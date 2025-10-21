@@ -1,5 +1,5 @@
 """
-Example Test Configuration for Meeting Automation Integration Tests
+Example Test Configuration for Project Knowledge Integration Tests
 Copy this file to test_config.py and update with your actual values
 """
 
@@ -9,18 +9,18 @@ API_KEY = "your-api-key-here"
 S3_BUCKET = "your-s3-bucket-name"
 
 # Test Data
-SAMPLE_MEETINGS = [
+SAMPLE_DOCUMENTS = [
     {
-        "filename": "test-discovery.txt",
-        "meeting_type": "discovery",
+        "filename": "test-lessons-learned.txt",
+        "document_type": "lessons_learned",
         "date": "2025-01-08",
-        "content": "Discovery meeting with client. Requirements: user authentication, product catalog, payment system. Team: Alice (frontend), Bob (backend), Charlie (DevOps).",
+        "content": "Sewer district project lessons: Early coordination with utility companies prevented delays. Soil testing revealed unexpected conditions requiring design modifications.",
     },
     {
-        "filename": "test-demo.txt",
-        "meeting_type": "demo",
+        "filename": "test-project-report.txt",
+        "document_type": "project_report",
         "date": "2025-01-15",
-        "content": "Sprint demo. Alice completed login UI, Bob implemented auth API, Charlie set up CI/CD. Next: Alice builds product pages, Bob adds cart API.",
+        "content": "Water district project report: Completed pipeline installation ahead of schedule. Community engagement was key to project success. Recommend similar approach for future projects.",
     },
 ]
 
@@ -33,10 +33,8 @@ POLLING_INTERVAL = 5  # Check every 5 seconds
 # Expected File Patterns
 EXPECTED_FILES = [
     "project_overview.json",
-    "working_backwards.json",
-    "assigned-students.json",
 ]
 
-EXPECTED_TRANSCRIPT_PATTERN = "meeting-transcripts/{filename}"
-EXPECTED_SUMMARY_PATTERN = "meeting-summaries/{filename_base}.json"
+EXPECTED_DOCUMENT_PATTERN = "documents/{filename}"
+EXPECTED_KNOWLEDGE_PATTERN = "knowledge/{filename_base}.json"
 EXPECTED_ASSET_PATTERN = "assets/{asset_type}.md"
