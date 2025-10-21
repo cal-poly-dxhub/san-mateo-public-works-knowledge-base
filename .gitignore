@@ -1,0 +1,16 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Generated prompts and templates (extracted from config.yaml)
+src/*/prompts/
+src/*/templates/
+
+test_config.py
