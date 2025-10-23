@@ -113,12 +113,20 @@ def search_with_rag(query: str, project_name: str = "", project_type: str = "", 
 
 Use the following context from meeting transcripts to answer the user's question. When referencing information, include inline citations using [1], [2], [3] etc. to indicate which source you're using.
 
+IMPORTANT: Format your response using markdown syntax:
+- Start with a brief intro paragraph
+- Use ## for section headings if organizing multiple topics
+- Use **bold text** for key terms and important points
+- Use bullet points (- ) or numbered lists (1. ) for multiple items
+- Add a blank line between paragraphs and list items
+- Keep each point concise
+
 Context:
 {context}
 
 Question: {query}
 
-Answer with inline citations:"""
+Provide your answer in well-formatted markdown:"""
 
         # Call the LLM
         bedrock_client = boto3.client("bedrock-runtime")

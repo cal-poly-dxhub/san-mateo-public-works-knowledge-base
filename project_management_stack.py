@@ -819,6 +819,56 @@ class ProjectManagementStack(Stack):
             api_key_required=True,
         )
 
+        # Master lessons learned endpoints
+        lessons_master_lambda = _lambda.Function(
+            self,
+            "LessonsMasterLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="lessons_master_api.handler",
+            code=_lambda.Code.from_asset("src/lessons"),
+            environment={
+                "BUCKET_NAME": bucket.bucket_name,
+                "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
+            },
+            timeout=Duration.seconds(30),
+        )
+
+        bucket.grant_read_write(lessons_master_lambda)
+        project_data_table.grant_read_write_data(lessons_master_lambda)
+
+        lessons_master_resource = api.root.add_resource("lessons")
+
+        # GET /lessons/project-types
+        project_types_resource = lessons_master_resource.add_resource(
+            "project-types"
+        )
+        project_types_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(lessons_master_lambda),
+            api_key_required=True,
+        )
+
+        # GET /lessons/by-type/{project_type}
+        by_type_resource = lessons_master_resource.add_resource("by-type")
+        by_type_detail_resource = by_type_resource.add_resource(
+            "{project_type}"
+        )
+        by_type_detail_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(lessons_master_lambda),
+            api_key_required=True,
+        )
+
+        # PUT /lessons/{lesson_id}
+        lesson_detail_resource = lessons_master_resource.add_resource(
+            "{lesson_id}"
+        )
+        lesson_detail_resource.add_method(
+            "PUT",
+            apigateway.LambdaIntegration(lessons_master_lambda),
+            api_key_required=True,
+        )
+
         documents_resource = project_detail_resource.add_resource("documents")
         documents_resource.add_method(
             "POST",
@@ -982,11 +1032,15 @@ Answer:""",
         )
 
         # Available search models parameter
-        available_models = config.get("models", {}).get("available_search_models", [])
+        available_models = config.get("models", {}).get(
+            "available_search_models", []
+        )
         ssm.StringParameter(
             self,
             "AvailableModels",
             parameter_name="/project-management/available-models",
-            string_value=json.dumps({"available_search_models": available_models}),
+            string_value=json.dumps(
+                {"available_search_models": available_models}
+            ),
             description="Available AI models for search",
         )

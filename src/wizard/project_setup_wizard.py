@@ -90,6 +90,7 @@ def handler(event, context):
             folders = [
                 f"projects/{project_name}/",
                 f"projects/{project_name}/documents/",
+                f"lessons-learned/{project_name}/",
             ]
             for folder in folders:
                 s3.put_object(Bucket=bucket_name, Key=folder)

@@ -20,6 +20,7 @@ import BatchStatusDialog from "@/components/BatchStatusDialog";
 
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
+import SearchComponent from "@/components/SearchComponent";
 
 interface Project {
   name: string;
@@ -41,21 +42,18 @@ interface Project {
 export default function Home() {
   const router = useRouter();
   const { apiKey, refreshTrigger } = useApiKey();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+
   const [hasSearched, setHasSearched] = useState(false);
   const [ragEnabled, setRagEnabled] = useState(true);
-  const [searchType, setSearchType] = useState<"both" | "lessons" | "documents">("both");
+  const [searchType, setSearchType] = useState<
+    "both" | "lessons" | "documents"
+  >("both");
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [searchLimit, setSearchLimit] = useState("5");
   const [batchStatusOpen, setBatchStatusOpen] = useState(false);
   const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
-
 
   useEffect(() => {
     loadProjects();
@@ -70,7 +68,9 @@ export default function Home() {
   const loadAvailableModels = async () => {
     try {
       const data = await apiRequest("/models");
-      const models = Array.isArray(data) ? data : (data.available_search_models || []);
+      const models = Array.isArray(data)
+        ? data
+        : data.available_search_models || [];
       setAvailableModels(models);
       if (models.length > 0) {
         setSelectedModel(models[0].id);
@@ -107,13 +107,13 @@ export default function Home() {
         model_id: selectedModel,
         limit: parseInt(searchLimit),
       };
-      
+
       if (searchType === "lessons") {
         body.is_lesson = true;
       } else if (searchType === "documents") {
         body.is_lesson = false;
       }
-      
+
       const data = await apiRequest(endpoint, {
         method: "POST",
         body: JSON.stringify(body),
@@ -153,140 +153,26 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="flex justify-between mb-8 gap-4 flex-col">
-        <div className="flex gap-4">
-          <Input
-            type="text"
-            placeholder="Ask the AI Assistant: regulations, templates, timelines..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          />
-          {ragEnabled && (
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select AI Model" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableModels.length > 0 ? (
-                  availableModels.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="loading" disabled>
-                    Loading models... ({availableModels.length})
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          )}
-          <Select value={searchLimit} onValueChange={setSearchLimit}>
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="rag-toggle"
-              checked={ragEnabled}
-              onCheckedChange={setRagEnabled}
-            />
-            <Label htmlFor="rag-toggle" className="text-sm whitespace-nowrap">
-              RAG
-            </Label>
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant={searchType === "both" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("both")}
-            >
-              Both
-            </Button>
-            <Button
-              variant={searchType === "lessons" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("lessons")}
-            >
-              Lessons
-            </Button>
-            <Button
-              variant={searchType === "documents" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("documents")}
-            >
-              Docs
-            </Button>
-          </div>
-          <Button
-            onClick={handleSearch}
-            variant="secondary"
-            disabled={isSearching}
-          >
-            {isSearching ? "Searching..." : "Search"}
-          </Button>
-        </div>
-        <div className="flex gap-4">
-          <Button
-            variant="secondary"
-            onClick={() => setCreateProjectOpen(true)}
-          >
-            Create Project
-          </Button>
+      <div className="mb-8">
+        <SearchComponent placeholder="Ask the AI Assistant: regulations, templates, timelines..." />
+      </div>
 
-          {currentBatchId && (
-            <Button variant="outline" onClick={() => setBatchStatusOpen(true)}>
-              View Batch Status
+      <div className="flex gap-4 mb-8">
+      <div className="flex gap-4 mb-8">
+        <Button
+          variant="secondary"
+          onClick={() => setCreateProjectOpen(true)}
+        >
+          Create Project
+        </Button>
+
+        {currentBatchId && (
+          <Button variant="outline" onClick={() => setBatchStatusOpen(true)}>
+            View Batch Status
             </Button>
           )}
         </div>
       </div>
-
-      {hasSearched && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4">Search Results</h2>
-          {searchResults.length > 0 ? (
-            <div className="space-y-4">
-              {ragEnabled ? (
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-medium">AI Answer:</h3>
-                  <p className="text-sm leading-relaxed mt-2">
-                    {searchResults[0]?.answer}
-                  </p>
-                </div>
-              ) : (
-                searchResults.map((result, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <h3 className="font-medium">
-                      {result.title || result.source}
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-2">
-                      {result.content || result.text}
-                    </p>
-                    {result.score && (
-                      <span className="text-xs text-gray-400">
-                        Score: {result.score.toFixed(3)}
-                      </span>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          ) : (
-            <div className="p-4 border rounded-lg text-center text-muted-foreground">
-              No results found for "{searchQuery}"
-            </div>
-          )}
-        </div>
-      )}
 
       {projects.length === 0 ? (
         <div className="text-center py-16">
@@ -319,8 +205,6 @@ export default function Home() {
         onOpenChange={setBatchStatusOpen}
         batchId={currentBatchId}
       />
-
-
     </div>
   );
 }

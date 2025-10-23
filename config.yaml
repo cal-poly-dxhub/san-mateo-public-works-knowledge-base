@@ -10,12 +10,18 @@ models:
 
   # Available search models for AI assistant
   available_search_models:
-    - id: "anthropic.claude-3-sonnet-20240229-v1:0"
-      name: "Claude 3 Sonnet"
+    - id: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      name: "Claude 4.5 Haiku"
+      description: "A good balance of speed and detail"
+    - id: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      name: "Claude 4.5 Sonnet"
       description: "Best for complex analysis and detailed responses"
-    - id: "anthropic.claude-3-haiku-20240307-v1:0"
-      name: "Claude 3 Haiku"
+    - id: "us.meta.llama4-maverick-17b-instruct-v1:0"
+      name: "Llama 4 Maverick"
       description: "Fast responses for quick queries"
+    - id: "us.amazon.nova-pro-v1:0"
+      name: "Amazon Nova Pro"
+      description: "Amazon's latest AI model"
 
 # Vector ingestion configuration
 vector_ingestion:

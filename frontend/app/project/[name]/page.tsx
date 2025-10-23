@@ -22,6 +22,7 @@ import { apiRequest } from "@/lib/api";
 import DocumentUploadDialog from "@/components/DocumentUploadDialog";
 import LessonsLearned from "@/components/LessonsLearned";
 import Checklist from "@/components/Checklist";
+import SearchComponent from "@/components/SearchComponent";
 
 interface Project {
   name: string;
@@ -108,15 +109,20 @@ export default function ProjectPage() {
       const endpoint = ragEnabled ? "/search-rag" : "/project-search";
       const body: any = {
         query: projectSearch,
-        project_name: project?.name,
         limit: parseInt(searchLimit),
         model_id: selectedModel,
       };
 
+      // For documents, filter by project. For lessons, search globally
       if (ragEnabled && searchType === "lessons") {
         body.is_lesson = true;
+        // Don't set project_name - search all lessons
       } else if (ragEnabled && searchType === "documents") {
         body.is_lesson = false;
+        body.project_name = project?.name; // Only project documents
+      } else if (ragEnabled && searchType === "both") {
+        // Search project documents + all lessons
+        body.project_name = project?.name;
       }
 
       const data = await apiRequest(endpoint, {
@@ -125,7 +131,7 @@ export default function ProjectPage() {
       });
 
       if (ragEnabled) {
-        setSearchResults([{ answer: data.answer, query: projectSearch }]);
+        setSearchResults([{ answer: data.answer, sources: data.sources || [], query: projectSearch }]);
       } else {
         setSearchResults(data.results || []);
       }
@@ -307,142 +313,10 @@ export default function ProjectPage() {
       </header>
 
       <div className="max-w-7xl mx-auto p-6">
-        <div className="space-y-4 mb-6">
-          {/* Suggested Questions */}
-          <div className="flex gap-2 items-center">
-            <span className="text-sm text-muted-foreground">Suggested:</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setProjectSearch("Im starting a new project, anything I should be aware of?")}
-            >
-              Im starting a new project, anything I should be aware of?
-            </Button>
-          </div>
-
-          {/* Search Type Filter */}
-          <div className="flex gap-2">
-            <Button
-              variant={searchType === "both" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("both")}
-            >
-              Both
-            </Button>
-            <Button
-              variant={searchType === "lessons" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("lessons")}
-            >
-              Lessons Only
-            </Button>
-            <Button
-              variant={searchType === "documents" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("documents")}
-            >
-              Documents Only
-            </Button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex gap-4">
-            <Input
-              placeholder="Search within this project..."
-              value={projectSearch}
-              onChange={(e) => setProjectSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleProjectSearch()}
-              className="flex-1"
-            />
-            {ragEnabled && (
-              <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select AI Model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="rag-toggle"
-                checked={ragEnabled}
-                onCheckedChange={setRagEnabled}
-              />
-              <Label htmlFor="rag-toggle" className="text-sm whitespace-nowrap">
-                RAG
-              </Label>
-            </div>
-            <Select value={searchLimit} onValueChange={setSearchLimit}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleProjectSearch}
-              disabled={isSearching}
-              className="hover:bg-primary/90"
-            >
-              <Search className="h-4 w-4 mr-2" />
-              {isSearching ? "Searching..." : "Search"}
-            </Button>
-          </div>
-        </div>
-
-        {hasSearched && (
-          <div className="mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Search Results</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {searchResults.length > 0 ? (
-                  ragEnabled ? (
-                    <div className="space-y-4">
-                      <h4 className="font-medium">AI Answer:</h4>
-                      <p className="text-sm leading-relaxed">
-                        {searchResults[0]?.answer}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {searchResults.map((result, index) => (
-                        <div key={index} className="p-4 border rounded-lg">
-                          <h4 className="font-medium">
-                            {result.title || result.source}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-2">
-                            {result.content || result.text}
-                          </p>
-                          {result.score && (
-                            <span className="text-xs text-gray-400">
-                              Score: {result.score.toFixed(3)}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )
-                ) : (
-                  <div className="text-center text-muted-foreground py-4">
-                    No results found for "{projectSearch}"
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        <SearchComponent 
+          projectName={project.name}
+          placeholder="Search within this project..."
+        />
 
         {/* Removed project overview and status cards - now handled in tabs */}
 
