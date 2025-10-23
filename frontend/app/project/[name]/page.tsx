@@ -8,8 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
-import ProjectTimeline from "@/components/ProjectTimeline";
-import ActionItems from "@/components/ActionItems";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,10 +20,14 @@ import {
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import ProjectOverview from "@/components/ProjectOverview";
-import Tasks from "@/components/Tasks";
+import WorkingBackwards from "@/components/WorkingBackwards";
+import DocumentUploadDialog from "@/components/DocumentUploadDialog";
+import LessonsLearned from "@/components/LessonsLearned";
+import Checklist from "@/components/Checklist";
 
 interface Project {
   name: string;
+  projectType?: string;
   status?: string;
   description?: string;
   project_overview?: any;
@@ -56,6 +58,7 @@ export default function ProjectPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   useEffect(() => {
     if (params.name) {
@@ -280,10 +283,17 @@ export default function ProjectPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
-        <div className="max-w-7xl mx-auto p-6">
+        <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
           <h1 className="text-3xl font-semibold tracking-tight">
             {project?.name || "Loading..."}
           </h1>
+          <Button
+            onClick={() => setUploadDialogOpen(true)}
+            variant="outline"
+            size="sm"
+          >
+            Upload Document
+          </Button>
         </div>
       </header>
 
@@ -387,15 +397,15 @@ export default function ProjectPage() {
 
         {/* Removed project overview and status cards - now handled in tabs */}
 
-        <Tabs defaultValue="tasks" className="space-y-6">
+        <Tabs defaultValue="checklist" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="checklist">Checklist</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+            <TabsTrigger value="lessons">Lessons Learned</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="tasks" className="space-y-6">
-            <Tasks projectName={project.name} />
+          <TabsContent value="checklist" className="space-y-6">
+            <Checklist projectName={project.name} />
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
@@ -415,22 +425,22 @@ export default function ProjectPage() {
             />
           </TabsContent>
 
-          <TabsContent value="timeline" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Roadmap</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Meetings and their corresponding action items
-                </p>
-              </CardHeader>
-              <CardContent>
-                <ProjectTimeline projectName={project.name} />
-              </CardContent>
-            </Card>
+          <TabsContent value="lessons" className="space-y-6">
+            <LessonsLearned projectName={project.name} />
           </TabsContent>
         </Tabs>
       </div>
 
+      <DocumentUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        projectName={project?.name || ""}
+        projectType={project?.projectType || "other"}
+        onUploadComplete={() => {
+          // Refresh lessons learned
+          setUploadDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

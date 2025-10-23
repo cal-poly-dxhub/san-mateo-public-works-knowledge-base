@@ -69,6 +69,15 @@ def handler(event, context):
             ]
             for folder in folders:
                 s3.put_object(Bucket=bucket_name, Key=folder)
+            
+            # Create initial lessons-learned.md file
+            lessons_content = f"# Lessons Learned - {project_name}\n\nNo lessons learned yet. Upload documents with 'Extract Lessons Learned' enabled to populate this file.\n"
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=f"projects/{project_name}/lessons-learned.md",
+                Body=lessons_content.encode('utf-8'),
+                ContentType='text/markdown'
+            )
         
         # Store tasks separately for easier querying
         for task in project_config.get('tasks', []):
