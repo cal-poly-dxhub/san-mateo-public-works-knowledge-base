@@ -168,7 +168,7 @@ export default function CreateProjectDialog({
                 setProjectName(value);
               }}
               placeholder="highway-1-slurry-seal"
-              pattern="[a-z0-9-]+"
+              pattern="[a-z0-9\-]+"
               title="Only lowercase letters, numbers, and hyphens allowed"
               required
             />
