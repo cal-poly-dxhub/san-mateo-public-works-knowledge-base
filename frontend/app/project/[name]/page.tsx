@@ -23,7 +23,6 @@ import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import ProjectOverview from "@/components/ProjectOverview";
 import WorkingBackwards from "@/components/WorkingBackwards";
-import ProjectUploadDialog from "@/components/ProjectUploadDialog";
 
 interface Project {
   name: string;
@@ -57,7 +56,6 @@ export default function ProjectPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   useEffect(() => {
     if (params.name) {
@@ -282,19 +280,10 @@ export default function ProjectPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center p-6">
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {project?.name || "Loading..."}
-            </h1>
-            <Button
-              onClick={() => setUploadDialogOpen(true)}
-              variant="outline"
-              size="sm"
-            >
-              Upload Video
-            </Button>
-          </div>
+        <div className="max-w-7xl mx-auto p-6">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {project?.name || "Loading..."}
+          </h1>
         </div>
       </header>
 
@@ -452,17 +441,6 @@ export default function ProjectPage() {
         </Tabs>
       </div>
 
-      <ProjectUploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        projectName={project?.name || ""}
-        onUploadComplete={() => {
-          // Refresh project data after upload
-          if (params.name) {
-            loadProject(decodeURIComponent(params.name as string));
-          }
-        }}
-      />
     </div>
   );
 }
