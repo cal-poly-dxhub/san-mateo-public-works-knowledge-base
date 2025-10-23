@@ -130,7 +130,7 @@ Return only the formatted lessons in markdown."""
         return f"## General - {project_name} - {date}\n**Lesson:** Document uploaded\n**Details:** Automatic extraction failed\n\n---\n"
 
 def append_to_project_lessons(bucket_name, project_name, new_lessons):
-    """Append lessons to project's lessons-learned.md file"""
+    """Merge lessons with project's lessons-learned.md file using LLM"""
     
     lessons_key = f"projects/{project_name}/lessons-learned.md"
     
@@ -141,15 +141,54 @@ def append_to_project_lessons(bucket_name, project_name, new_lessons):
     except:
         existing_content = f"# Lessons Learned - {project_name}\n\n"
     
-    # Append new lessons
-    updated_content = existing_content + "\n" + new_lessons + "\n"
+    # Merge using LLM instead of simple append
+    merged_content = merge_project_lessons_with_llm(existing_content, new_lessons, project_name)
     
     s3.put_object(
         Bucket=bucket_name,
         Key=lessons_key,
-        Body=updated_content.encode('utf-8'),
+        Body=merged_content.encode('utf-8'),
         ContentType='text/markdown'
     )
+
+def merge_project_lessons_with_llm(existing_content, new_lessons, project_name):
+    """Merge new lessons with existing project lessons using LLM"""
+    
+    prompt = f"""Merge these new lessons learned with the existing project lessons for {project_name}.
+
+Rules:
+1. Deduplicate similar lessons (keep most comprehensive version)
+2. If lessons contradict, keep the most recent one
+3. Organize by category and chronological order (newest first)
+4. Preserve all metadata and formatting
+5. Keep it focused on this specific project
+
+New Lessons:
+{new_lessons}
+
+Existing Project Lessons:
+{existing_content}
+
+Return the complete merged project lessons file in markdown format."""
+    
+    try:
+        response = bedrock.invoke_model(
+            modelId=os.environ.get('LESSONS_MODEL_ID', 'anthropic.claude-3-5-sonnet-20241022-v2:0'),
+            body=json.dumps({
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 3000,
+                "messages": [{"role": "user", "content": prompt}]
+            })
+        )
+        
+        response_body = json.loads(response['body'].read())
+        merged = response_body['content'][0]['text']
+        return merged
+        
+    except Exception as e:
+        print(f"Error merging project lessons: {str(e)}")
+        # Fallback: just append
+        return existing_content + "\n" + new_lessons + "\n"
 
 def update_master_lessons(bucket_name, project_type, project_name, new_lessons):
     """Update master lessons learned file with LLM merge"""
