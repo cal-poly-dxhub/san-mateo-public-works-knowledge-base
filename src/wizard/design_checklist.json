@@ -1,0 +1,2369 @@
+{
+  "document": {
+    "title": "PROJECT SCHEDULE CHECKLIST",
+    "version": "1.0",
+    "last_updated": "2024-01-01",
+    "metadata": {
+      "date": "",
+      "project": "",
+      "work_authorization": "",
+      "office_plans_file_no": "",
+      "design_engineer": "",
+      "survey_books": "",
+      "project_manager": ""
+    },
+    "checklist_items": [
+      {
+        "id": 1,
+        "tasks": [
+          {
+            "task_id": "1.1",
+            "description": "Office plans file number assigned and logged into the book (found in the drafting section) and setup electronic folder under (F:\\Users\\design\\C3D).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "1.2",
+            "description": "Review the 'Database & Cabinet Document' for location database of key documents (F:\\Users\\design\\forms\\Database & Cabinet Document Location.docx) and attach.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "tasks": [
+          {
+            "task_id": "2.1",
+            "description": "Old plans/survey books, Case I, Raster Drawings, GIS, As-Built Electronic files researched.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "tasks": [
+          {
+            "task_id": "3.1",
+            "description": "General project limits determined, ROW confirmed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "3.2",
+            "description": "Send e-mail to GIS Staff (PW Tech) to include all project location in the webviewer, including project limits.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "tasks": [
+          {
+            "task_id": "4.1",
+            "description": "Field inspection, photos, and videos of the project area.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "4.2",
+            "description": "Take photos during storm events of the project area that involves drainage features or potential impacts to drainage. ie reconstruction, resurfacing, curb ramps, storm drains, and make note of locations for possible ponding.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "tasks": [
+          {
+            "task_id": "5.1",
+            "description": "Prepare project schedule using MS Project (See template in (F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)) Note: Do not copy from old projects. Use a new template with every new project.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "notes": "Do not copy from old projects. Use a new template with every new project."
+          },
+          {
+            "task_id": "5.2",
+            "description": "Prepare project specifications and AutoCAD templates. (See template in F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Cost-share Agrmnts (Cities & Towns)\\Boilerplate). Note: Do not use copies from old projects. Use a new template with every new project.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "notes": "Do not use copies from old projects. Use a new template with every new project."
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "tasks": [
+          {
+            "task_id": "6.1",
+            "description": "Review Assessor Maps, Subdivision Maps, Drafting Records, Drainage and Sewer Maps for abandonments to confirm Right-of-Way and any locations of existing utilities within project limits. Right-of-Way status determined? Electronic files can be found under the → intranet webpage → Applications → GIS – All Applications or GIS",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "tasks": [
+          {
+            "task_id": "7.1",
+            "description": "Request for a project survey. Surface treatment projects such as slurry, chip seal or resurface projects should require little, if any surveying. Verify if concrete curb ramps are to be surveyed?",
+            "projected_date": "Yes",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "7.2",
+            "description": "Submit a request for County surveyor or on call surveyor to tie out benchmarks, railroad ties, monumentation, and other pertinent survey points. See applicable template at (F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Survey (00b 01c and-or 02)\\X01_Req4Survey_Topo.docx)",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Survey (00b 01c and-or 02)\\X01_Req4Survey_Topo.docx"
+          },
+          {
+            "task_id": "7.3",
+            "description": "Survey Completion Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "tasks": [
+          {
+            "task_id": "8.1",
+            "description": "Survey notes plotted. - Existing alignment, R/W, & Property lines complete?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "8.2",
+            "description": "Existing topography & profiles complete?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "8.3",
+            "description": "Existing cross sections complete?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "8.4",
+            "description": "Existing utilities complete?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "tasks": [
+          {
+            "task_id": "9.1",
+            "description": "Determine project limits and project type (Recon., Resurf., Slurry, Cape, other). Prepare preliminary schematics, ROW, Property lines, alignment of VG's & proposed typical sections (this is considered '30% Plans' on project checklist). Check for work in adjacent cities/towns. If so, contact that city/town for desire to include their portion in our project.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "milestone": "30% Plans"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "tasks": [
+          {
+            "task_id": "10.1",
+            "description": "Provide copies of 30% schematics, etc. to Road Div., and Utilities Section, Watershed Protection, and/or other stakeholders. Request field review of all facilities and listing of issues/concerns. Check if any work to be performed by Road Div. or if any County utility work (i.e., sewer) is to be included in project. (FORM 'MEMO TO ROADS –INITIAL PLAN REVIEW.DOC' (F:\\Users\\design\\_PROJECT DOC TEMPLATES (2012)\\Design (01 06c 09-13 15b)\\Memo to Roads - initial plan review.doc). Include Onedrive and Bluebeam hyperlinks and print hard copies for Principal Engineer.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "F:\\Users\\design\\_PROJECT DOC TEMPLATES (2012)\\Design (01 06c 09-13 15b)\\Memo to Roads - initial plan review.doc"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "tasks": [
+          {
+            "task_id": "11.1",
+            "description": "Determine in discussions with Senior Engineer requirement and appropriate time/stage for meeting with Road Div., Construction, Utilities, other stakeholders and Director to review project issues/concerns.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "tasks": [
+          {
+            "task_id": "12.1",
+            "description": "Setup meeting with Road Div., Construction, Watershed Protection, other stakeholders, and Director to discuss issues/concerns (after 30% Plans complete).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "tasks": [
+          {
+            "task_id": "13.1",
+            "description": "Revise project schedule to incorporate issues/concerns from meeting.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "tasks": [
+          {
+            "task_id": "14.1",
+            "description": "Review electronic files for County Utilities for utility information of their existing facilities. Memo not required. Follow up with respective supervisor to discuss findings. See path in County intranet webpage →Applications → GIS – All Applications → County Sewer Finder OR http://bit.ly/sewer2. Drainage maps can also be located at G:\\Users\\Pwpublic\\San Mateo Drainage District Maps\\SMCo100ScaleDrainage Maps",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "agencies": [
+              {
+                "name": "PG&E",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "AT&T (Major Line)",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "AT&T (Minor Line)",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Cable TV",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Water CO/District",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Fire District",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Sewer District",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Storm Drain",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Other",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              }
+            ]
+          },
+          {
+            "task_id": "14.2",
+            "description": "Are any Utilities to be relocated? If so, submit Notice of Intents/Notice to Owner letters to Utility Agencies.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "tasks": [
+          {
+            "task_id": "15.1",
+            "description": "Existing alignment, topography, cross sections & Utility facilities checked. Check to initial & date all work.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "tasks": [
+          {
+            "task_id": "16.1",
+            "description": "Notify the Permit Section (2nd floor, 455 County Center) of overall project limits and request all applications that may affect R/W be routed through design for review. (If applicable).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "tasks": [
+          {
+            "task_id": "17.1",
+            "description": "Are property owner info/survey letters necessary for design criteria? (For recons: Have valley gutters been painted by the Survey Crew on site?)",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "17.2",
+            "description": "See template in (F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Property Owners (00a c-d 04b 17a 23 24)\\PO Surveys\\00a – PO Survey.doc. If so, send letter to property owners and post letter to department website.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "template_path": "F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Property Owners (00a c-d 04b 17a 23 24)\\PO Surveys\\00a – PO Survey.doc"
+          },
+          {
+            "task_id": "17.3",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "17.4",
+            "description": "Send results of the property owner info/survey. If majority approves of recon, send survey results letter to property owners. If project location is in North Fair Oaks send bilingual letter.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "17.5",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "tasks": [
+          {
+            "task_id": "18.1",
+            "description": "Is it a public information/hearing necessary?",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "18.2",
+            "description": "If so, determine meeting time and location.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "18.3",
+            "description": "Send meeting notice letter to property owner and post to department website.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "18.4",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "tasks": [
+          {
+            "task_id": "19.1",
+            "description": "Prepare/send 'applications' Required by Grant Funding/Permitting Agencies, (i.e., FAA, FEMA, BCDC, CALTRANS, ETC.) (If applicable).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "19.2",
+            "description": "Approval Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "tasks": [
+          {
+            "task_id": "20.1",
+            "description": "Determine if a Notice of Intent (NOI) is required to be filed",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": true,
+            "reference": "https://www.waterboards.ca.gov/water_issues/programs/stormwater/docs/constpermits/wqo_2009_0009_complete.pdf",
+            "subtasks": [
+              {
+                "question": "Is the Project for routine maintenance to maintain original line and grade, hydraulic capacity, or original purpose of the facility? (If 'Yes,' an NOI is NOT required to be filed; if 'No,' proceed to next question)",
+                "answer": "N/A"
+              },
+              {
+                "question": "Does the Project disturb more than 5 acres? (If 'Yes,' an NOI is required to be filed; if 'No,' proceed to next question)",
+                "answer": "N/A"
+              },
+              {
+                "question": "Does the Project disturb between 1 and 5 acres? (If 'Yes,' proceed to next question; if 'No,' an NOI is NOT required)",
+                "answer": "N/A"
+              },
+              {
+                "question": "Determine if Project qualifies for a waiver: (If 'Yes,' an NOI is NOT required; if 'No,' an NOI is required)",
+                "answer": "N/A"
+              },
+              {
+                "question": "Is an NOI required to be filed with the SWQCB?",
+                "answer": "N/A"
+              }
+            ]
+          },
+          {
+            "task_id": "20.2",
+            "description": "File the NOI via the State Water Resources Control Board (SWRCB) SMARTS Database: http://www.waterboards.ca.gov/water_issues/programs/stormwater/databases.shtml. Choose: Storm Water Multiple Application and Report Tracking System (SMARTS) Database. NOTE: (F:\\Users\\const\\__ Templates-Details-CT Ref\\SMARTS). Notice of Intent (NOI) Filing Date:",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "url": "http://www.waterboards.ca.gov/water_issues/programs/stormwater/databases.shtml"
+          }
+        ]
+      },
+      {
+        "id": 21,
+        "tasks": [
+          {
+            "task_id": "21.1",
+            "description": "Determine if GI or C3 is required by referencing the folder (G:\\Users\\Pwpublic\\_NPDES\\GI\\Design GI Resources\\Checklist & Sizing Calcs)",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": true,
+            "reference_path": "G:\\Users\\Pwpublic\\_NPDES\\GI\\Design GI Resources\\Checklist & Sizing Calcs"
+          }
+        ]
+      },
+      {
+        "id": 22,
+        "tasks": [
+          {
+            "task_id": "22.1",
+            "description": "Prepare & submit request permit screening request form to Watershed Protection for environmental permits/approvals, except for CEQA Notice of Exemption (See #48). Confirm permit needs with Watershed Protection. (Watershed Protection to complete all documents & permit applications.) (G:\\Users\\Pwpublic\\WPS Permit Resources\\Permit Screening Temp\\WPS Request Brainstorm.xlsx)",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "G:\\Users\\Pwpublic\\WPS Permit Resources\\Permit Screening Temp\\WPS Request Brainstorm.xlsx"
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "tasks": [
+          {
+            "task_id": "23.1",
+            "description": "Extra-Territorial jurisdiction required? (If applicable) (Review current annexation/boundary maps).",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.2",
+            "description": "Is Public Agency Cost Sharing Agreement necessary?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.3",
+            "description": "Is Utility Cost Sharing Agreement necessary?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.4",
+            "description": "Send Initial letter to Public Agencies/Utilities (See template in F:\\Users\\design\\_PROJECT DOC TEMPLATES (2012)\\Cost-share Agrmnts (Cities & Towns)\\Boilerplate\\Cost-share Agreement_City-Town.docx)",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "template_path": "F:\\Users\\design\\_PROJECT DOC TEMPLATES (2012)\\Cost-share Agrmnts (Cities & Towns)\\Boilerplate\\Cost-share Agreement_City-Town.docx"
+          },
+          {
+            "task_id": "23.5",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.6",
+            "description": "Send letter w/ preliminary agreement(s) to Agency(ies) & Utilities for review. If possible, include extra-territorial jurisdiction in agreement. Eliminate need to go to B/S at the end of project (See # 57). (Note: Agreements With Not-to-Exceed totals in excess of $100,000 require B/S approval).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "notes": "Agreements With Not-to-Exceed totals in excess of $100,000 require B/S approval"
+          },
+          {
+            "task_id": "23.7",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.8",
+            "description": "Senior, Principal, Deputy Director reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.9",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.10",
+            "description": "Complete/revise agreement?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.11",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.12",
+            "description": "Send letter w/ agreement to Agency(ies) for signature and then Director for execution.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.13",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "23.14",
+            "description": "Prepare Resolution(s) & include w/ B/S Report for adoption of Plans & Specifications (See # 40). Include extra-territorial jurisdiction and agreements greater than certain value.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "tasks": [
+          {
+            "task_id": "24.1",
+            "description": "Are soil tests required?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false,
+            "test_types": [
+              {
+                "type": "R-Value tests",
+                "required": "N/A"
+              },
+              {
+                "type": "Cement Treat tests",
+                "required": "N/A"
+              },
+              {
+                "type": "Include compaction Curve",
+                "required": "N/A"
+              },
+              {
+                "type": "Other",
+                "required": "N/A"
+              }
+            ]
+          },
+          {
+            "task_id": "24.2",
+            "description": "Coordinate with Maintenance (Road Div.) to collect and take soil samples to lab testing firm and prepare transmittal memo for laboratory services. (Engineer to observe location/depth of all test samples.)",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "24.3",
+            "description": "Deliver samples to soils laboratory.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "24.4",
+            "description": "Receipt of test results",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "24.5",
+            "description": "Soil tests laboratory bill paid.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "tasks": [
+          {
+            "task_id": "25.1",
+            "description": "Is a geotechnical investigation required?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.2",
+            "description": "Is a geotechnical engineer to be hired?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.3",
+            "description": "Use on-call consultant or prepare/send RFQ/RFP or letter of interest to minimum of 3 Geotechnical Engineers unless an agreement is in place for General Consultation (Discuss options w/ supervisor).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.4",
+            "description": "Review B-1 Administrative Memorandum for County RFP procurement processes. This memo governs soliciting, selecting, and development agreements with providers of goods and services. Review County Contract Handbook for RFp templates. See link below for the B-1 Memo. http://cmo.smcgov.org/sites/cmo.smcgov.org/files/B-1_1.pdf",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "reference_url": "http://cmo.smcgov.org/sites/cmo.smcgov.org/files/B-1_1.pdf"
+          },
+          {
+            "task_id": "25.5",
+            "description": "Review responses, select consultant, determine Scope of Work, conditions, negotiate fees, etc. – prepare agreement.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.6",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.7",
+            "description": "Send agreement to Consultant for review.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.8",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.9",
+            "description": "Complete/revise/finalize Scope of Work and Agreement.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.10",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.11",
+            "description": "Senior, Principal, Deputy Director reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.12",
+            "description": "Send Agreement to Consultant for signature.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.13",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.14",
+            "description": "If over $100K, prepare B/S Report & Reso. Submit to Design Section Senior, Principal, and Deputy Director 6 weeks prior to Board Agenda date. Submit revised draft to 'Executive Admin' 4 weeks prior to agenda date. For Independent Consultant Contracts, the Director can sign up to $100K.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false,
+            "threshold": "$100K"
+          },
+          {
+            "task_id": "25.15",
+            "description": "Send Notice to Proceed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.16",
+            "description": "Geotechnical report/work completion date, design criteria/recommendations received with Geotechnical report?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "25.17",
+            "description": "Geotechnical Engineer bill paid per agreement.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "tasks": [
+          {
+            "task_id": "26.1",
+            "description": "Is a major structure design required?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.2",
+            "description": "Is Structural Engineer to be hired?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.3",
+            "description": "Use on-call or prepare/send RFQ/RFP or Letter of Interest to minimum of 3 Structural Consultants unless an agreement is in place for General Consultation (Discuss options with supervisor).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.4",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.5",
+            "description": "Review responses, select consultant, determine Scope of Work, conditions, negotiate fees, etc. – prepare agreement.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.6",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.7",
+            "description": "Send agreement to Consultant for review.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.8",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.9",
+            "description": "Complete/revise/finalize Scope of Work and Agreement.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.10",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.11",
+            "description": "Send Agreement to Consultant for signature.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.12",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.13",
+            "description": "If over $100K, Prepare B/S Report & Reso. Submit to Design Section Principal and Deputy Director 6 weeks prior to Board Agenda date. Submit revised draft to 'Executive Admin' 4 weeks prior to Agenda date. For Independent Contracts, the Director can now sign up to $100K.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false,
+            "threshold": "$100K"
+          },
+          {
+            "task_id": "26.14",
+            "description": "Send Notice to Proceed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.15",
+            "description": "Structural Report/Work completion date.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.16",
+            "description": "Review of structural plans completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.17",
+            "description": "Revisions/corrections completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.18",
+            "description": "Design criteria/recommendations received w/ Final Structural Report?",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "26.19",
+            "description": "Structural Engineer bill paid per Agreement.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 27,
+        "tasks": [
+          {
+            "task_id": "27.1",
+            "description": "Is a Design Speed/Traffic Index (T.I.) required?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "27.2",
+            "description": "Send written request to Road Operations Manager for Traffic Engineer Services and traffic data.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "27.3",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 28,
+        "tasks": [
+          {
+            "task_id": "28.1",
+            "description": "Begin preliminary engineering drawings (60%).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "milestone": "60% Plans"
+          },
+          {
+            "task_id": "28.2",
+            "description": "Project design concept determined? (i.e.: Resurface, Reconstruct, etc.)",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.3",
+            "description": "Construction limits approved by Project Manager?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.4",
+            "description": "Plan concept/layout/fadeout/etc. approved by Project Manager?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.5",
+            "description": "Develop & plot proposed geometrics?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.6",
+            "description": "Develop proposed centerline profile & establish grades?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.7",
+            "description": "Develop roadway structural section alternatives and costs for each, including cement treated base (CTB), deep lift, and lime treatment?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.8",
+            "description": "Structural Section approved by Project Manager? (Refer to CO. STD.)",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.9",
+            "description": "Plot cross section templates?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.10",
+            "description": "Drainage issues investigated?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.11",
+            "description": "Existing drainage patterns determined?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.12",
+            "description": "Proposed drainage patterns determined?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.13",
+            "description": "Drainage facilities designed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.14",
+            "description": "Alternate construction/drainage/traffic solutions analyzed/completed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "28.15",
+            "description": "Miscellaneous details/notes completed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 29,
+        "tasks": [
+          {
+            "task_id": "29.1",
+            "description": "Preliminary engineering drawings (60%) completed. Plans to be distributed via BlueBeam to respective Seniors, Principal, and Deputy Director in design, construction, roads, utilities, surveyor, and watershed protection. Specifications to be distributed via OneDrive. Director and selected individuals shall receive hard copies of the plans and specs. Please confirm with your respective Senior.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "milestone": "60% Plans Complete",
+            "distribution": {
+              "plans": "BlueBeam",
+              "specifications": "OneDrive",
+              "hard_copies": "Director and selected individuals"
+            }
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "tasks": [
+          {
+            "task_id": "30.1",
+            "description": "Send letter and preliminary plans (between 30% and 60% completion) to Utility Co's./Public Agencies for verification of facilities and resolution of any conflicts identified in design process. (Form letters stored in F:\\Users\\design\\_PROJECT DOC TEMPLATES (2012)\\Utilities-Fire (04a 05 07 15d-e 22))",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "F:\\Users\\design\\_PROJECT DOC TEMPLATES (2012)\\Utilities-Fire (04a 05 07 15d-e 22)",
+            "agencies": [
+              {
+                "name": "PG&E",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "AT&T",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Cable TV",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Water CO/District",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Fire District",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Sewer District",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Storm Drain",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Other",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "City(ies)",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "Caltrans",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              },
+              {
+                "name": "SFPUC",
+                "contact": "",
+                "initials": "",
+                "status": "N/A",
+                "reply_date": ""
+              }
+            ]
+          },
+          {
+            "task_id": "30.2",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "30.3",
+            "description": "Utility/Agencies' facilities verified, conflicts resolved, plans revised?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "30.4",
+            "description": "Are any Utilities to be relocated? If so, submit Notice of Intents/Notice to Owner letters to Utility Agencies.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "30.5",
+            "description": "For PG&E letters – include Customer Relationship Manager, as a cc on all PG&E correspondences.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "30.6",
+            "description": "If a Utility encroachment permit is anticipated, notify Permit Section to let us review/approve submittals and permit expire date.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 31,
+        "tasks": [
+          {
+            "task_id": "31.1",
+            "description": "Setup in person meeting with Road Div., Construction, Survey, watershed protection, utilities and review preliminary plans (60%) to determine if information complete. Do Roads & Utilities Sections agree? Is there anything to add or know? Engineer to identify utility conflicts.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "31.2",
+            "description": "Review additional input necessary for complete design (drainage, striping, traffic, work hours, monuments, survey reference, etc,). Discuss with Senior Engineer to determine if this requirement to be deleted. Determine what, if any, work Road Division will complete for project.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "31.3",
+            "description": "Review all tree locations for impact to project. Determine need for tree expert to evaluate trees and provide report. If tree is to be removed within the Coastal Zone, Planning will need to be notified and a Tree Removal Permit shall be obtain prior to removing a tree.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "31.4",
+            "description": "Verify if tree is located in a Home Owners Association neighborhood.",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "31.5",
+            "description": "Application for tree removal permit from planning shall issue Public Notice to residents 100 feet from said tree Engineer to place noticing poster (from planning) onto tree.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 32,
+        "tasks": [
+          {
+            "task_id": "32.1",
+            "description": "Is additional survey data required?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "32.2",
+            "description": "Send request on Standard Survey Memo. Clearly indicate additional info required. (See applicable template at F:\\Users\\design\\forms\\OLD FORM LETTERS\\CONSTRUCTION\\SURVEY REQUEST FORM.DOC)",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "template_path": "F:\\Users\\design\\forms\\OLD FORM LETTERS\\CONSTRUCTION\\SURVEY REQUEST FORM.DOC"
+          },
+          {
+            "task_id": "32.3",
+            "description": "Completion Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "32.4",
+            "description": "Additional survey data plotted?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 33,
+        "tasks": [
+          {
+            "task_id": "33.1",
+            "description": "Are temporary construction/storm drain easements, rights of entry or Right-of-Way in Fee required?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.2",
+            "description": "Determine ownership or jurisdiction",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "jurisdictions": [
+              {
+                "name": "Caltrans",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "City Jurisdiction",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Utility Company",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Private Property Owner",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Other",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              }
+            ]
+          },
+          {
+            "task_id": "33.3",
+            "description": "Send letter & preliminary plans to appropriate Agency for comments & review (CC to Real Property Division, if necessary). (Allow 6 weeks for review by Agencies – Request shorter time)",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.4",
+            "description": "Send R/W request with details and requirements to Real Property Division.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.5",
+            "description": "Meet with Real Property to discuss project documents previously submitted and establish work schedule based on project delivery to construction.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.6",
+            "description": "In case of easement hire on-call surveyor to prepare plats and legal descriptions.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.7",
+            "description": "Send Real Property a summary of meeting outlining responsibilities and critical delivery dates. Request copies of all correspondence that Real Property sends out concerning Right-of-Way or easements.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.8",
+            "description": "On a regular basis, project engineer to request updates from Real Property on progress of acquisitions and compare to previously approved schedule. Senior to monitor R/W updates for impact on project.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.9",
+            "description": "Project not to be awarded without all R/W and/or easements secured. Status to be evaluated prior to placing on B/S Agenda for advertisement.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "33.10",
+            "description": "Final acquisition date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 34,
+        "tasks": [
+          {
+            "task_id": "34.1",
+            "description": "Are Cost Sharing Agreements/Memorandum of Agreements or Understanding necessary for contract work to be performed on Utility Co. facilities or within Cities/Caltrans jurisdictions?",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "agencies": [
+              {
+                "name": "PG&E CO.",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "AT&T",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Cable TV",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Water CO/District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Fire District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Sewer District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Storm Drain",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Other",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "City(ies)",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Caltrans",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "SFPUC",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Caltrain",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "UPPR",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              }
+            ]
+          },
+          {
+            "task_id": "34.2",
+            "description": "Prepare agreement(s). (Agreement Templates stored in F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\UtilitiesFire (04a 05 07 15d-e 22))",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "template_path": "F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\UtilitiesFire (04a 05 07 15d-e 22)"
+          },
+          {
+            "task_id": "34.3",
+            "description": "Senior/Principal/Deputy Director/County Attorney reviewed/approved Agreements?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "34.4",
+            "description": "Send agreement(s) to Utility Co's/Public Agencies for review.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "34.5",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "34.6",
+            "description": "Complete/revise agreement(s) and send to Utilities/Public Agencies for approval.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "34.7",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "34.8",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "34.9",
+            "description": "Prepare Resolution and include as part of B/S Report for adoption of Plans & Specs. (SEE # 39). Prepare agreement and exhibit",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 35,
+        "tasks": [
+          {
+            "task_id": "35.1",
+            "description": "Plans (90%), specifications, quantity calculations, bid item list, & engineer's estimate checked. COMPLETION DATE (Checker to initial/date all work).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "milestone": "90% Plans"
+          },
+          {
+            "task_id": "35.2",
+            "description": "Peer review and quantities revisions/corrections completed?",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "35.3",
+            "description": "Plan check revisions/corrections completed?",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 36,
+        "tasks": [
+          {
+            "task_id": "36.1",
+            "description": "Prepare semi-final (90%) project package ready for review by Project Manager/Senior Engineer. To send to construction, design, utilities, surveyor, watershed protection. Specifications to be distributed via OneDrive. Plans and engineering estimate to be distributed via Bluebeam. Principal engineer and selected individuals shall receive hard copies of the plans and specs. Please confirm with your respective Senior.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "milestone": "90% Plans Package",
+            "distribution": {
+              "specifications": "OneDrive",
+              "plans": "Bluebeam",
+              "engineering_estimate": "Bluebeam",
+              "hard_copies": "Principal engineer and selected individuals"
+            }
+          }
+        ]
+      },
+      {
+        "id": 37,
+        "tasks": [
+          {
+            "task_id": "37.1",
+            "description": "Prepare B/S Report & Resolution for Adoption of Plans/Specs. (Use templates stored in f:\\users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Board (08 16 19)).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "f:\\users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Board (08 16 19)"
+          },
+          {
+            "task_id": "37.2",
+            "description": "Contact Clerk of the Board at CMO and confirm bid opening date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "37.3",
+            "description": "Submit B/S Report/Resolution to Senior, Principal and Deputy Director 6 Weeks prior to proposed Agenda Date. Revised report & all attachments to 'Executive Admin' 4 Weeks prior to Agenda date. Include all agreements/resolutions, etc. that are part of B/S Report.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "lead_times": {
+              "senior_review": "6 weeks",
+              "executive_admin": "4 weeks"
+            }
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "tasks": [
+          {
+            "task_id": "38.1",
+            "description": "Submit 100% Draft Plans & Specs to Senior, Principal, and Deputy Director for review & approval. Allow 1 week for review & revisions to incorporate changes.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "milestone": "100% Draft Plans"
+          },
+          {
+            "task_id": "38.2",
+            "description": "Revisions/corrections completed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "38.3",
+            "description": "Submit Plans & Specs to Director for review & signature. Submit a minimum of 1 week prior to Agenda date set for B/S Adoption.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "38.4",
+            "description": "Revisions/corrections completed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "38.5",
+            "description": "Include a statement that someone has reviewed the last set of comments and they have been incorporated, especially important for Sewer/Parks Projects",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "38.6",
+            "description": "Include a brief update on the remaining schedule",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "schedule_items": [
+              {
+                "item": "Advertise Date",
+                "date": ""
+              },
+              {
+                "item": "Bid Opening Date – Inform Clerical Services on bid opening date for their information",
+                "date": ""
+              },
+              {
+                "item": "BOS Award Date",
+                "date": ""
+              }
+            ]
+          },
+          {
+            "task_id": "38.7",
+            "description": "Once we provide this e-mail, then the Director will ask the Executive Secretary to affix her electronic signature on the plans.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "tasks": [
+          {
+            "task_id": "39.1",
+            "description": "If a rush job, arrange for accelerated Award Date (less than 3 weeks). Senior to discuss with 'Executive Admin' at time of preparation of advertisement (Requires Deputy Director OK).",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "39.2",
+            "description": "If streamlined approach, then time frame will be shorter. Review & approval of EEOP in order to award project within 3 weeks of bid opening (If not sooner). Currently County does not have monitoring process in place, leaving Department to monitor.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 40,
+        "tasks": [
+          {
+            "task_id": "40.1",
+            "description": "On Monday, following adoption of Plans/Specs & advertising approval by B/S: Prepare Advertising letter (if emailing request) and 'Notice to Contractors' to specified newspaper. Allow 3 weeks (4 weeks for Fed projects) minimum advertising period after Board adoption. Must publish twice (or 3 times, or count 21 days after B/S adopt date) in a weekly newspaper (review Streets & Highways Code for exact requirements). Preferred method is to submit advertising request online at https://adtech.dailyjournal.com Ad tech currently publishes on a Wednesday, Thursday, Friday and Saturday. There is a 2-business day lead time (by 12noon) to publish an ad request. Login and password can be located at F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Account Information.docx. Instructions located at F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Bid Process (09- 13)\\2_Advertisement",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "advertising_url": "https://adtech.dailyjournal.com",
+            "lead_time": "2 business days",
+            "minimum_period": "3 weeks (4 weeks for Federal projects)",
+            "account_info_path": "F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Account Information.docx",
+            "instructions_path": "F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Bid Process (09- 13)\\2_Advertisement"
+          },
+          {
+            "task_id": "40.2",
+            "description": "Review the advertisement period document and incorporate duration into project. Publication dates and deadline confirmed?",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "40.3",
+            "description": "Submit Tuesday through email the NC pages and Project Plans and Specs to various Plan Rooms for Advertisement Notification so it's published by Thursday.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "40.4",
+            "description": "Bill paid for advertising project",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "40.5",
+            "description": "Copy of advertisement & Affidavit of Publication included w/ bill?",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "40.6",
+            "description": "Send NC page/Advertising letter to Senior for approval: Request that 'Notice to Contractors (NC)' portion of Specifications be sent to potential bidders and posted online? NOTE: Contractor mailing list for various type projects can be found: f:/users/hal/plans & specs Distribution. Send the 'NC PDF file' to Public Works Technician for posting to the DPW website, cc Clerical, PW tech, Engineering, Utilities, Roads Seniors, Principal, and Deputy Director.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "40.7",
+            "description": "Request reproduction of Plans & Specs from ARC (Provide original Plans & Specs). Confirm # of sets to be made. (TYP # is 7 Plans & 10 Specs).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 41,
+        "tasks": [
+          {
+            "task_id": "41.1",
+            "description": "Contact ARC, at 650-631-2310 or SanCarlos@E-ARC.com to send plans and specs for duplication.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "contact": {
+              "phone": "650-631-2310",
+              "email": "SanCarlos@E-ARC.com"
+            }
+          }
+        ]
+      },
+      {
+        "id": 42,
+        "tasks": [
+          {
+            "task_id": "42.1",
+            "description": "Email admin there is a upcoming project to conform",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 43,
+        "tasks": [
+          {
+            "task_id": "43.1",
+            "description": "Reserve 2 sets of specs for Admin for conforming the Proposal and Agreement section of spec with the low bidder info (Design/Construction and Contractor) (see #48).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 44,
+        "tasks": [
+          {
+            "task_id": "44.1",
+            "description": "Send Memo to the Road Div. detailing construction schedule & request Road Div. complete their work (See # 10 & 29). (If applicable).",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 45,
+        "tasks": [
+          {
+            "task_id": "45.1",
+            "description": "Address RFI's and email all plan holders and post on website.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "45.2",
+            "description": "Issue addendum if applicable",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "45.3",
+            "description": "Post plan holder list on website",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 46,
+        "tasks": [
+          {
+            "task_id": "46.1",
+            "description": "Open bids – Wednesday or Thursday, 2:30 p.m. typically. Review all proposals and verify bid item amounts & totals. Evaluate bid for any balancing of bid. Senior provide Record of Bid Opening listing bidders & bid amounts to Design Seniors, Principal Engineer, Deputy Director, & Director. (USE STD FORM 'BidOpen.doc')",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "typical_time": "Wednesday or Thursday, 2:30 p.m."
+          },
+          {
+            "task_id": "46.2",
+            "description": "Post Record of Bid Opening online, send to PW Tech.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "46.3",
+            "description": "Prepare Bid Summary. Bid Summary checked & initialed by Project Engineer & Project Manager.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "46.4",
+            "description": "Public Works will review & administer EEOP compliance requirements. REPLY DATE. Review Equal Benefits Compliance Forms.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "46.5",
+            "description": "Scan all proposal's and save them in project folder. Low bidder proposal goes to executive admin.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 47,
+        "tasks": [
+          {
+            "task_id": "47.1",
+            "description": "Award Project - Submit Report/Reso to Senior, Principal, and Deputy Director 6 weeks prior to Board Agenda date. Submit revised Report/Reso to 'Executive Admin' 4 weeks prior to B/S Agenda date. (Use templates stored in f:\\users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Board (08 16 19)). If on accelerated Award Schedule See # 41.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "f:\\users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\Board (08 16 19)",
+            "lead_times": {
+              "senior_review": "6 weeks",
+              "executive_admin": "4 weeks"
+            }
+          },
+          {
+            "task_id": "47.2",
+            "description": "County Attorney reviewed?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "47.3",
+            "description": "Submit memo to Utilities Section requesting to file CEQA Notice of Exemption.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "47.4",
+            "description": "Per the DIR and Labor Code Section 1773.3. Register Contractor within 5 days of award using the PWC-100 online application. https://www.dir.ca.gov/pwc100ext/ Log-in Email: YOUR_EMAIL@smcgov.org Password: YOUR_PASSWORD Click on 'Create A Project'",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "registration_url": "https://www.dir.ca.gov/pwc100ext/",
+            "credentials": {
+              "email": "YOUR_EMAIL@smcgov.org",
+              "password": "YOUR_PASSWORD"
+            },
+            "deadline": "5 days of award"
+          }
+        ]
+      },
+      {
+        "id": 48,
+        "tasks": [
+          {
+            "task_id": "48.1",
+            "description": "Send project information letter and project fund analysis (i.e., Construction Award Memo) to Construction Section. Provide particulars of the project. Include in memo, work to be done by Road Div. (Use Std Forms 'Award Information & Memo.doc' & 'Fund Analysis Form.doc'). Confirm the # of sets of Plans & Specs that will be required. Two (2) sets typical for Design/Construction and Contractor, 3 sets for Parks.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "48.2",
+            "description": "Request and verify with Survey to tie-out survey points.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "48.3",
+            "description": "Provide 1 copy each of Low Bidder's Proposal, Bid Summary, Award Resolution, & signed Contract.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "48.4",
+            "description": "Send 1 set of Signed Plans and Specs to Road Div. Deputy Director as soon as they have been reproduced.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 49,
+        "tasks": [
+          {
+            "task_id": "49.1",
+            "description": "Request Admin to conform the Proposal and Agreement section of spec with the low bidder info (conform contract).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "49.2",
+            "description": "Review conformed contracts for accuracy.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "49.3",
+            "description": "Request Admin to send letter, w/ conformed contract documents to Contractor for signature and insurance & bond forms (Engineer provides all relevant information). In order to expedite this process, this should be sent to the Contractor prior to Project Award with memo that indicates projected project award date.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "49.4",
+            "description": "NTE Amount in Contract agrees with NTE in Award Resolution.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "49.5",
+            "description": "Contracts received by Contractor",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "49.6",
+            "description": "Contracts received from Contractor",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "49.7",
+            "description": "Insurance and Bond Amounts correct?",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 50,
+        "tasks": [
+          {
+            "task_id": "50.1",
+            "description": "Send Memo with copy of insurance forms to Risk Management, requesting review/approval of Contractor's Insurance coverage.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "50.2",
+            "description": "Reply Date",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 51,
+        "tasks": [
+          {
+            "task_id": "51.1",
+            "description": "Request County Attorney to review/approve the Contractor's Agreement & Bonds. Request DPW Risk Manager to review and approve insurance forms.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "51.2",
+            "description": "Check online if Bond Company is approved by State at https://www.insurance.ca.gov/01-consumers/index.cfm",
+            "projected_date": "N/A",
+            "actual_date": "",
+            "required": false,
+            "verification_url": "https://www.insurance.ca.gov/01-consumers/index.cfm"
+          }
+        ]
+      },
+      {
+        "id": 52,
+        "tasks": [
+          {
+            "task_id": "52.1",
+            "description": "Submit memo - to 'Executive Admin' w/ conformed Contractor package - that requests President of the B/S to sign Agreement. (See Std Form 'Step6.doc')",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 53,
+        "tasks": [
+          {
+            "task_id": "53.1",
+            "description": "Request 'Executive Admin' to send Contractor's 'Notice to Proceed' letter Certified or Return Receipt. (Engineer provides all relevant information). Cc: Road Div. Deputy Director",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 54,
+        "tasks": [
+          {
+            "task_id": "54.1",
+            "description": "Send Award Information Letter (see template stored in F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\PropertyOwners (00a c-d 04b 17a 23 24)) to affected property owners. Include project description, name of contractor, general construction sequence, pertinent dates, contact personnel, etc.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\PropertyOwners (00a c-d 04b 17a 23 24)"
+          }
+        ]
+      },
+      {
+        "id": 55,
+        "tasks": [
+          {
+            "task_id": "55.1",
+            "description": "Send emails/letters to Utility Cos./Public Agencies regarding project award, name of contractor, costs, details, etc. (See Templates in F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\UtilitiesFire (04a 05 07 15d-e 22)). Send copies to Construction Section, Road Div., etc. (See # 32)",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "template_path": "F:\\Users\\design\\forms\\_PROJECT DOC TEMPLATES (2012)\\UtilitiesFire (04a 05 07 15d-e 22)",
+            "agencies": [
+              {
+                "name": "PG&E CO.",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "AT&T",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Cable TV",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Water CO/District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Fire District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Sewer District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Storm Drain",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Other",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "City(ies)",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Caltrans",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 56,
+        "tasks": [
+          {
+            "task_id": "56.1",
+            "description": "Notify Utility Cos./Public Agencies of project completion. Include billing w/ Accounting Section Invoice for contract work. (See # 32). Date Payment Due.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "agencies": [
+              {
+                "name": "PG&E CO.",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "AT&T",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Cable TV",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Water CO/District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Fire District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Sewer District",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Storm Drain",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Other",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "City(ies)",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              },
+              {
+                "name": "Caltrans",
+                "contact": "",
+                "status": "N/A",
+                "date": ""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 57,
+        "tasks": [
+          {
+            "task_id": "57.1",
+            "description": "Prepare B/S Report & Resolution to release extra-territorial jurisdiction if City(ies) involved. Depending on conditions & financing arrangement included in agreement, may have automatic reversion to City. Discuss w/ Project Manager. (See # 21).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 58,
+        "tasks": [
+          {
+            "task_id": "58.1",
+            "description": "Verify that 'AS BUILT' Plans are completed by Construction Section within one month after project Notice of Completion is filed. AS BUILT to be submitted in PDF format. AS BUILTS for Utilities shall be submitted in AutoCAD format. Project Manager to determine final format. Verify that Construction Section has uploaded AS BUILT to web (construction inspector to coordinate with PW tech).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "deadline": "One month after Notice of Completion",
+            "formats": {
+              "general": "PDF",
+              "utilities": "AutoCAD"
+            }
+          }
+        ]
+      },
+      {
+        "id": 59,
+        "tasks": [
+          {
+            "task_id": "59.1",
+            "description": "Verify County GIS layers are up to date.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 60,
+        "tasks": [
+          {
+            "task_id": "60.1",
+            "description": "If GI or trash devices are installed prepare O&M stormwater handoff to send to Roads Division. Use the files below for reference and for documentation https://smcgov.sharepoint.com/:f:/t/OOS_Stormwater/EvNhGMCzQ4tCrlrmrBkPT1YBLH2Tgu_LtHozdItu7_96ww?e=LhPPS3 https://smcgov.sharepoint.com/:f:/t/OOS_Stormwater/EmkYM2SJMMJAglxnuiOPmuQBhz3jzhOHbU3aUjc19QB3PQ?e=dfukhF",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false,
+            "reference_urls": [
+              "https://smcgov.sharepoint.com/:f:/t/OOS_Stormwater/EvNhGMCzQ4tCrlrmrBkPT1YBLH2Tgu_LtHozdItu7_96ww?e=LhPPS3",
+              "https://smcgov.sharepoint.com/:f:/t/OOS_Stormwater/EmkYM2SJMMJAglxnuiOPmuQBhz3jzhOHbU3aUjc19QB3PQ?e=dfukhF"
+            ]
+          }
+        ]
+      },
+      {
+        "id": 61,
+        "tasks": [
+          {
+            "task_id": "61.1",
+            "description": "Prepare 'Final Reports' required by Grant Funding/Permitting Agencies, i.e., FAA, FEMA, BCDC, etc. Include billing w/ Accounting Section Invoice for Grant/Contract work. (See # 20).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "61.2",
+            "description": "For Federal Grants/Invoices include Accounting with the billing DATE",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "61.3",
+            "description": "Payment Due",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 62,
+        "tasks": [
+          {
+            "task_id": "62.1",
+            "description": "Update and verify PMS asset information for project is updated in the PMS program.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "62.2",
+            "description": "Update Projects Database with final information",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 63,
+        "tasks": [
+          {
+            "task_id": "63.1",
+            "description": "Send an email both to Google and Apple to reopen roads in their map app. Apple email: mapsescalations@apple.com",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true,
+            "contacts": {
+              "google": "",
+              "apple": "mapsescalations@apple.com"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

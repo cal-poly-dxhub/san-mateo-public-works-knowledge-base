@@ -786,6 +786,14 @@ class ProjectManagementStack(Stack):
             api_key_required=True,
         )
 
+        # Metadata endpoint
+        metadata_resource = project_detail_resource.add_resource("metadata")
+        metadata_resource.add_method(
+            "PUT",
+            apigateway.LambdaIntegration(checklist_lambda),
+            api_key_required=True,
+        )
+
         file_resource = api.root.add_resource("file")
         file_proxy = file_resource.add_proxy(
             default_integration=apigateway.LambdaIntegration(files_lambda),

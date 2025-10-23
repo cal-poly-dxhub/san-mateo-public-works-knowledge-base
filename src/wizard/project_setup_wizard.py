@@ -8,6 +8,11 @@ bedrock = boto3.client('bedrock-runtime')
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
 
+# Load design checklist template
+CHECKLIST_PATH = os.path.join(os.path.dirname(__file__), 'design_checklist.json')
+with open(CHECKLIST_PATH, 'r') as f:
+    DESIGN_CHECKLIST = json.load(f)
+
 def handler(event, context):
     """Handle project setup wizard requests"""
     try:
@@ -19,10 +24,23 @@ def handler(event, context):
         area_size = body.get('areaSize')
         special_conditions = body.get('specialConditions', [])
         
-        # Generate project configuration using AI
-        project_config = generate_project_config(
-            project_type, location, area_size, special_conditions
-        )
+        # Load tasks from design checklist
+        project_config = {
+            'metadata': DESIGN_CHECKLIST['document']['metadata'].copy(),
+            'tasks': []
+        }
+        
+        # Convert checklist items to tasks
+        for item in DESIGN_CHECKLIST['document']['checklist_items']:
+            for task in item['tasks']:
+                project_config['tasks'].append({
+                    'task_id': task['task_id'],
+                    'description': task['description'],
+                    'required': task.get('required', True),
+                    'projected_date': task.get('projected_date', ''),
+                    'actual_date': task.get('actual_date', ''),
+                    'notes': task.get('notes', '')
+                })
         
         # Use project name as project_id (slugified)
         project_id = project_name.lower().replace(' ', '-')
