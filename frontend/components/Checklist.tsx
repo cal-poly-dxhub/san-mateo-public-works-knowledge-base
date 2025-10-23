@@ -28,6 +28,10 @@ interface Metadata {
   design_engineer: string;
   survey_books: string;
   project_manager: string;
+  project_type?: string;
+  location?: string;
+  area_size?: string;
+  special_conditions?: string[];
 }
 
 interface ChecklistProps {
@@ -178,6 +182,75 @@ export default function Checklist({ projectName }: ChecklistProps) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
+              {/* Project Overview Section */}
+              <div className="col-span-2">
+                <h4 className="font-semibold text-base mb-3 text-primary">Project Overview</h4>
+              </div>
+              
+              <div>
+                <span className="font-medium">Project Type:</span>{" "}
+                {editingMetadata ? (
+                  <Input
+                    value={editedMetadata?.project_type || ''}
+                    onChange={(e) => setEditedMetadata({ ...editedMetadata!, project_type: e.target.value })}
+                    className="h-8 mt-1"
+                    placeholder="e.g., Road Reconstruction"
+                  />
+                ) : (
+                  metadata.project_type || <span className="text-muted-foreground">Not set</span>
+                )}
+              </div>
+              
+              <div>
+                <span className="font-medium">Location:</span>{" "}
+                {editingMetadata ? (
+                  <Input
+                    value={editedMetadata?.location || ''}
+                    onChange={(e) => setEditedMetadata({ ...editedMetadata!, location: e.target.value })}
+                    className="h-8 mt-1"
+                    placeholder="e.g., Main St between 1st and 5th Ave"
+                  />
+                ) : (
+                  metadata.location || <span className="text-muted-foreground">Not set</span>
+                )}
+              </div>
+              
+              <div>
+                <span className="font-medium">Work Area Size:</span>{" "}
+                {editingMetadata ? (
+                  <Input
+                    value={editedMetadata?.area_size || ''}
+                    onChange={(e) => setEditedMetadata({ ...editedMetadata!, area_size: e.target.value })}
+                    className="h-8 mt-1"
+                    placeholder="acres"
+                  />
+                ) : (
+                  metadata.area_size ? `${metadata.area_size} acres` : <span className="text-muted-foreground">Not set</span>
+                )}
+              </div>
+              
+              <div>
+                <span className="font-medium">Special Conditions:</span>{" "}
+                {editingMetadata ? (
+                  <Input
+                    value={editedMetadata?.special_conditions?.join(', ') || ''}
+                    onChange={(e) => setEditedMetadata({ 
+                      ...editedMetadata!, 
+                      special_conditions: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                    })}
+                    className="h-8 mt-1"
+                    placeholder="e.g., School zone, High traffic"
+                  />
+                ) : (
+                  metadata.special_conditions?.length ? metadata.special_conditions.join(', ') : <span className="text-muted-foreground">None</span>
+                )}
+              </div>
+
+              {/* Administrative Details Section */}
+              <div className="col-span-2 mt-4">
+                <h4 className="font-semibold text-base mb-3 text-primary">Administrative Details</h4>
+              </div>
+              
               <div>
                 <span className="font-medium">Date:</span>{" "}
                 {editingMetadata ? (

@@ -30,6 +30,14 @@ def handler(event, context):
             'tasks': []
         }
         
+        # Add project creation fields to metadata
+        project_config['metadata'].update({
+            'project_type': project_type,
+            'location': location,
+            'area_size': area_size,
+            'special_conditions': special_conditions
+        })
+        
         # Convert checklist items to tasks
         for item in DESIGN_CHECKLIST['document']['checklist_items']:
             for task in item['tasks']:
