@@ -298,15 +298,20 @@ def create_project(event, bucket_name):
                 "body": json.dumps({"error": "project_name is required"}),
             }
 
-        # Call project setup Lambda to create folder structure
+        # Call project setup wizard Lambda to create folder structure
         lambda_client = boto3.client("lambda")
         setup_payload = {
-            "project_name": project_name,
-            "project_description": description,
+            "body": json.dumps({
+                "projectName": project_name,
+                "projectType": "Other",
+                "location": "TBD",
+                "areaSize": "0",
+                "specialConditions": []
+            })
         }
 
         lambda_client.invoke(
-            FunctionName=os.environ.get("PROJECT_SETUP_LAMBDA_NAME"),
+            FunctionName=os.environ.get("PROJECT_WIZARD_LAMBDA_NAME"),
             InvocationType="RequestResponse",
             Payload=json.dumps(setup_payload),
         )

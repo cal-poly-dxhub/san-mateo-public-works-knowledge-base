@@ -36,7 +36,10 @@ export default function CreateProjectDialog({
 }: CreateProjectDialogProps) {
   const { apiKey } = useApiKey();
   const [projectName, setProjectName] = useState("");
-  const [projectDescription, setProjectDescription] = useState("");
+  const [projectType, setProjectType] = useState("Reconstruction");
+  const [location, setLocation] = useState("");
+  const [areaSize, setAreaSize] = useState("");
+  const [specialConditions, setSpecialConditions] = useState<string[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(false);
   const [batchId, setBatchId] = useState<string | null>(null);
@@ -82,12 +85,15 @@ export default function CreateProjectDialog({
     setLoading(true);
 
     try {
-      // Create project first
+      // Create project using wizard
       await apiRequest("/create-project", {
         method: "POST",
         body: JSON.stringify({
-          project_name: projectName,
-          project_description: projectDescription,
+          projectName: projectName,
+          projectType: projectType,
+          location: location,
+          areaSize: areaSize,
+          specialConditions: specialConditions,
         }),
       });
 
@@ -135,7 +141,10 @@ export default function CreateProjectDialog({
 
   const resetForm = () => {
     setProjectName("");
-    setProjectDescription("");
+    setProjectType("Reconstruction");
+    setLocation("");
+    setAreaSize("");
+    setSpecialConditions([]);
     setFiles([]);
     setBatchId(null);
   };
@@ -154,18 +163,66 @@ export default function CreateProjectDialog({
             <Input
               id="projectName"
               value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+                setProjectName(value);
+              }}
+              placeholder="highway-1-slurry-seal"
+              pattern="[a-z0-9-]+"
+              title="Only lowercase letters, numbers, and hyphens allowed"
               required
             />
+            <span className="text-xs text-muted-foreground">Use lowercase letters, numbers, and hyphens only</span>
           </div>
           
           <div className="flex flex-col gap-2">
-            <Label htmlFor="projectDescription">Project Description</Label>
+            <Label htmlFor="projectType">Project Type *</Label>
+            <select
+              id="projectType"
+              value={projectType}
+              onChange={(e) => setProjectType(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              required
+            >
+              <option value="Reconstruction">Reconstruction</option>
+              <option value="Resurface">Resurface</option>
+              <option value="Slurry Seal">Slurry Seal</option>
+              <option value="Drainage">Drainage</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="location">Location *</Label>
+            <Input
+              id="location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g., Main St between 1st and 5th Ave"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="areaSize">Work Area Size (acres) *</Label>
+            <Input
+              id="areaSize"
+              type="number"
+              step="0.1"
+              value={areaSize}
+              onChange={(e) => setAreaSize(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="specialConditions">Special Conditions</Label>
             <Textarea
-              id="projectDescription"
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
-              rows={3}
+              id="specialConditions"
+              placeholder="e.g., Near school zone, High traffic area, Utility conflicts (comma-separated)"
+              onChange={(e) => setSpecialConditions(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+              rows={2}
             />
           </div>
           

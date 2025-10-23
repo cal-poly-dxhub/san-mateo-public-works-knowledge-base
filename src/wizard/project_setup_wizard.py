@@ -42,6 +42,18 @@ def handler(event, context):
             'lastUpdated': datetime.utcnow().isoformat()
         })
         
+        # Create S3 folder structure
+        bucket_name = os.environ.get('BUCKET_NAME')
+        if bucket_name:
+            folders = [
+                f"projects/{project_name}/",
+                f"projects/{project_name}/meeting-videos/",
+                f"projects/{project_name}/meeting-transcripts/",
+                f"projects/{project_name}/meeting-summaries/"
+            ]
+            for folder in folders:
+                s3.put_object(Bucket=bucket_name, Key=folder)
+        
         # Store tasks separately for easier querying
         for task in project_config.get('tasks', []):
             task_id = str(uuid.uuid4())
@@ -55,7 +67,12 @@ def handler(event, context):
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
             'body': json.dumps({
                 'projectId': project_id,
                 'config': project_config
@@ -66,6 +83,11 @@ def handler(event, context):
         print(f"Error: {str(e)}")
         return {
             'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
             'body': json.dumps({'error': str(e)})
         }
 

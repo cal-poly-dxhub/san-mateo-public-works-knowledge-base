@@ -563,7 +563,7 @@ export default function ProjectPage() {
               overviewData={
                 project
                   ? {
-                      projectName: project.projectName || project.name,
+                      projectName: decodeURIComponent(project.projectName || project.name),
                       description: project.description || "",
                       teamMembers: project.teamMembers || [],
                       timeline: { startDate: "", endDate: "" },

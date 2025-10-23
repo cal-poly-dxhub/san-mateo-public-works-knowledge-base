@@ -63,7 +63,7 @@ class ProjectManagementStack(Stack):
         bucket = s3.Bucket(
             self,
             "ProjectManagementBucket",
-            bucket_name="dxhub-project-management",
+            bucket_name="dpw-project-management",
             removal_policy=cdk.RemovalPolicy.DESTROY,  # TODO Change to RETAIN
             cors=[
                 s3.CorsRule(
@@ -95,7 +95,7 @@ class ProjectManagementStack(Stack):
         )
 
         # S3 Vectors Knowledge Base Components
-        vector_bucket_name = "dxhub-project-mgmt-vectors"
+        vector_bucket_name = "dpw-project-mgmt-vectors"
         index_name = "project-mgmt-index"
 
         # Docs bucket for knowledge base data source
@@ -113,7 +113,7 @@ class ProjectManagementStack(Stack):
             self,
             "S3VectorsCreator",
             runtime=_lambda.Runtime.PYTHON_3_11,
-            handler="create_bucket.handler",
+            handler="create_bucket.on_event",
             code=_lambda.Code.from_asset(
                 "./src/search",
                 bundling=cdk.BundlingOptions(
@@ -177,26 +177,6 @@ class ProjectManagementStack(Stack):
         bucket.grant_read_write(setup_lambda)
 
         # Project Setup Lambda
-        project_lambda = _lambda.Function(
-            self,
-            "ProjectSetupLambda",
-            runtime=_lambda.Runtime.PYTHON_3_11,
-            handler="project_setup.handler",
-            code=_lambda.Code.from_asset("./src/setup"),
-            environment={"BUCKET_NAME": bucket.bucket_name},
-        )
-        bucket.grant_read_write(project_lambda)
-
-        # Grant SSM permissions to project lambda
-        project_lambda.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["ssm:GetParameter"],
-                resources=[
-                    f"arn:aws:ssm:{self.region}:{self.account}:parameter/meeting-automation/*"
-                ],
-            )
-        )
-
         # Batch Processing Infrastructure
         from aws_cdk import aws_sqs as sqs
 
@@ -453,7 +433,7 @@ class ProjectManagementStack(Stack):
             layers=[meeting_data_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "PROJECT_SETUP_LAMBDA_NAME": project_lambda.function_name,
+                "PROJECT_WIZARD_LAMBDA_NAME": wizard_lambda.function_name,
                 "VECTOR_BUCKET_NAME": vector_bucket_name,
                 "INDEX_NAME": index_name,
                 "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
@@ -464,7 +444,7 @@ class ProjectManagementStack(Stack):
         projects_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["lambda:InvokeFunction"],
-                resources=[project_lambda.function_arn],
+                resources=[wizard_lambda.function_arn],
             )
         )
         # Grant S3 Vectors permissions
@@ -896,7 +876,7 @@ Answer:""",
             "VectorBucketName",
             parameter_name="/project-management/vector-ingestion/vector-bucket-name",
             string_value=vector_config.get(
-                "vector_bucket_name", "dxhub-project-mgmt-vectors"
+                "vector_bucket_name", "dpw-project-mgmt-vectors"
             ),
             description="S3 vectors bucket name",
         )
