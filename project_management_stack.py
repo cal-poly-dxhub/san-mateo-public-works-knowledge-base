@@ -980,3 +980,13 @@ Answer:""",
             string_value=vector_config.get("index_name", "project-mgmt-index"),
             description="S3 vectors index name",
         )
+
+        # Available search models parameter
+        available_models = config.get("models", {}).get("available_search_models", [])
+        ssm.StringParameter(
+            self,
+            "AvailableModels",
+            parameter_name="/project-management/available-models",
+            string_value=json.dumps({"available_search_models": available_models}),
+            description="Available AI models for search",
+        )

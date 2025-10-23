@@ -161,17 +161,22 @@ def get_embedding(text: str, model_id: str) -> List[float]:
 
 
 def get_project_metadata(bucket_name: str, project_name: str) -> Dict[str, Any]:
-    """Get project metadata from S3"""
+    """Get project metadata from DynamoDB"""
     try:
-        # Try to get project overview
-        overview_key = f"projects/{project_name}/project-overview.json"
-        response = s3_client.get_object(Bucket=bucket_name, Key=overview_key)
-        overview = json.loads(response["Body"].read().decode("utf-8"))
-
+        response = dynamodb_client.get_item(
+            TableName=os.environ.get("PROJECTS_TABLE", "projects"),
+            Key={"project_name": {"S": project_name}}
+        )
+        
+        if "Item" not in response:
+            logger.warning(f"No metadata found for project {project_name}")
+            return {}
+        
+        item = response["Item"]
         return {
-            "project_description": overview.get("description", ""),
-            "project_goals": overview.get("goals", []),
-            "team_members": overview.get("team_members", []),
+            "project_type": item.get("project_type", {}).get("S", ""),
+            "project_description": item.get("description", {}).get("S", ""),
+            "status": item.get("status", {}).get("S", ""),
         }
     except Exception as e:
         logger.warning(f"Could not load project metadata for {project_name}: {e}")
@@ -192,20 +197,14 @@ def ingest_file_to_vector_index(
         response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
         raw_content = response["Body"].read().decode("utf-8")
         
-        # Handle JSON lessons files
+        # Handle JSON lessons files - each lesson becomes its own chunk
         if is_lesson:
             lessons_data = json.loads(raw_content)
-            # Convert lessons to text format for chunking
-            content_parts = []
-            for lesson in lessons_data.get("lessons", []):
-                lesson_text = f"Category: {lesson.get('category', 'General')}\n"
-                lesson_text += f"Lesson: {lesson.get('lesson', '')}\n"
-                lesson_text += f"Impact: {lesson.get('impact', '')}\n"
-                lesson_text += f"Recommendation: {lesson.get('recommendation', '')}\n"
-                content_parts.append(lesson_text)
-            content = "\n\n".join(content_parts)
+            lessons_list = lessons_data.get("lessons", [])
+            logger.info(f"Processing {len(lessons_list)} individual lessons from {file_key}")
         else:
             content = raw_content
+            lessons_list = None
             
     except Exception as e:
         logger.error(f"Error reading {file_key}: {e}")
@@ -218,8 +217,21 @@ def ingest_file_to_vector_index(
     filename = file_key.split("/")[-1]
 
     # Chunk the content
-    chunks = chunk_text(content, config["chunk_size_tokens"], config["overlap_tokens"])
-    logger.info(f"Created {len(chunks)} chunks for {filename}")
+    if is_lesson and lessons_list:
+        # Each lesson is its own chunk
+        chunks = []
+        for lesson in lessons_list:
+            lesson_text = f"Title: {lesson.get('title', 'Untitled')}\n"
+            lesson_text += f"Lesson: {lesson.get('lesson', '')}\n"
+            lesson_text += f"Details: {lesson.get('details', '')}\n"
+            lesson_text += f"Impact: {lesson.get('impact', '')}\n"
+            lesson_text += f"Recommendation: {lesson.get('recommendation', '')}\n"
+            lesson_text += f"Severity: {lesson.get('severity', 'Unknown')}"
+            chunks.append(lesson_text)
+        logger.info(f"Created {len(chunks)} lesson chunks for {filename}")
+    else:
+        chunks = chunk_text(content, config["chunk_size_tokens"], config["overlap_tokens"])
+        logger.info(f"Created {len(chunks)} chunks for {filename}")
 
     vector_ids = []
     embedding_model_id = os.getenv("EMBEDDING_MODEL_ID", "amazon.titan-embed-text-v2:0")

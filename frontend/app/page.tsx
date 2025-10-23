@@ -70,7 +70,7 @@ export default function Home() {
   const loadAvailableModels = async () => {
     try {
       const data = await apiRequest("/models");
-      const models = data.available_search_models || [];
+      const models = Array.isArray(data) ? data : (data.available_search_models || []);
       setAvailableModels(models);
       if (models.length > 0) {
         setSelectedModel(models[0].id);

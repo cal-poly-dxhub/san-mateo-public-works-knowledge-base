@@ -6,6 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -24,6 +32,7 @@ interface SearchResult {
 }
 
 export default function SearchPage() {
+  const { apiKey } = useApiKey();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,10 +40,31 @@ export default function SearchPage() {
   const [searchType, setSearchType] = useState<"both" | "lessons" | "documents">("both");
   const [selectedProject, setSelectedProject] = useState("");
   const [projects, setProjects] = useState<string[]>([]);
+  const [availableModels, setAvailableModels] = useState<any[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>("");
 
   useEffect(() => {
     loadProjects();
   }, []);
+
+  useEffect(() => {
+    if (apiKey) {
+      loadAvailableModels();
+    }
+  }, [apiKey]);
+
+  const loadAvailableModels = async () => {
+    try {
+      const data = await apiRequest("/models");
+      const models = Array.isArray(data) ? data : (data.available_search_models || []);
+      setAvailableModels(models);
+      if (models.length > 0) {
+        setSelectedModel(models[0].id);
+      }
+    } catch (error) {
+      console.error("Error loading models:", error);
+    }
+  };
 
   const loadProjects = async () => {
     try {
@@ -50,7 +80,7 @@ export default function SearchPage() {
 
     setLoading(true);
     try {
-      const body: any = { query, limit: 10 };
+      const body: any = { query, limit: 10, model_id: selectedModel };
       
       if (selectedProject) {
         body.project_name = selectedProject;
@@ -138,6 +168,23 @@ export default function SearchPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Model Selection */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="model">AI Model</Label>
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger id="model">
+                <SelectValue placeholder="Select AI Model" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Search Input */}

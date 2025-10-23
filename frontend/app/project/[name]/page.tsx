@@ -76,7 +76,9 @@ export default function ProjectPage() {
   const loadAvailableModels = async () => {
     try {
       const data = await apiRequest("/models");
-      const models = data.available_search_models || [];
+      console.log("Models API response:", data);
+      const models = Array.isArray(data) ? data : (data.available_search_models || []);
+      console.log("Parsed models:", models);
       setAvailableModels(models);
       if (models.length > 0) {
         setSelectedModel(models[0].id);
@@ -308,6 +310,18 @@ export default function ProjectPage() {
 
       <div className="max-w-7xl mx-auto p-6">
         <div className="space-y-4 mb-6">
+          {/* Suggested Questions */}
+          <div className="flex gap-2 items-center">
+            <span className="text-sm text-muted-foreground">Suggested:</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setProjectSearch("Im starting a new project, anything I should be aware of?")}
+            >
+              Im starting a new project, anything I should be aware of?
+            </Button>
+          </div>
+
           {/* Search Type Filter */}
           <div className="flex gap-2">
             <Button
