@@ -296,16 +296,36 @@ def delete_project(project_name, bucket_name):
 
         # Delete all DynamoDB items for this project
         try:
-            import sys
-
-            sys.path.append("/opt/python")
-            from meeting_data import MeetingDataManager
-
-            meeting_manager = MeetingDataManager(
-                os.environ.get("MEETING_DATA_TABLE_NAME")
-            )
-            meeting_manager.delete_project(project_name)
-            print(f"Deleted DynamoDB items for project: {project_name}")
+            table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
+            if table_name:
+                table = dynamodb.Table(table_name)
+                
+                # Get project_id from project name
+                response = table.scan(
+                    FilterExpression='projectName = :pname',
+                    ExpressionAttributeValues={':pname': project_name}
+                )
+                
+                if response['Items']:
+                    project_id = response['Items'][0]['project_id']
+                    
+                    # Query all items for this project_id
+                    items_response = table.query(
+                        KeyConditionExpression='project_id = :pid',
+                        ExpressionAttributeValues={':pid': project_id}
+                    )
+                    
+                    # Delete all items
+                    with table.batch_writer() as batch:
+                        for item in items_response['Items']:
+                            batch.delete_item(
+                                Key={
+                                    'project_id': item['project_id'],
+                                    'item_id': item['item_id']
+                                }
+                            )
+                    
+                    print(f"Deleted {len(items_response['Items'])} DynamoDB items for project: {project_name}")
         except Exception as e:
             print(f"Warning: Could not delete DynamoDB items: {e}")
 
