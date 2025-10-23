@@ -6,6 +6,7 @@ import boto3
 
 s3_client = boto3.client("s3")
 lambda_client = boto3.client("lambda")
+dynamodb = boto3.resource("dynamodb")
 
 
 def handler(event, context):
@@ -61,8 +62,11 @@ def handler(event, context):
 
 
 def get_projects_list(bucket_name):
-    """Get list of all projects"""
+    """Get list of all projects with task progress"""
     try:
+        table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
+        table = dynamodb.Table(table_name) if table_name else None
+        
         response = s3_client.list_objects_v2(
             Bucket=bucket_name, Prefix="projects/", Delimiter="/"
         )
@@ -71,6 +75,8 @@ def get_projects_list(bucket_name):
         for prefix in response.get("CommonPrefixes", []):
             project_name = prefix["Prefix"].replace("projects/", "").rstrip("/")
             if project_name:
+                project_data = {"name": project_name}
+                
                 # Get project overview if exists
                 try:
                     overview_response = s3_client.get_object(
@@ -80,13 +86,41 @@ def get_projects_list(bucket_name):
                     overview_data = json.loads(
                         overview_response["Body"].read().decode("utf-8")
                     )
-                    description = overview_data.get(
+                    project_data["description"] = overview_data.get(
                         "description", "No description available"
                     )
+                    project_data["status"] = overview_data.get("status", "active")
                 except:
-                    description = "No description available"
+                    project_data["description"] = "No description available"
+                    project_data["status"] = "active"
+                
+                # Get task progress from DynamoDB
+                if table:
+                    try:
+                        # Query for all tasks for this project
+                        db_response = table.query(
+                            KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
+                            ExpressionAttributeValues={
+                                ":pid": project_name,
+                                ":task": "task#"
+                            }
+                        )
+                        
+                        tasks = db_response.get("Items", [])
+                        total_tasks = len(tasks)
+                        completed_tasks = sum(1 for t in tasks if t.get("status") == "completed")
+                        
+                        project_data["task_count"] = total_tasks
+                        project_data["task_progress"] = {
+                            "completed": completed_tasks,
+                            "total": total_tasks
+                        }
+                    except Exception as e:
+                        print(f"Error fetching tasks for {project_name}: {e}")
+                        project_data["task_count"] = 0
+                        project_data["task_progress"] = {"completed": 0, "total": 0}
 
-                projects.append({"name": project_name, "description": description})
+                projects.append(project_data)
 
         return {
             "statusCode": 200,

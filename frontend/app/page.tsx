@@ -23,9 +23,9 @@ import { apiRequest } from "@/lib/api";
 interface Project {
   name: string;
   status?: string;
-  document_count?: number;
-  action_items?: {
-    open: number;
+  task_count?: number;
+  task_progress?: {
+    completed: number;
     total: number;
   };
   team_size?: number;

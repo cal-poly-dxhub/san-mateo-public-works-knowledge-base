@@ -11,9 +11,9 @@ import { apiRequest } from "@/lib/api";
 interface Project {
   name: string;
   status?: string;
-  document_count?: number;
-  action_items?: {
-    open: number;
+  task_count?: number;
+  task_progress?: {
+    completed: number;
     total: number;
   };
   team_size?: number;
@@ -85,12 +85,12 @@ export default function ProjectCard({ project, onClick, onDelete }: ProjectCardP
 
   const getProjectHealth = (project: Project) => {
     if (project.health) return project.health;
-    const openActions = project.action_items?.open || 0;
-    const totalActions = project.action_items?.total || 0;
-    if (totalActions === 0) return "green";
-    const ratio = openActions / totalActions;
-    if (ratio > 0.7) return "red";
-    if (ratio > 0.3) return "yellow";
+    const completed = project.task_progress?.completed || 0;
+    const total = project.task_progress?.total || 0;
+    if (total === 0) return "green";
+    const ratio = completed / total;
+    if (ratio < 0.3) return "red";
+    if (ratio < 0.7) return "yellow";
     return "green";
   };
 
@@ -124,22 +124,24 @@ export default function ProjectCard({ project, onClick, onDelete }: ProjectCardP
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div className="text-center">
             <div className="text-2xl font-semibold">
-              {project.document_count || 0}
+              {project.task_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">Documents</div>
+            <div className="text-sm text-muted-foreground">Total Tasks</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-semibold">
-              {project.action_items?.open || 0}/
-              {project.action_items?.total || 0}
+              {project.task_progress?.completed || 0}/
+              {project.task_progress?.total || 0}
             </div>
-            <div className="text-sm text-muted-foreground">Action Items</div>
+            <div className="text-sm text-muted-foreground">Completed</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-semibold">
-              {project.team_size || 0}
+              {project.task_progress?.total 
+                ? Math.round((project.task_progress.completed / project.task_progress.total) * 100)
+                : 0}%
             </div>
-            <div className="text-sm text-muted-foreground">Team Size</div>
+            <div className="text-sm text-muted-foreground">Progress</div>
           </div>
         </div>
 
