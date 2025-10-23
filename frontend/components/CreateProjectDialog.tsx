@@ -15,14 +15,6 @@ import { Progress } from "@/components/ui/progress";
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 
-interface FileUpload {
-  file: File;
-  document_type: string;
-  date: string;
-  status: 'pending' | 'uploading' | 'uploaded' | 'error';
-  progress: number;
-}
-
 interface CreateProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,9 +33,7 @@ export default function CreateProjectDialog({
   const [location, setLocation] = useState("");
   const [areaSize, setAreaSize] = useState("");
   const [specialConditions, setSpecialConditions] = useState<string[]>([]);
-  const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(false);
-  const [batchId, setBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProjectTypes = async () => {
@@ -59,42 +49,6 @@ export default function CreateProjectDialog({
     };
     loadProjectTypes();
   }, []);
-
-
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    const newFiles = selectedFiles.map(file => {
-      // Extract date from filename using regex (YYYY-MM-DD format)
-      const dateMatch = file.name.match(/(\d{4}-\d{2}-\d{2})/);
-      const extractedDate = dateMatch ? dateMatch[1] : '';
-      
-      return {
-        file,
-        document_type: '',
-        date: extractedDate,
-        status: 'pending' as const,
-        progress: 0,
-      };
-    });
-    setFiles(prev => [...prev, ...newFiles]);
-  };
-
-  const updateFileDocumentType = (index: number, document_type: string) => {
-    setFiles(prev => prev.map((f, i) => 
-      i === index ? { ...f, document_type } : f
-    ));
-  };
-
-  const updateFileDate = (index: number, date: string) => {
-    setFiles(prev => prev.map((f, i) => 
-      i === index ? { ...f, date } : f
-    ));
-  };
-
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,13 +67,7 @@ export default function CreateProjectDialog({
         }),
       });
 
-      // If files are selected, start batch upload
-      if (files.length > 0) {
-        const resultBatchId = await startBatchUpload();
-        onProjectCreated(resultBatchId);
-      } else {
-        onProjectCreated();
-      }
+      onProjectCreated();
       onOpenChange(false);
       resetForm();
     } catch (error) {
@@ -161,8 +109,6 @@ export default function CreateProjectDialog({
     setLocation("");
     setAreaSize("");
     setSpecialConditions([]);
-    setFiles([]);
-    setBatchId(null);
   };
 
 
@@ -239,59 +185,7 @@ export default function CreateProjectDialog({
             />
           </div>
           
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="files">Upload Project Documents (Optional)</Label>
-            <Input
-              id="files"
-              type="file"
-              multiple
-              accept="video/*,audio/*,.txt,.vtt"
-              onChange={handleFileChange}
-              className="hover:cursor-pointer"
-            />
-          </div>
-
-          {files.length > 0 && (
-            <div className="space-y-2">
-              <Label>Selected Files</Label>
-              {files.map((fileUpload, index) => (
-                <div key={index} className="border rounded p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{fileUpload.file.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                  <Input
-                    placeholder="Document type (e.g., lessons learned, project plan, report)"
-                    value={fileUpload.document_type}
-                    onChange={(e) => updateFileDocumentType(index, e.target.value)}
-                  />
-                  <Input
-                    type="date"
-                    value={fileUpload.date}
-                    onChange={(e) => updateFileDate(index, e.target.value)}
-                  />
-                  {fileUpload.status !== 'pending' && (
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span>Status: {fileUpload.status}</span>
-                        <span>{fileUpload.progress}%</span>
-                      </div>
-                      <Progress value={fileUpload.progress} className="h-2" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button
               type="button"
               variant="secondary"
