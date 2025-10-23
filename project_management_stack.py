@@ -14,28 +14,16 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
 )
 from aws_cdk import (
-    aws_events as events,
-)
-from aws_cdk import (
-    aws_events_targets as targets,
-)
-from aws_cdk import (
     aws_iam as iam,
 )
 from aws_cdk import (
     aws_lambda as _lambda,
 )
 from aws_cdk import (
-    aws_lambda_event_sources as lambda_event_sources,
-)
-from aws_cdk import (
     aws_logs as logs,
 )
 from aws_cdk import (
     aws_s3 as s3,
-)
-from aws_cdk import (
-    aws_s3_notifications as s3n,
 )
 from aws_cdk import (
     aws_ssm as ssm,
@@ -223,15 +211,21 @@ class ProjectManagementStack(Stack):
             layers=[meeting_data_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "PROJECT_SETUP_MODEL_ID": config["models"]["project_setup_model_id"],
-                "TASK_GENERATION_MODEL_ID": config["models"]["task_generation_model_id"],
+                "PROJECT_SETUP_MODEL_ID": config["models"][
+                    "project_setup_model_id"
+                ],
+                "TASK_GENERATION_MODEL_ID": config["models"][
+                    "task_generation_model_id"
+                ],
                 "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
             },
         )
         bucket.grant_read_write(wizard_lambda)
         project_data_table.grant_read_write_data(wizard_lambda)
         wizard_lambda.add_to_role_policy(
-            iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
         )
 
         # AI Assistant Lambda
@@ -245,16 +239,56 @@ class ProjectManagementStack(Stack):
             layers=[meeting_data_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "AI_ASSISTANT_MODEL_ID": config["models"]["ai_assistant_model_id"],
-                "TEMPLATE_GENERATION_MODEL_ID": config["models"]["template_generation_model_id"],
+                "AI_ASSISTANT_MODEL_ID": config["models"][
+                    "ai_assistant_model_id"
+                ],
+                "TEMPLATE_GENERATION_MODEL_ID": config["models"][
+                    "template_generation_model_id"
+                ],
                 "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
             },
         )
         bucket.grant_read_write(assistant_lambda)
         project_data_table.grant_read_write_data(assistant_lambda)
         assistant_lambda.add_to_role_policy(
-            iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
         )
+
+        # Lessons Learned Lambda
+        lessons_lambda = _lambda.Function(
+            self,
+            "LessonsLearnedLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="lessons_api.handler",
+            code=_lambda.Code.from_asset("./src/lessons"),
+            timeout=cdk.Duration.minutes(3),
+            environment={
+                "BUCKET_NAME": bucket.bucket_name,
+                "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
+            },
+        )
+        bucket.grant_read_write(lessons_lambda)
+        lessons_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
+        )
+
+        # Checklist Lambda
+        checklist_lambda = _lambda.Function(
+            self,
+            "ChecklistLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="checklist_api.handler",
+            code=_lambda.Code.from_asset("./src/checklist"),
+            timeout=cdk.Duration.seconds(30),
+            environment={
+                "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
+            },
+        )
+        project_data_table.grant_read_write_data(checklist_lambda)
 
         # Task Manager Lambda
         task_lambda = _lambda.Function(
@@ -281,17 +315,23 @@ class ProjectManagementStack(Stack):
             timeout=cdk.Duration.minutes(5),
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "ASSET_MODEL_ID": config["models"]["template_generation_model_id"],
+                "ASSET_MODEL_ID": config["models"][
+                    "template_generation_model_id"
+                ],
             },
         )
         bucket.grant_read_write(assets_lambda)
         assets_lambda.add_to_role_policy(
-            iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
         )
         assets_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["lambda:InvokeFunction"],
-                resources=[f"arn:aws:lambda:{self.region}:{self.account}:function:*"],
+                resources=[
+                    f"arn:aws:lambda:{self.region}:{self.account}:function:*"
+                ],
             )
         )
 
@@ -315,12 +355,16 @@ class ProjectManagementStack(Stack):
             timeout=cdk.Duration.minutes(15),
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "ASSET_MODEL_ID": config["models"]["template_generation_model_id"],
+                "ASSET_MODEL_ID": config["models"][
+                    "template_generation_model_id"
+                ],
             },
         )
         bucket.grant_read_write(async_asset_processor)
         async_asset_processor.add_to_role_policy(
-            iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
         )
 
         # Add async processor name to assets lambda environment
@@ -350,7 +394,9 @@ class ProjectManagementStack(Stack):
         bucket.grant_read_write(vector_ingestion_lambda)
         ingestion_cache_table.grant_read_write_data(vector_ingestion_lambda)
         vector_ingestion_lambda.add_to_role_policy(
-            iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
         )
         vector_ingestion_lambda.add_to_role_policy(
             iam.PolicyStatement(
@@ -473,23 +519,6 @@ class ProjectManagementStack(Stack):
         )
         bucket.grant_read_write(files_lambda)
 
-        # Timeline API Lambda
-        timeline_lambda = _lambda.Function(
-            self,
-            "TimelineLambda",
-            runtime=_lambda.Runtime.PYTHON_3_11,
-            handler="timeline_api.handler",
-            code=_lambda.Code.from_asset("./src/timeline"),
-            layers=[meeting_data_layer],
-            timeout=cdk.Duration.seconds(30),
-            environment={
-                "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
-                "BUCKET_NAME": bucket.bucket_name,
-            },
-        )
-        project_data_table.grant_read_write_data(timeline_lambda)
-        bucket.grant_read(timeline_lambda)
-
         # Knowledge Base Search Lambda
         search_lambda = _lambda.Function(
             self,
@@ -524,7 +553,9 @@ class ProjectManagementStack(Stack):
         bucket.grant_read_write(search_lambda)
         docs_bucket.grant_read_write(search_lambda)
         search_lambda.add_to_role_policy(
-            iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
         )
         search_lambda.add_to_role_policy(
             iam.PolicyStatement(
@@ -576,8 +607,12 @@ class ProjectManagementStack(Stack):
         usage_plan = api.add_usage_plan(
             "ProjectKnowledgeUsagePlan",
             name="project-knowledge-usage-plan",
-            throttle=apigateway.ThrottleSettings(rate_limit=100, burst_limit=200),
-            quota=apigateway.QuotaSettings(limit=10000, period=apigateway.Period.DAY),
+            throttle=apigateway.ThrottleSettings(
+                rate_limit=100, burst_limit=200
+            ),
+            quota=apigateway.QuotaSettings(
+                limit=10000, period=apigateway.Period.DAY
+            ),
         )
 
         # Associate Usage Plan with API Stage
@@ -603,7 +638,9 @@ class ProjectManagementStack(Stack):
         )
 
         # Project detail routes
-        project_detail_resource = projects_resource.add_resource("{project_name}")
+        project_detail_resource = projects_resource.add_resource(
+            "{project_name}"
+        )
         project_detail_resource.add_method(
             "GET",
             apigateway.LambdaIntegration(projects_lambda),
@@ -643,7 +680,7 @@ class ProjectManagementStack(Stack):
             apigateway.LambdaIntegration(task_lambda),
             api_key_required=True,
         )
-        
+
         task_detail_resource = tasks_resource.add_resource("{task_id}")
         task_detail_resource.add_method(
             "PUT",
@@ -664,44 +701,6 @@ class ProjectManagementStack(Stack):
         update_progress_resource.add_method(
             "POST",
             apigateway.LambdaIntegration(projects_lambda),
-            api_key_required=True,
-        )
-
-        # Timeline endpoint
-        timeline_resource = project_detail_resource.add_resource("timeline")
-        timeline_resource.add_method(
-            "GET",
-            apigateway.LambdaIntegration(timeline_lambda),
-            api_key_required=True,
-        )
-
-        # Meeting summary endpoint
-        meetings_resource = project_detail_resource.add_resource("meetings")
-        meeting_detail_resource = meetings_resource.add_resource("{meeting_id}")
-        summary_resource = meeting_detail_resource.add_resource("summary")
-        summary_resource.add_method(
-            "GET",
-            apigateway.LambdaIntegration(timeline_lambda),
-            api_key_required=True,
-        )
-
-        # Action items endpoints
-        action_items_resource = project_detail_resource.add_resource("action-items")
-        action_items_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(timeline_lambda),
-            api_key_required=True,
-        )
-
-        action_item_detail = action_items_resource.add_resource("{action_item_id}")
-        action_item_detail.add_method(
-            "PUT",
-            apigateway.LambdaIntegration(timeline_lambda),
-            api_key_required=True,
-        )
-        action_item_detail.add_method(
-            "DELETE",
-            apigateway.LambdaIntegration(timeline_lambda),
             api_key_required=True,
         )
 
@@ -757,6 +756,36 @@ class ProjectManagementStack(Stack):
             api_key_required=True,
         )
 
+        # Lessons learned endpoints
+        lessons_resource = project_detail_resource.add_resource(
+            "lessons-learned"
+        )
+        lessons_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(lessons_lambda),
+            api_key_required=True,
+        )
+
+        documents_resource = project_detail_resource.add_resource("documents")
+        documents_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(lessons_lambda),
+            api_key_required=True,
+        )
+
+        # Checklist endpoints
+        checklist_resource = project_detail_resource.add_resource("checklist")
+        checklist_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(checklist_lambda),
+            api_key_required=True,
+        )
+        checklist_resource.add_method(
+            "PUT",
+            apigateway.LambdaIntegration(checklist_lambda),
+            api_key_required=True,
+        )
+
         file_resource = api.root.add_resource("file")
         file_proxy = file_resource.add_proxy(
             default_integration=apigateway.LambdaIntegration(files_lambda),
@@ -809,7 +838,9 @@ class ProjectManagementStack(Stack):
                     "Payload": json.dumps(
                         {
                             "RequestType": "Create",
-                            "ResourceProperties": {"BucketName": bucket.bucket_name},
+                            "ResourceProperties": {
+                                "BucketName": bucket.bucket_name
+                            },
                         }
                     ),
                 },
