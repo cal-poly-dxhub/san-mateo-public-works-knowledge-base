@@ -44,20 +44,21 @@ def setup_base_structure(bucket_name):
         s3_client.put_object(Bucket=bucket_name, Key=folder)
         logger.info(f"Created folder: {folder}")
 
-    students_template = [
-        {
-            "name": "Student Name",
-            "alias": "student_alias",
-            "seniority": "junior|intermediate|senior",
-            "strengths": "Description of strengths",
-            "skills": ["skill1", "skill2"],
-            "availability": "full-time/part-time",
-        }
-    ]
+    project_types = {
+        "project_types": [
+            "Reconstruction",
+            "Resurface",
+            "Slurry Seal",
+            "Drainage",
+            "Utilities",
+            "Other",
+        ]
+    }
 
     s3_client.put_object(
         Bucket=bucket_name,
-        Key="students.json",
-        Body=json.dumps(students_template, indent=4),
+        Key="project-types.json",
+        Body=json.dumps(project_types, indent=2),
+        ContentType="application/json",
     )
-    logger.info("Created students.json template")
+    logger.info("Created project-types.json")

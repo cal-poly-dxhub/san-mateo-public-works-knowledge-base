@@ -15,6 +15,9 @@ def handler(event, context):
         method = event.get("httpMethod", "GET")
         bucket_name = os.environ["BUCKET_NAME"]
 
+        if path == "/config/project-types" and method == "GET":
+            return get_project_types(bucket_name)
+
         if path == "/projects" and method == "GET":
             return get_projects_list(bucket_name)
 
@@ -429,4 +432,25 @@ def update_project_progress(event, bucket_name):
             "statusCode": 500,
             "headers": {"Access-Control-Allow-Origin": "*"},
             "body": json.dumps({"error": str(e)}),
+        }
+
+
+def get_project_types(bucket_name):
+    """Get project types from S3"""
+    try:
+        response = s3_client.get_object(
+            Bucket=bucket_name,
+            Key="project-types.json"
+        )
+        data = json.loads(response["Body"].read().decode("utf-8"))
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps(data)
+        }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"error": str(e)})
         }

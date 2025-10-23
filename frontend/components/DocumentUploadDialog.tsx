@@ -48,21 +48,25 @@ export default function DocumentUploadDialog({
       const content = await file.text();
 
       // Upload document
-      await apiRequest(`/projects/${encodeURIComponent(projectName)}/documents`, {
-        method: "POST",
-        body: JSON.stringify({
-          filename: file.name,
-          content: content,
-          extract_lessons: extractLessons,
-          project_type: projectType,
-        }),
-      });
-
-      alert(extractLessons 
-        ? "Document uploaded and lessons learned extracted!" 
-        : "Document uploaded successfully!"
+      await apiRequest(
+        `/projects/${encodeURIComponent(projectName)}/documents`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            filename: file.name,
+            content: content,
+            extract_lessons: extractLessons,
+            project_type: projectType,
+          }),
+        },
       );
-      
+
+      alert(
+        extractLessons
+          ? "Document upload started!"
+          : "Document uploaded successfully!",
+      );
+
       onUploadComplete();
       onOpenChange(false);
       resetForm();
@@ -115,7 +119,8 @@ export default function DocumentUploadDialog({
 
           {extractLessons && (
             <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
-              AI will analyze this document and extract key lessons learned for future projects.
+              AI will analyze this document and extract key lessons learned for
+              future projects.
             </div>
           )}
 

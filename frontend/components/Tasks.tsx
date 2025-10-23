@@ -23,10 +23,18 @@ interface TasksProps {
   projectName: string;
 }
 
+interface ProjectMetadata {
+  projectType?: string;
+  location?: string;
+  areaSize?: string;
+  specialConditions?: string[];
+}
+
 export default function Tasks({ projectName }: TasksProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [metadata, setMetadata] = useState<ProjectMetadata>({});
 
   useEffect(() => {
     loadTasks();
@@ -56,6 +64,19 @@ export default function Tasks({ projectName }: TasksProps) {
       console.log("Processed tasks:", processedTasks);
       setTasks(processedTasks);
       setProgress(data.progress || 0);
+
+      // Fetch project metadata
+      try {
+        const projectData = await apiRequest(`/projects/${encodeURIComponent(projectName)}`);
+        setMetadata({
+          projectType: projectData.projectType,
+          location: projectData.location,
+          areaSize: projectData.areaSize,
+          specialConditions: projectData.specialConditions
+        });
+      } catch (error) {
+        console.error("Error loading project metadata:", error);
+      }
     } catch (error) {
       console.error("Error loading tasks:", error);
     } finally {
@@ -103,6 +124,34 @@ export default function Tasks({ projectName }: TasksProps) {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Project Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="font-medium">Project Type:</span>
+              <span className="ml-2 text-muted-foreground">{metadata.projectType || 'Not specified'}</span>
+            </div>
+            <div>
+              <span className="font-medium">Location:</span>
+              <span className="ml-2 text-muted-foreground">{metadata.location || 'Not specified'}</span>
+            </div>
+            <div>
+              <span className="font-medium">Work Area Size:</span>
+              <span className="ml-2 text-muted-foreground">{metadata.areaSize ? `${metadata.areaSize} acres` : 'Not specified'}</span>
+            </div>
+            <div>
+              <span className="font-medium">Special Conditions:</span>
+              <span className="ml-2 text-muted-foreground">
+                {metadata.specialConditions?.length ? metadata.specialConditions.join(', ') : 'None'}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-between items-center">

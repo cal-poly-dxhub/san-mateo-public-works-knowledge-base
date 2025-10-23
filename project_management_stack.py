@@ -263,7 +263,7 @@ class ProjectManagementStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_11,
             handler="lessons_api.handler",
             code=_lambda.Code.from_asset("./src/lessons"),
-            timeout=cdk.Duration.minutes(3),
+            timeout=cdk.Duration.seconds(30),  # Quick response
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
                 "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
@@ -273,6 +273,37 @@ class ProjectManagementStack(Stack):
         lessons_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel"], resources=["*"]
+            )
+        )
+
+        # Async Lessons Processor Lambda
+        async_lessons_processor = _lambda.Function(
+            self,
+            "AsyncLessonsProcessorLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="async_lessons_processor.handler",
+            code=_lambda.Code.from_asset("./src/lessons"),
+            timeout=cdk.Duration.minutes(5),  # Longer timeout for processing
+            environment={
+                "BUCKET_NAME": bucket.bucket_name,
+                "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
+            },
+        )
+        bucket.grant_read_write(async_lessons_processor)
+        async_lessons_processor.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"], resources=["*"]
+            )
+        )
+
+        # Add async processor name to lessons lambda environment
+        lessons_lambda.add_environment(
+            "ASYNC_LESSONS_PROCESSOR_NAME", async_lessons_processor.function_name
+        )
+        lessons_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["lambda:InvokeFunction"],
+                resources=[async_lessons_processor.function_arn],
             )
         )
 
@@ -632,6 +663,15 @@ class ProjectManagementStack(Stack):
         # Projects endpoints
         projects_resource = api.root.add_resource("projects")
         projects_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(projects_lambda),
+            api_key_required=True,
+        )
+
+        # Config endpoints
+        config_resource = api.root.add_resource("config")
+        project_types_resource = config_resource.add_resource("project-types")
+        project_types_resource.add_method(
             "GET",
             apigateway.LambdaIntegration(projects_lambda),
             api_key_required=True,

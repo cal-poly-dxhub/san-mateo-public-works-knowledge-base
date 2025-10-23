@@ -36,13 +36,29 @@ export default function CreateProjectDialog({
 }: CreateProjectDialogProps) {
   const { apiKey } = useApiKey();
   const [projectName, setProjectName] = useState("");
-  const [projectType, setProjectType] = useState("Reconstruction");
+  const [projectType, setProjectType] = useState("");
+  const [projectTypes, setProjectTypes] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [areaSize, setAreaSize] = useState("");
   const [specialConditions, setSpecialConditions] = useState<string[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(false);
   const [batchId, setBatchId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadProjectTypes = async () => {
+      try {
+        const data = await apiRequest("/config/project-types");
+        setProjectTypes(data.project_types || []);
+        if (data.project_types?.length > 0) {
+          setProjectType(data.project_types[0]);
+        }
+      } catch (error) {
+        console.error("Error loading project types:", error);
+      }
+    };
+    loadProjectTypes();
+  }, []);
 
 
 
@@ -141,7 +157,7 @@ export default function CreateProjectDialog({
 
   const resetForm = () => {
     setProjectName("");
-    setProjectType("Reconstruction");
+    setProjectType(projectTypes[0] || "");
     setLocation("");
     setAreaSize("");
     setSpecialConditions([]);
@@ -184,12 +200,9 @@ export default function CreateProjectDialog({
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               required
             >
-              <option value="Reconstruction">Reconstruction</option>
-              <option value="Resurface">Resurface</option>
-              <option value="Slurry Seal">Slurry Seal</option>
-              <option value="Drainage">Drainage</option>
-              <option value="Utilities">Utilities</option>
-              <option value="Other">Other</option>
+              {projectTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
             </select>
           </div>
 
