@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -47,6 +48,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [ragEnabled, setRagEnabled] = useState(true);
+  const [searchType, setSearchType] = useState<"both" | "lessons" | "documents">("both");
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
@@ -100,13 +102,21 @@ export default function Home() {
     setSearchResults([]);
     try {
       const endpoint = ragEnabled ? "/search-rag" : "/search";
+      const body: any = {
+        query: searchQuery,
+        model_id: selectedModel,
+        limit: parseInt(searchLimit),
+      };
+      
+      if (searchType === "lessons") {
+        body.is_lesson = true;
+      } else if (searchType === "documents") {
+        body.is_lesson = false;
+      }
+      
       const data = await apiRequest(endpoint, {
         method: "POST",
-        body: JSON.stringify({
-          query: searchQuery,
-          model_id: selectedModel,
-          limit: parseInt(searchLimit),
-        }),
+        body: JSON.stringify(body),
       });
 
       if (ragEnabled) {
@@ -192,6 +202,29 @@ export default function Home() {
             <Label htmlFor="rag-toggle" className="text-sm whitespace-nowrap">
               RAG
             </Label>
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant={searchType === "both" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSearchType("both")}
+            >
+              Both
+            </Button>
+            <Button
+              variant={searchType === "lessons" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSearchType("lessons")}
+            >
+              Lessons
+            </Button>
+            <Button
+              variant={searchType === "documents" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSearchType("documents")}
+            >
+              Docs
+            </Button>
           </div>
           <Button
             onClick={handleSearch}

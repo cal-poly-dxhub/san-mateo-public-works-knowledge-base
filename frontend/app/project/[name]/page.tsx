@@ -59,6 +59,7 @@ export default function ProjectPage() {
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [searchType, setSearchType] = useState<"both" | "lessons" | "documents">("both");
 
   useEffect(() => {
     if (params.name) {
@@ -105,14 +106,22 @@ export default function ProjectPage() {
     setSearchResults([]);
     try {
       const endpoint = ragEnabled ? "/search-rag" : "/project-search";
+      const body: any = {
+        query: projectSearch,
+        project_name: project?.name,
+        limit: parseInt(searchLimit),
+        model_id: selectedModel,
+      };
+
+      if (ragEnabled && searchType === "lessons") {
+        body.is_lesson = true;
+      } else if (ragEnabled && searchType === "documents") {
+        body.is_lesson = false;
+      }
+
       const data = await apiRequest(endpoint, {
         method: "POST",
-        body: JSON.stringify({
-          query: projectSearch,
-          project_name: project?.name,
-          limit: parseInt(searchLimit),
-          model_id: selectedModel,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (ragEnabled) {
@@ -298,57 +307,85 @@ export default function ProjectPage() {
       </header>
 
       <div className="max-w-7xl mx-auto p-6">
-        <div className="flex gap-4 mb-6">
-          <Input
-            placeholder="Search within this project..."
-            value={projectSearch}
-            onChange={(e) => setProjectSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleProjectSearch()}
-            className="flex-1"
-          />
-          {ragEnabled && (
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select AI Model" />
+        <div className="space-y-4 mb-6">
+          {/* Search Type Filter */}
+          <div className="flex gap-2">
+            <Button
+              variant={searchType === "both" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSearchType("both")}
+            >
+              Both
+            </Button>
+            <Button
+              variant={searchType === "lessons" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSearchType("lessons")}
+            >
+              Lessons Only
+            </Button>
+            <Button
+              variant={searchType === "documents" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSearchType("documents")}
+            >
+              Documents Only
+            </Button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="flex gap-4">
+            <Input
+              placeholder="Search within this project..."
+              value={projectSearch}
+              onChange={(e) => setProjectSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleProjectSearch()}
+              className="flex-1"
+            />
+            {ragEnabled && (
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select AI Model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableModels.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="rag-toggle"
+                checked={ragEnabled}
+                onCheckedChange={setRagEnabled}
+              />
+              <Label htmlFor="rag-toggle" className="text-sm whitespace-nowrap">
+                RAG
+              </Label>
+            </div>
+            <Select value={searchLimit} onValueChange={setSearchLimit}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {availableModels.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
               </SelectContent>
             </Select>
-          )}
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="rag-toggle"
-              checked={ragEnabled}
-              onCheckedChange={setRagEnabled}
-            />
-            <Label htmlFor="rag-toggle" className="text-sm whitespace-nowrap">
-              RAG
-            </Label>
+            <Button
+              onClick={handleProjectSearch}
+              disabled={isSearching}
+              className="hover:bg-primary/90"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              {isSearching ? "Searching..." : "Search"}
+            </Button>
           </div>
-          <Select value={searchLimit} onValueChange={setSearchLimit}>
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            onClick={handleProjectSearch}
-            disabled={isSearching}
-            className="hover:bg-primary/90"
-          >
-            <Search className="h-4 w-4 mr-2" />
-            {isSearching ? "Searching..." : "Search"}
-          </Button>
         </div>
 
         {hasSearched && (
