@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Download, Plus } from "lucide-react";
+import { Search } from "lucide-react";
 import ProjectTimeline from "@/components/ProjectTimeline";
 import ActionItems from "@/components/ActionItems";
 import { Switch } from "@/components/ui/switch";
@@ -55,10 +55,6 @@ export default function ProjectPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [isGeneratingReview, setIsGeneratingReview] = useState(false);
-  const [isGeneratingStory, setIsGeneratingStory] = useState(false);
-  const [executiveSummaryExists, setExecutiveSummaryExists] = useState(false);
-  const [webstoryExists, setWebstoryExists] = useState(false);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -88,77 +84,12 @@ export default function ProjectPage() {
     }
   };
 
-  const checkAssetExists = async (assetType: string, projectData: Project) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "https://42redkfdhl.execute-api.us-west-2.amazonaws.com/prod"}/projects/${encodeURIComponent(projectData.name)}/assets/${assetType}.md`,
-        {
-          method: "GET",
-          headers: {
-            "x-api-key":
-              process.env.NEXT_PUBLIC_API_KEY ||
-              localStorage?.getItem("apiKey") ||
-              "",
-          },
-        },
-      );
-      return response.ok;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const downloadAsset = async (assetType: string, filename: string) => {
-    if (!project) return;
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "https://42redkfdhl.execute-api.us-west-2.amazonaws.com/prod"}/projects/${encodeURIComponent(project.name)}/assets/${assetType}.md`,
-        {
-          headers: {
-            "x-api-key":
-              process.env.NEXT_PUBLIC_API_KEY ||
-              localStorage?.getItem("apiKey") ||
-              "",
-          },
-        },
-      );
-
-      if (response.ok) {
-        const content = await response.text();
-        const blob = new Blob([content], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error(`Error downloading ${assetType}:`, error);
-      alert(`Error downloading ${assetType}`);
-    }
-  };
-
-  const checkAssetAvailability = async (projectData: Project) => {
-    const [execSummaryExists, webstoryFileExists] = await Promise.all([
-      checkAssetExists("executive_summary", projectData),
-      checkAssetExists("webstory", projectData),
-    ]);
-
-    setExecutiveSummaryExists(execSummaryExists);
-    setWebstoryExists(webstoryFileExists);
-  };
-
   const loadProject = async (projectName: string) => {
     try {
       const data = await apiRequest(
         `/projects/${encodeURIComponent(projectName)}`,
       );
       setProject(data);
-
-      // Check asset availability after project is loaded
-      await checkAssetAvailability(data);
     } catch (error) {
       console.error("Error loading project:", error);
     } finally {
@@ -363,88 +294,6 @@ export default function ProjectPage() {
             >
               Upload Video
             </Button>
-          </div>
-          <div className="flex gap-4">
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Executive Summary</span>
-              <div className="flex gap-2">
-                {executiveSummaryExists ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        downloadAsset(
-                          "executive_summary",
-                          `${project.name}_executive_summary.md`,
-                        )
-                      }
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={generateExecutiveReview}
-                      disabled={isGeneratingReview}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {isGeneratingReview ? "Generating..." : "Generate New"}
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={generateExecutiveReview}
-                    disabled={isGeneratingReview}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {isGeneratingReview ? "Generating..." : "Generate"}
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Web Story</span>
-              <div className="flex gap-2">
-                {webstoryExists ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        downloadAsset("webstory", `${project.name}_webstory.md`)
-                      }
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={generateWebStory}
-                      disabled={isGeneratingStory}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {isGeneratingStory ? "Generating..." : "Generate New"}
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={generateWebStory}
-                    disabled={isGeneratingStory}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {isGeneratingStory ? "Generating..." : "Generate"}
-                  </Button>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </header>
