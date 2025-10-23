@@ -24,14 +24,14 @@ def handler(event, context):
             bucket_name = record["s3"]["bucket"]["name"]
             object_key = record["s3"]["object"]["key"]
 
-            # Only process transcript files
+            # Only process text files in documents folder
             if not (
-                object_key.endswith(".txt") and "meeting-transcripts" in object_key
+                object_key.endswith(".txt") and "documents" in object_key
             ):
-                logger.info(f"Skipping non-transcript file: {object_key}")
+                logger.info(f"Skipping non-document file: {object_key}")
                 continue
 
-            logger.info(f"Processing transcript for vector ingestion: {object_key}")
+            logger.info(f"Processing document for vector ingestion: {object_key}")
 
             # Extract project name from path
             project_name = extract_project_name(object_key)
@@ -61,7 +61,7 @@ def handler(event, context):
 
 def extract_project_name(object_key: str) -> str:
     """Extract project name from S3 object key"""
-    # Expected format: projects/{project_name}/meeting-transcripts/{filename}
+    # Expected format: projects/{project_name}/documents/{filename}
     parts = object_key.split("/")
     if len(parts) >= 3 and parts[0] == "projects":
         return parts[1]
@@ -230,6 +230,7 @@ def ingest_file_to_vector_index(
                 "chunk_index": str(i),
                 "total_chunks": str(len(chunks)),
                 "content": truncated_content,
+                "is_lesson": "false",
                 **project_metadata,  # Include project metadata
             }
 

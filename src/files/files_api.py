@@ -100,7 +100,7 @@ def generate_upload_url(event, bucket_name):
             }
 
         # Generate S3 key
-        s3_key = f"projects/{project_name}/meeting-videos/{file_name}"
+        s3_key = f"projects/{project_name}/documents/{file_name}"
 
         # Generate presigned URL
         presigned_url = s3_client.generate_presigned_url(

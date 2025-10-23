@@ -3,6 +3,7 @@ import boto3
 import os
 from datetime import datetime
 from lessons_api import extract_lessons_from_document, append_to_project_lessons, update_master_lessons
+from sync_lessons_vectors import sync_lessons_to_vectors
 
 def handler(event, context):
     """Process lessons extraction asynchronously"""
@@ -27,6 +28,9 @@ def handler(event, context):
         
         # Update master lessons learned
         update_master_lessons(bucket_name, project_type, project_name, lessons)
+        
+        # Sync lessons to vector store
+        sync_lessons_to_vectors(bucket_name, project_name, project_type)
         
         print(f"Successfully processed {len(lessons)} lessons for {project_name}")
         return {'statusCode': 200, 'message': 'Lessons processed successfully'}

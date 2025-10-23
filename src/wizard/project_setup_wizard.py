@@ -81,9 +81,7 @@ def handler(event, context):
         if bucket_name:
             folders = [
                 f"projects/{project_name}/",
-                f"projects/{project_name}/meeting-videos/",
-                f"projects/{project_name}/meeting-transcripts/",
-                f"projects/{project_name}/meeting-summaries/"
+                f"projects/{project_name}/documents/",
             ]
             for folder in folders:
                 s3.put_object(Bucket=bucket_name, Key=folder)

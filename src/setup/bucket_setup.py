@@ -38,7 +38,7 @@ def setup_base_structure(bucket_name):
     except s3_client.exceptions.NoSuchBucket:
         s3_client.create_bucket(Bucket=bucket_name)
 
-    base_folders = ["new-meeting-videos/", "projects/"]
+    base_folders = ["document-uploads/", "projects/"]
 
     for folder in base_folders:
         s3_client.put_object(Bucket=bucket_name, Key=folder)

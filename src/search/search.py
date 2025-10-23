@@ -14,10 +14,11 @@ def handler(event, context):
         body = json.loads(event.get("body", "{}"))
         query = body.get("query", "")
         project_name = body.get("project", "") or body.get("project_name", "")
-        limit = body.get("limit", 10)  # Default to 10 if not specified
+        limit = body.get("limit", 10)
+        is_lesson = body.get("is_lesson")  # Optional: true/false/null
 
         print(
-            f"Search request - Query: {query}, Project: {project_name}, Limit: {limit}"
+            f"Search request - Query: {query}, Project: {project_name}, Limit: {limit}, IsLesson: {is_lesson}"
         )
 
         # Check if this is a RAG search request
@@ -35,18 +36,23 @@ def handler(event, context):
 
         if path.endswith("/search-rag"):
             # Perform RAG search
-            answer = search_with_rag(query, project_name, limit)
+            result = search_with_rag(query, project_name, limit, is_lesson)
             return {
                 "statusCode": 200,
                 "headers": {
                     "Content-Type": "application/json",
                     "Access-Control-Allow-Origin": "*",
                 },
-                "body": json.dumps({"query": query, "answer": answer, "type": "rag"}),
+                "body": json.dumps({
+                    "query": query,
+                    "answer": result["answer"],
+                    "sources": result["sources"],
+                    "type": "rag"
+                }),
             }
         else:
             # Perform regular vector search
-            results = search_vector_index(query, project_name, limit)
+            results = search_vector_index(query, project_name, limit, is_lesson)
             return {
                 "statusCode": 200,
                 "headers": {
@@ -74,22 +80,25 @@ def handler(event, context):
         }
 
 
-def search_with_rag(query: str, project_name: str = "", limit: int = 10) -> str:
+def search_with_rag(query: str, project_name: str = "", limit: int = 10, is_lesson = None) -> str:
     """
     Perform RAG search: retrieve relevant documents and generate answer using LLM
     """
     try:
         # First, get relevant documents using vector search
-        documents = search_vector_index(query, project_name, limit)
+        documents = search_vector_index(query, project_name, limit, is_lesson)
 
         if not documents:
-            return "I couldn't find any relevant information in the meeting transcripts to answer your question."
+            return {
+                "answer": "I couldn't find any relevant information in the meeting transcripts to answer your question.",
+                "sources": []
+            }
 
-        # Prepare context from retrieved documents
+        # Prepare context from retrieved documents with citation numbers
         context_parts = []
         for i, doc in enumerate(documents):
             context_parts.append(
-                f"Document {i + 1} (from {doc['source']}):\n{doc['content']}"
+                f"[{i + 1}] Source: {doc['source']}\nContent: {doc['content']}"
             )
 
         context = "\n\n".join(context_parts)
@@ -98,13 +107,17 @@ def search_with_rag(query: str, project_name: str = "", limit: int = 10) -> str:
         config = load_config()
         rag_config = config.get("rag_search", {})
         model_id = rag_config.get("model_id", "anthropic.claude-3-sonnet-20240229-v1:0")
-        prompt_template = rag_config.get(
-            "prompt",
-            "Answer based on context: {context}\n\nQuestion: {question}",
-        )
+        
+        prompt = f"""You are an AI assistant that answers questions based on meeting transcripts and project documentation.
 
-        # Format the prompt
-        prompt = prompt_template.format(context=context, question=query)
+Use the following context from meeting transcripts to answer the user's question. When referencing information, include inline citations using [1], [2], [3] etc. to indicate which source you're using.
+
+Context:
+{context}
+
+Question: {query}
+
+Answer with inline citations:"""
 
         # Call the LLM
         bedrock_client = boto3.client("bedrock-runtime")
@@ -122,11 +135,17 @@ def search_with_rag(query: str, project_name: str = "", limit: int = 10) -> str:
         result = json.loads(response["body"].read())
         answer = result["content"][0]["text"]
 
-        return answer
+        return {
+            "answer": answer,
+            "sources": documents
+        }
 
     except Exception as e:
         print(f"Error in RAG search: {str(e)}")
-        return f"I encountered an error while processing your question: {str(e)}"
+        return {
+            "answer": f"I encountered an error while processing your question: {str(e)}",
+            "sources": []
+        }
 
 
 def load_config():
@@ -169,7 +188,7 @@ Answer:""",
 
 
 def search_vector_index(
-    query: str, project_name: str = "", limit: int = 10
+    query: str, project_name: str = "", limit: int = 10, is_lesson = None
 ) -> List[Dict[str, Any]]:
     """
     Search the S3 vector index using embeddings
@@ -203,12 +222,18 @@ def search_vector_index(
             "returnMetadata": True,
         }
 
-        # Add project filter if specified
+        # Build filter
+        filters = {}
         if project_name:
-            search_params["filter"] = {"project_name": project_name}
-            print(f"Applied project filter: {project_name}")
+            filters["project_name"] = project_name
+        if is_lesson is not None:
+            filters["is_lesson"] = "true" if is_lesson else "false"
+        
+        if filters:
+            search_params["filter"] = filters
+            print(f"Applied filters: {filters}")
         else:
-            print("No project filter applied")
+            print("No filters applied")
 
         # Perform vector search
         search_response = s3vectors_client.query_vectors(**search_params)
