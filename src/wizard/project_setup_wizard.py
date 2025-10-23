@@ -24,9 +24,25 @@ def handler(event, context):
             project_type, location, area_size, special_conditions
         )
         
-        # Store project in DynamoDB
-        project_id = str(uuid.uuid4())
+        # Use project name as project_id (slugified)
+        project_id = project_name.lower().replace(' ', '-')
         table = dynamodb.Table(os.environ['PROJECT_DATA_TABLE_NAME'])
+        
+        # Check if project already exists
+        try:
+            existing = table.get_item(Key={'project_id': project_id, 'item_id': 'config'})
+            if 'Item' in existing:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type'
+                    },
+                    'body': json.dumps({'error': f'Project "{project_name}" already exists'})
+                }
+        except:
+            pass  # Project doesn't exist, continue
         
         table.put_item(Item={
             'project_id': project_id,

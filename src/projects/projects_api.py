@@ -141,8 +141,26 @@ def get_projects_list(bucket_name):
 def get_project_detail(bucket_name, project_name):
     """Get detailed project information"""
     try:
+        # First try to find project by name in DynamoDB
+        table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
+        project_id = project_name
+        
+        if table_name:
+            table = dynamodb.Table(table_name)
+            # Scan for project with matching name
+            response = table.scan(
+                FilterExpression="item_id = :config AND projectName = :name",
+                ExpressionAttributeValues={
+                    ":config": "config",
+                    ":name": project_name
+                }
+            )
+            if response.get('Items'):
+                project_id = response['Items'][0]['project_id']
+        
         project_detail = {
             "name": project_name,
+            "project_id": project_id,
             "description": "No description available",
             "meeting_summaries": [],
             "action_items_detail": [],

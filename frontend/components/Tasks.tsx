@@ -35,7 +35,26 @@ export default function Tasks({ projectName }: TasksProps) {
   const loadTasks = async () => {
     try {
       const data = await apiRequest(`/projects/${encodeURIComponent(projectName)}/tasks`);
-      setTasks(data.tasks || []);
+      console.log("Raw task data:", data);
+      
+      // Handle nested taskData structure from DynamoDB
+      const processedTasks = (data.tasks || []).map((item: any) => {
+        const taskData = item.taskData || item;
+        return {
+          taskId: item.item_id?.replace('task#', '') || item.taskId,
+          phase: taskData.phase || 'General',
+          taskName: taskData.task || taskData.taskName || 'Unnamed Task',
+          description: taskData.description,
+          status: item.status || 'not_started',
+          estimatedDays: taskData.estimatedDays,
+          assignedTo: taskData.assignedTo,
+          plannedCompletionDate: taskData.plannedCompletionDate,
+          actualCompletionDate: item.actualCompletionDate
+        };
+      });
+      
+      console.log("Processed tasks:", processedTasks);
+      setTasks(processedTasks);
       setProgress(data.progress || 0);
     } catch (error) {
       console.error("Error loading tasks:", error);
@@ -50,7 +69,7 @@ export default function Tasks({ projectName }: TasksProps) {
         method: "PUT",
         body: JSON.stringify({ status: newStatus }),
       });
-      loadTasks();
+      await loadTasks();
     } catch (error) {
       console.error("Error updating task:", error);
     }
@@ -71,6 +90,16 @@ export default function Tasks({ projectName }: TasksProps) {
   }, {} as Record<string, Task[]>);
 
   if (loading) return <div>Loading tasks...</div>;
+
+  if (tasks.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          No tasks found for this project. Tasks are created during project setup.
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
