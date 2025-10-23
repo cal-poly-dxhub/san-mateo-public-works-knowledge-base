@@ -24,10 +24,11 @@ def handler(event, context):
             bucket_name = record["s3"]["bucket"]["name"]
             object_key = record["s3"]["object"]["key"]
 
-            # Only process text files in documents folder
-            if not (
-                object_key.endswith(".txt") and "documents" in object_key
-            ):
+            # Process text files in documents folder or lessons JSON files
+            is_document = object_key.endswith(".txt") and "documents" in object_key
+            is_lesson = object_key.endswith("lessons-learned.json")
+            
+            if not (is_document or is_lesson):
                 logger.info(f"Skipping non-document file: {object_key}")
                 continue
 
@@ -45,9 +46,10 @@ def handler(event, context):
             )
 
             # Check if file needs processing
+            is_lesson = object_key.endswith("lessons-learned.json")
             if should_process_file(object_key, file_last_modified):
                 ingest_file_to_vector_index(
-                    bucket_name, object_key, project_name, file_last_modified
+                    bucket_name, object_key, project_name, file_last_modified, is_lesson
                 )
             else:
                 logger.info(f"File {object_key} already processed, skipping")
@@ -70,35 +72,25 @@ def extract_project_name(object_key: str) -> str:
 
 def load_config():
     """Load vector ingestion configuration from SSM"""
-    try:
-        chunk_size = ssm_client.get_parameter(
-            Name="/meeting-automation/vector-ingestion/chunk-size-tokens"
-        )
-        overlap = ssm_client.get_parameter(
-            Name="/meeting-automation/vector-ingestion/overlap-tokens"
-        )
-        bucket_name = ssm_client.get_parameter(
-            Name="/meeting-automation/vector-ingestion/vector-bucket-name"
-        )
-        index_name = ssm_client.get_parameter(
-            Name="/meeting-automation/vector-ingestion/index-name"
-        )
+    chunk_size = ssm_client.get_parameter(
+        Name="/project-management/vector-ingestion/chunk-size-tokens"
+    )
+    overlap = ssm_client.get_parameter(
+        Name="/project-management/vector-ingestion/overlap-tokens"
+    )
+    bucket_name = ssm_client.get_parameter(
+        Name="/project-management/vector-ingestion/vector-bucket-name"
+    )
+    index_name = ssm_client.get_parameter(
+        Name="/project-management/vector-ingestion/index-name"
+    )
 
-        return {
-            "chunk_size_tokens": int(chunk_size["Parameter"]["Value"]),
-            "overlap_tokens": int(overlap["Parameter"]["Value"]),
-            "vector_bucket_name": bucket_name["Parameter"]["Value"],
-            "index_name": index_name["Parameter"]["Value"],
-        }
-    except Exception as e:
-        logger.error(f"Error loading config from SSM: {e}")
-        # Fallback defaults
-        return {
-            "chunk_size_tokens": 512,
-            "overlap_tokens": 64,
-            "vector_bucket_name": "dxhub-meeting-kb-vectors",
-            "index_name": "meeting-kb-index",
-        }
+    return {
+        "chunk_size_tokens": int(chunk_size["Parameter"]["Value"]),
+        "overlap_tokens": int(overlap["Parameter"]["Value"]),
+        "vector_bucket_name": bucket_name["Parameter"]["Value"],
+        "index_name": index_name["Parameter"]["Value"],
+    }
 
 
 def should_process_file(file_key: str, file_last_modified: str) -> bool:
@@ -187,7 +179,7 @@ def get_project_metadata(bucket_name: str, project_name: str) -> Dict[str, Any]:
 
 
 def ingest_file_to_vector_index(
-    bucket_name: str, file_key: str, project_name: str, file_last_modified: str
+    bucket_name: str, file_key: str, project_name: str, file_last_modified: str, is_lesson: bool = False
 ):
     """Ingest a single file into the vector index with project metadata"""
     logger.info(f"Starting vector ingestion for {file_key}")
@@ -198,7 +190,23 @@ def ingest_file_to_vector_index(
     # Get file content
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
-        content = response["Body"].read().decode("utf-8")
+        raw_content = response["Body"].read().decode("utf-8")
+        
+        # Handle JSON lessons files
+        if is_lesson:
+            lessons_data = json.loads(raw_content)
+            # Convert lessons to text format for chunking
+            content_parts = []
+            for lesson in lessons_data.get("lessons", []):
+                lesson_text = f"Category: {lesson.get('category', 'General')}\n"
+                lesson_text += f"Lesson: {lesson.get('lesson', '')}\n"
+                lesson_text += f"Impact: {lesson.get('impact', '')}\n"
+                lesson_text += f"Recommendation: {lesson.get('recommendation', '')}\n"
+                content_parts.append(lesson_text)
+            content = "\n\n".join(content_parts)
+        else:
+            content = raw_content
+            
     except Exception as e:
         logger.error(f"Error reading {file_key}: {e}")
         return
@@ -230,7 +238,7 @@ def ingest_file_to_vector_index(
                 "chunk_index": str(i),
                 "total_chunks": str(len(chunks)),
                 "content": truncated_content,
-                "is_lesson": "false",
+                "is_lesson": "true" if is_lesson else "false",
                 **project_metadata,  # Include project metadata
             }
 

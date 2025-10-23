@@ -3,7 +3,6 @@ import boto3
 import os
 from datetime import datetime
 from lessons_api import extract_lessons_from_document, append_to_project_lessons, update_master_lessons
-from sync_lessons_vectors import sync_lessons_to_vectors
 
 def handler(event, context):
     """Process lessons extraction asynchronously"""
@@ -29,8 +28,8 @@ def handler(event, context):
         # Update master lessons learned
         update_master_lessons(bucket_name, project_type, project_name, lessons)
         
-        # Sync lessons to vector store
-        sync_lessons_to_vectors(bucket_name, project_name, project_type)
+        # Trigger vector ingestion for lessons files
+        trigger_vector_ingestion(bucket_name, project_name)
         
         print(f"Successfully processed {len(lessons)} lessons for {project_name}")
         return {'statusCode': 200, 'message': 'Lessons processed successfully'}
@@ -38,3 +37,28 @@ def handler(event, context):
     except Exception as e:
         print(f"Error processing lessons async: {str(e)}")
         return {'statusCode': 500, 'error': str(e)}
+
+def trigger_vector_ingestion(bucket_name, project_name):
+    """Trigger vector ingestion for lessons learned files"""
+    try:
+        lambda_client = boto3.client('lambda')
+        
+        # Trigger ingestion for project lessons file
+        project_lessons_key = f"projects/{project_name}/lessons-learned.json"
+        lambda_client.invoke(
+            FunctionName=os.environ.get('VECTOR_INGESTION_LAMBDA_NAME'),
+            InvocationType='Event',
+            Payload=json.dumps({
+                'Records': [{
+                    's3': {
+                        'bucket': {'name': bucket_name},
+                        'object': {'key': project_lessons_key}
+                    }
+                }]
+            })
+        )
+        
+        print(f"Triggered vector ingestion for {project_lessons_key}")
+        
+    except Exception as e:
+        print(f"Error triggering vector ingestion: {str(e)}")

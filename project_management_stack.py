@@ -298,7 +298,8 @@ class ProjectManagementStack(Stack):
 
         # Add async processor name to lessons lambda environment
         lessons_lambda.add_environment(
-            "ASYNC_LESSONS_PROCESSOR_NAME", async_lessons_processor.function_name
+            "ASYNC_LESSONS_PROCESSOR_NAME",
+            async_lessons_processor.function_name,
         )
         lessons_lambda.add_to_role_policy(
             iam.PolicyStatement(
@@ -454,6 +455,18 @@ class ProjectManagementStack(Stack):
             vector_ingestion_lambda.function_name,
         )
         wizard_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["lambda:InvokeFunction"],
+                resources=[vector_ingestion_lambda.function_arn],
+            )
+        )
+
+        # Add vector ingestion lambda to async lessons processor
+        async_lessons_processor.add_environment(
+            "VECTOR_INGESTION_LAMBDA_NAME",
+            vector_ingestion_lambda.function_name,
+        )
+        async_lessons_processor.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["lambda:InvokeFunction"],
                 resources=[vector_ingestion_lambda.function_arn],
