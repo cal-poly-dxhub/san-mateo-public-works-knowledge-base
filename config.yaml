@@ -21,7 +21,7 @@ models:
 vector_ingestion:
   chunk_size_tokens: 512
   overlap_tokens: 64
-  vector_bucket_name: "dxhub-project-mgmt-vectors"
+  vector_bucket_name: "dpw-project-mgmt-vectors"
   index_name: "project-mgmt-index"
 
 settings:
@@ -33,7 +33,7 @@ settings:
     - "Drainage"
     - "Utilities"
     - "Other"
-  
+
   special_conditions:
     - "Near coast"
     - "In NFO area"
@@ -44,22 +44,22 @@ settings:
 prompts:
   project_setup_wizard: |
     You are an AI assistant helping set up a new Public Works infrastructure project.
-    
+
     Based on the following project information, generate a complete project configuration.
-    
+
     Project Information:
     - Project Type: {project_type}
     - Location: {location}
     - Work Area Size: {area_size} acres
     - Special Conditions: {special_conditions}
-    
+
     Generate a comprehensive project setup including:
     1. Task checklist (only relevant tasks for this project type)
     2. Stakeholder contact list (utilities, agencies, property owners)
     3. Required permits and approvals
     4. Suggested timeline with milestones
     5. Estimated budget range based on project type and size
-    
+
     Format as JSON:
     {{
       "projectConfig": {{
@@ -88,71 +88,71 @@ prompts:
 
   generate_task_checklist: |
     Generate a detailed task checklist for a {project_type} project.
-    
+
     Include all phases: Survey, Design (30%, 60%, 90%), Approvals, Bidding, Construction, Closeout.
-    
+
     For each task include:
     - Task name and description
     - Estimated duration
     - Dependencies (which tasks must complete first)
     - Required documents/deliverables
     - Who needs to approve
-    
+
     Only include tasks relevant to this project type. Format as JSON array.
 
   ai_assistant_response: |
     You are an experienced Public Works senior engineer assistant helping with project management questions.
-    
+
     Project Context:
     {project_context}
-    
+
     User Question: {question}
-    
+
     Relevant Information from Knowledge Base:
     {knowledge_base_results}
-    
+
     Provide a helpful, specific answer that:
     1. Directly answers the question
     2. References specific regulations, forms, or procedures when applicable
     3. Suggests next steps or actions
     4. Warns about common pitfalls or delays
     5. Provides links to templates or forms if relevant
-    
+
     Be concise but thorough. Use plain English.
 
   generate_document_template: |
     Generate a {document_type} for the following project:
-    
+
     Project Details:
     {project_details}
-    
+
     The document should be professional, complete, and ready to use with all project-specific information filled in.
-    
+
     Include:
     - Proper formatting and structure
     - All required sections for this document type
     - Project-specific details (names, dates, locations, etc.)
     - Distribution list if applicable
     - Next steps or required actions
-    
+
     Format as markdown for easy editing.
 
   proactive_alert_check: |
     Analyze the current project status and identify potential issues or recommendations.
-    
+
     Project Status:
     {project_status}
-    
+
     Recent Activity:
     {recent_activity}
-    
+
     Check for:
     - Tasks that should have started but haven't
     - Dependencies blocking progress
     - Upcoming deadlines that need preparation
     - Common issues from similar projects
     - Coordination gaps (e.g., utilities not contacted at right time)
-    
+
     Return JSON array of alerts:
     {{
       "alerts": [
@@ -168,19 +168,19 @@ prompts:
 
   estimate_timeline: |
     Based on similar {project_type} projects, estimate the timeline for this project.
-    
+
     Project Size: {area_size} acres
     Special Conditions: {special_conditions}
-    
+
     Historical Data:
     {historical_projects}
-    
+
     Provide realistic estimates for each phase with:
     - Typical duration
     - Factors that could extend timeline
     - Critical path items
     - Recommended buffer time
-    
+
     Format as JSON with phase-by-phase breakdown.
 
 templates:
@@ -199,7 +199,7 @@ templates:
       "timeline": {{}},
       "budget": {{}}
     }}
-  
+
   task: |
     {{
       "taskId": "",
