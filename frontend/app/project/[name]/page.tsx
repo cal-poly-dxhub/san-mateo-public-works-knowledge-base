@@ -22,7 +22,7 @@ import {
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import ProjectOverview from "@/components/ProjectOverview";
-import WorkingBackwards from "@/components/WorkingBackwards";
+import Tasks from "@/components/Tasks";
 
 interface Project {
   name: string;
@@ -387,14 +387,16 @@ export default function ProjectPage() {
 
         {/* Removed project overview and status cards - now handled in tabs */}
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue="tasks" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="action-items">Timeline</TabsTrigger>
-            <TabsTrigger value="working-backwards">
-              Working Backwards
-            </TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="tasks" className="space-y-6">
+            <Tasks projectName={project.name} />
+          </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
             <ProjectOverview
@@ -413,7 +415,7 @@ export default function ProjectPage() {
             />
           </TabsContent>
 
-          <TabsContent value="action-items" className="space-y-6">
+          <TabsContent value="timeline" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Project Roadmap</CardTitle>
@@ -425,18 +427,6 @@ export default function ProjectPage() {
                 <ProjectTimeline projectName={project.name} />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="working-backwards" className="space-y-6">
-            <WorkingBackwards
-              workingBackwardsData={
-                project.working_backwards
-                  ? {
-                      workingBackwards: project.working_backwards,
-                    }
-                  : null
-              }
-            />
           </TabsContent>
         </Tabs>
       </div>
