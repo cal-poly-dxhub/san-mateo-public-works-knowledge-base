@@ -89,7 +89,7 @@ def get_asset_file(project_name, filename):
 def get_available_models():
     """Get available AI models"""
     try:
-        response = ssm_client.get_parameter(Name="/meeting-automation/available-models")
+        response = ssm_client.get_parameter(Name="/project-management/available-models")
         models = json.loads(response["Parameter"]["Value"])
 
         return {

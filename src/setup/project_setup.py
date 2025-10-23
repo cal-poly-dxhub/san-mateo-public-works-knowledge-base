@@ -1,5 +1,6 @@
 import logging
 import os
+from urllib.parse import quote
 
 import boto3
 
@@ -53,17 +54,18 @@ def handler(event, context):
 
 def create_project_folder(bucket_name, project_name, project_description=""):
     project_name = project_name.strip("/")
+    project_name_encoded = quote(project_name, safe='')
     logger.info(f"Creating project folder: {project_name}")
 
     # Create main project folder
-    project_path = f"projects/{project_name}/"
+    project_path = f"projects/{project_name_encoded}/"
     s3_client.put_object(Bucket=bucket_name, Key=project_path)
 
     # Create subfolders
     subfolders = [
-        f"projects/{project_name}/meeting-videos/",
-        f"projects/{project_name}/meeting-transcripts/",
-        f"projects/{project_name}/meeting-summaries/",
+        f"projects/{project_name_encoded}/meeting-videos/",
+        f"projects/{project_name_encoded}/meeting-transcripts/",
+        f"projects/{project_name_encoded}/meeting-summaries/",
     ]
 
     for folder in subfolders:
@@ -77,7 +79,7 @@ def create_project_folder(bucket_name, project_name, project_description=""):
     if project_description:
         overview_content = overview_content.replace('""', f'"{project_description}"')
 
-    overview_path = f"projects/{project_name}/project_overview.json"
+    overview_path = f"projects/{project_name_encoded}/project_overview.json"
     s3_client.put_object(
         Bucket=bucket_name,
         Key=overview_path,
@@ -91,7 +93,7 @@ def create_project_folder(bucket_name, project_name, project_description=""):
         project_name=project_name
     )
 
-    working_backwards_path = f"projects/{project_name}/working_backwards.json"
+    working_backwards_path = f"projects/{project_name_encoded}/working_backwards.json"
     s3_client.put_object(
         Bucket=bucket_name,
         Key=working_backwards_path,
