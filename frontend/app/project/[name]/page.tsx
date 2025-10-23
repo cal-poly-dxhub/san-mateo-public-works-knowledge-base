@@ -19,8 +19,6 @@ import {
 } from "@/components/ui/select";
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
-import ProjectOverview from "@/components/ProjectOverview";
-import WorkingBackwards from "@/components/WorkingBackwards";
 import DocumentUploadDialog from "@/components/DocumentUploadDialog";
 import LessonsLearned from "@/components/LessonsLearned";
 import Checklist from "@/components/Checklist";
@@ -449,31 +447,13 @@ export default function ProjectPage() {
         {/* Removed project overview and status cards - now handled in tabs */}
 
         <Tabs defaultValue="checklist" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="checklist">Checklist</TabsTrigger>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="lessons">Lessons Learned</TabsTrigger>
           </TabsList>
 
           <TabsContent value="checklist" className="space-y-6">
             <Checklist projectName={project.name} />
-          </TabsContent>
-
-          <TabsContent value="overview" className="space-y-6">
-            <ProjectOverview
-              overviewData={
-                project
-                  ? {
-                      projectName: decodeURIComponent(project.projectName || project.name),
-                      description: project.description || "",
-                      teamMembers: project.teamMembers || [],
-                      timeline: { startDate: "", endDate: "" },
-                      goals: project.customerRequirements || [],
-                      notes: "",
-                    }
-                  : null
-              }
-            />
           </TabsContent>
 
           <TabsContent value="lessons" className="space-y-6">
