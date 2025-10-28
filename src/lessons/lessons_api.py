@@ -68,7 +68,7 @@ def upload_and_extract(event):
                     'filename': filename
                 })
             )
-            
+
             return {
                 "statusCode": 202,  # Accepted
                 "headers": {"Access-Control-Allow-Origin": "*"},
@@ -89,7 +89,7 @@ def upload_and_extract(event):
         return error_response(str(e))
 
 
-def extract_lessons_from_document(content, project_name, date):
+def extract_lessons_from_document(content, project_name, date, filename="Unknown"):
     """Extract lessons learned from document using LLM"""
 
     prompt = f"""Extract lessons learned from this document for project "{project_name}".
@@ -137,6 +137,9 @@ Return only the JSON array, no other text."""
         end = lessons_text.rfind("]") + 1
         if start >= 0 and end > start:
             lessons_array = json.loads(lessons_text[start:end])
+            # Add source_document to each lesson
+            for lesson in lessons_array:
+                lesson["source_document"] = filename
             return lessons_array
 
         return []
@@ -148,6 +151,7 @@ Return only the JSON array, no other text."""
                 "title": "Document uploaded",
                 "dateEntered": f"{date}T00:00:00Z",
                 "lesson": "Automatic extraction failed",
+                "source_document": filename
                 "details": "Document was uploaded but lesson extraction encountered an error",
                 "impact": "No automated insights generated",
                 "recommendation": "Review document manually for lessons learned",

@@ -218,8 +218,9 @@ def ingest_file_to_vector_index(
 
     # Chunk the content
     if is_lesson and lessons_list:
-        # Each lesson is its own chunk
+        # Each lesson is its own chunk - store lesson data for metadata
         chunks = []
+        lesson_metadata_list = []
         for lesson in lessons_list:
             lesson_text = f"Title: {lesson.get('title', 'Untitled')}\n"
             lesson_text += f"Lesson: {lesson.get('lesson', '')}\n"
@@ -228,9 +229,14 @@ def ingest_file_to_vector_index(
             lesson_text += f"Recommendation: {lesson.get('recommendation', '')}\n"
             lesson_text += f"Severity: {lesson.get('severity', 'Unknown')}"
             chunks.append(lesson_text)
+            # Store source document name if available
+            lesson_metadata_list.append({
+                "source_document": lesson.get("source_document", "Unknown")
+            })
         logger.info(f"Created {len(chunks)} lesson chunks for {filename}")
     else:
         chunks = chunk_text(content, config["chunk_size_tokens"], config["overlap_tokens"])
+        lesson_metadata_list = None
         logger.info(f"Created {len(chunks)} chunks for {filename}")
 
     vector_ids = []
@@ -244,9 +250,16 @@ def ingest_file_to_vector_index(
 
             # Create metadata with project context
             truncated_content = chunk[:1800] if len(chunk) > 1800 else chunk
+            
+            # For lessons, use source_document if available
+            if is_lesson and lesson_metadata_list and i < len(lesson_metadata_list):
+                source_doc = lesson_metadata_list[i].get("source_document", filename)
+            else:
+                source_doc = filename
+            
             metadata = {
                 "project_name": project_name,
-                "file_name": filename,
+                "file_name": source_doc,  # Use source document name for lessons
                 "chunk_index": str(i),
                 "total_chunks": str(len(chunks)),
                 "content": truncated_content,

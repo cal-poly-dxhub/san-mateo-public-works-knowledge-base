@@ -19,7 +19,8 @@ def handler(event, context):
         lessons = extract_lessons_from_document(
             content_text, 
             project_name, 
-            datetime.now().strftime('%Y-%m-%d')
+            datetime.now().strftime('%Y-%m-%d'),
+            filename  # Pass filename for source tracking
         )
         
         # Append to project lessons learned

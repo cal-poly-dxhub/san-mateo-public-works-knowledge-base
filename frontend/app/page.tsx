@@ -54,6 +54,8 @@ export default function Home() {
   const [searchLimit, setSearchLimit] = useState("5");
   const [batchStatusOpen, setBatchStatusOpen] = useState(false);
   const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
 
   useEffect(() => {
     loadProjects();

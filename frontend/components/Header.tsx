@@ -33,15 +33,15 @@ export default function Header() {
   return (
     <nav className="bg-secondary w-full p-3 flex justify-between items-center">
       <div className="flex items-center gap-8">
-        <Link href="/" className="font-bold text-md flex flex-row gap-2 items-center">
+        <Link href="/" className="font-bold text-md flex flex-row gap-2 items-center text-secondary-foreground">
           <Image src="/logo.png" alt="dxhub logo" width={35} height={35} />
           AI-Powered Project Management
         </Link>
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-sm hover:underline hover:text-primary transition-colors">
+          <Link href="/" className="text-sm hover:underline hover:text-accent transition-colors text-secondary-foreground">
             Dashboard
           </Link>
-          <Link href="/lessons-learned" className="text-sm hover:underline hover:text-primary transition-colors">
+          <Link href="/lessons-learned" className="text-sm hover:underline hover:text-accent transition-colors text-secondary-foreground">
             Lessons Learned
           </Link>
         </div>
