@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from datetime import datetime, timezone
 
 import boto3
@@ -81,7 +82,7 @@ Return only the JSON array."""
 
     try:
         response = bedrock.invoke_model(
-            modelId=os.environ["LESSONS_MODEL_ID"],
+            modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
             body=json.dumps(
                 {
                     "anthropic_version": "bedrock-2023-05-31",
@@ -99,10 +100,11 @@ Return only the JSON array."""
         end = lessons_text.rfind("]") + 1
         if start >= 0 and end > start:
             lessons = json.loads(lessons_text[start:end])
-            # Add id and source_document to each lesson
+            # Add unique id and source_document to each lesson
             for lesson in lessons:
-                lesson["id"] = timestamp
+                lesson["id"] = str(uuid.uuid4())
                 lesson["source_document"] = filename
+                lesson["created_at"] = timestamp
             return lessons
 
         return []
@@ -195,7 +197,7 @@ Use the delete_lessons tool to specify which lesson IDs to delete. If no lessons
 
     try:
         response = bedrock.invoke_model(
-            modelId=os.environ["LESSONS_MODEL_ID"],
+            modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
             body=json.dumps(
                 {
                     "anthropic_version": "bedrock-2023-05-31",
@@ -304,7 +306,7 @@ Use report_conflicts tool. If none, call with empty array."""
 
     try:
         response = bedrock.invoke_model(
-            modelId=os.environ["LESSONS_MODEL_ID"],
+            modelId=os.environ["CONFLICT_DETECTOR_MODEL_ID"],
             body=json.dumps(
                 {
                     "anthropic_version": "bedrock-2023-05-31",
