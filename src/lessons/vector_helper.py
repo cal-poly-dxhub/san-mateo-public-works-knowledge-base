@@ -23,7 +23,7 @@ def trigger_vector_ingestion(bucket_name: str, s3_key: str):
     """
     try:
         lambda_client.invoke(
-            FunctionName=os.environ.get("VECTOR_INGESTION_LAMBDA_NAME"),
+            FunctionName=os.environ.get("ASYNC_LESSONS_PROCESSOR_NAME"),
             InvocationType="Event",
             Payload=json.dumps({
                 "Records": [{
