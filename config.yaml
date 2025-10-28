@@ -2,19 +2,15 @@ models:
   # Primary LLM - Used for most AI tasks
   # Used by: Project setup, AI assistant, RAG search
   primary_llm: "us.anthropic.claude-sonnet-4-20250514-v1:0"
-  
-  # Lessons extraction - Extracts lessons from documents
+
+  # Lessons extraction - Extracts lessons from documents (fast model)
   # Used by: Lesson extraction from uploaded documents
-  lessons_extractor: "us.anthropic.claude-sonnet-4-20250514-v1:0"
-  
-  # Conflict detection - Finds conflicts between lessons
+  lessons_extractor: "meta.llama4-maverick-17b-instruct-v1:0"
+
+  # Conflict detection - Finds conflicts between lessons (reasoning model)
   # Used by: Detecting superseding lessons, conflict analysis
   conflict_detector: "us.anthropic.claude-sonnet-4-20250514-v1:0"
-  
-  # Document generation - Used for creating reports, templates, assets
-  # Used by: Asset generation (executive summaries, web stories)
-  document_generator: "anthropic.claude-3-sonnet-20240229-v1:0"
-  
+
   # Embeddings - Used for vector search
   # Used by: Vector ingestion, search queries
   embeddings: "amazon.titan-embed-text-v2:0"
