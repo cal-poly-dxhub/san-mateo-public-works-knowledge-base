@@ -81,19 +81,12 @@ Document:
 Return only the JSON array."""
 
     try:
-        response = bedrock.invoke_model(
+        response = bedrock.converse(
             modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
-            body=json.dumps(
-                {
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": 4096,
-                    "messages": [{"role": "user", "content": prompt}],
-                }
-            ),
+            messages=[{"role": "user", "content": [{"text": prompt}]}]
         )
 
-        result = json.loads(response["body"].read())
-        lessons_text = result["content"][0]["text"]
+        lessons_text = response["output"]["message"]["content"][0]["text"]
 
         # Parse JSON array
         start = lessons_text.find("[")
@@ -111,7 +104,7 @@ Return only the JSON array."""
 
     except Exception as e:
         print(f"Error extracting lessons: {e}")
-        return []
+        raise
 
 
 def merge_lessons_with_superseding(
@@ -196,31 +189,21 @@ Only delete if:
 Use the delete_lessons tool to specify which lesson IDs to delete. If no lessons should be deleted, don't call the tool."""
 
     try:
-        response = bedrock.invoke_model(
+        response = bedrock.converse(
             modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
-            body=json.dumps(
-                {
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": 2048,
-                    "tools": tools,
-                    "messages": [{"role": "user", "content": prompt}],
-                }
-            ),
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            toolConfig={"tools": tools}
         )
 
-        result = json.loads(response["body"].read())
-
         # Check if tool was used
-        for content_block in result.get("content", []):
-            if (
-                content_block.get("type") == "tool_use"
-                and content_block.get("name") == "delete_lessons"
-            ):
-                tool_input = content_block.get("input", {})
-                lesson_ids = tool_input.get("lesson_ids", [])
-                reasoning = tool_input.get("reasoning", "")
-                print(f"LLM superseding: {reasoning}")
-                return lesson_ids
+        for content_block in response["output"]["message"]["content"]:
+            if content_block.get("toolUse"):
+                tool_use = content_block["toolUse"]
+                if tool_use["name"] == "delete_lessons":
+                    lesson_ids = tool_use["input"].get("lesson_ids", [])
+                    reasoning = tool_use["input"].get("reasoning", "")
+                    print(f"LLM superseding: {reasoning}")
+                    return lesson_ids
 
         return []
 
@@ -305,23 +288,15 @@ Find conflicts where new lesson covers same topic, contradicts, or makes existin
 Use report_conflicts tool. If none, call with empty array."""
 
     try:
-        response = bedrock.invoke_model(
+        response = bedrock.converse(
             modelId=os.environ["CONFLICT_DETECTOR_MODEL_ID"],
-            body=json.dumps(
-                {
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": 4096,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "tools": tools,
-                }
-            ),
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            toolConfig={"tools": tools}
         )
-
-        result = json.loads(response["body"].read())
         
-        for content in result.get("content", []):
-            if content.get("type") == "tool_use" and content.get("name") == "report_conflicts":
-                conflicts = content.get("input", {}).get("conflicts", [])
+        for content in response["output"]["message"]["content"]:
+            if content.get("toolUse") and content["toolUse"]["name"] == "report_conflicts":
+                conflicts = content["toolUse"]["input"].get("conflicts", [])
                 enriched = []
                 for conflict in conflicts:
                     new_lesson = next((l for l in new_lessons if l["id"] == conflict["new_lesson_id"]), None)
