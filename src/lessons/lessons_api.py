@@ -57,25 +57,29 @@ def upload_and_extract(event):
 
         if extract_lessons:
             # Trigger async processing
-            lambda_client = boto3.client('lambda')
+            lambda_client = boto3.client("lambda")
             lambda_client.invoke(
-                FunctionName=os.environ.get('ASYNC_LESSONS_PROCESSOR_NAME'),
-                InvocationType='Event',  # Async
-                Payload=json.dumps({
-                    'project_name': project_name,
-                    'project_type': project_type,
-                    'content': content_text,
-                    'filename': filename
-                })
+                FunctionName=os.environ.get("ASYNC_LESSONS_PROCESSOR_NAME"),
+                InvocationType="Event",  # Async
+                Payload=json.dumps(
+                    {
+                        "project_name": project_name,
+                        "project_type": project_type,
+                        "content": content_text,
+                        "filename": filename,
+                    }
+                ),
             )
 
             return {
                 "statusCode": 202,  # Accepted
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({
-                    "message": "Document uploaded successfully. Lessons extraction in progress.",
-                    "status": "processing"
-                })
+                "body": json.dumps(
+                    {
+                        "message": "Document uploaded successfully. Lessons extraction in progress.",
+                        "status": "processing",
+                    }
+                ),
             }
 
         return {
@@ -89,7 +93,9 @@ def upload_and_extract(event):
         return error_response(str(e))
 
 
-def extract_lessons_from_document(content, project_name, date, filename="Unknown"):
+def extract_lessons_from_document(
+    content, project_name, date, filename="Unknown"
+):
     """Extract lessons learned from document using LLM"""
 
     prompt = f"""Extract lessons learned from this document for project "{project_name}".
@@ -151,7 +157,7 @@ Return only the JSON array, no other text."""
                 "title": "Document uploaded",
                 "dateEntered": f"{date}T00:00:00Z",
                 "lesson": "Automatic extraction failed",
-                "source_document": filename
+                "source_document": filename,
                 "details": "Document was uploaded but lesson extraction encountered an error",
                 "impact": "No automated insights generated",
                 "recommendation": "Review document manually for lessons learned",
