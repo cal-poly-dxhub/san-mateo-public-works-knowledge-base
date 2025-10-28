@@ -1,45 +1,56 @@
 models:
-  # Project management models
-  project_setup_model_id: "us.anthropic.claude-sonnet-4-20250514-v1:0"
-  task_generation_model_id: "anthropic.claude-3-sonnet-20240229-v1:0"
-  ai_assistant_model_id: "us.anthropic.claude-sonnet-4-20250514-v1:0"
-  template_generation_model_id: "anthropic.claude-3-sonnet-20240229-v1:0"
+  # Primary LLM - Used for most AI tasks
+  # Used by: Project setup, AI assistant, RAG search
+  primary_llm: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+  
+  # Lessons extraction - Extracts lessons from documents
+  # Used by: Lesson extraction from uploaded documents
+  lessons_extractor: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+  
+  # Conflict detection - Finds conflicts between lessons
+  # Used by: Detecting superseding lessons, conflict analysis
+  conflict_detector: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+  
+  # Document generation - Used for creating reports, templates, assets
+  # Used by: Asset generation (executive summaries, web stories)
+  document_generator: "anthropic.claude-3-sonnet-20240229-v1:0"
+  
+  # Embeddings - Used for vector search
+  # Used by: Vector ingestion, search queries
+  embeddings: "amazon.titan-embed-text-v2:0"
 
-  # Search and embedding models
-  embedding_model_id: "amazon.titan-embed-text-v2:0"
-
-  # Available search models for AI assistant
+  # Available models for user selection in search UI
   available_search_models:
     - id: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
       name: "Claude 4.5 Haiku"
-      description: "A good balance of speed and detail"
+      description: "Fast and efficient"
     - id: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
       name: "Claude 4.5 Sonnet"
-      description: "Best for complex analysis and detailed responses"
+      description: "Best for complex analysis"
     - id: "us.meta.llama4-maverick-17b-instruct-v1:0"
       name: "Llama 4 Maverick"
-      description: "Fast responses for quick queries"
+      description: "Quick responses"
     - id: "us.amazon.nova-pro-v1:0"
       name: "Amazon Nova Pro"
-      description: "Amazon's latest AI model"
+      description: "Amazon's latest model"
 
-# Vector ingestion configuration
-vector_ingestion:
+# Vector search configuration
+vector_search:
   chunk_size_tokens: 512
   overlap_tokens: 64
   vector_bucket_name: "dpw-project-mgmt-vectors"
   index_name: "project-mgmt-index"
 
-settings:
+# Project configuration
+project:
   max_document_length: 100000
-  project_types:
+  types:
     - "Reconstruction"
     - "Resurface"
     - "Slurry Seal"
     - "Drainage"
     - "Utilities"
     - "Other"
-
   special_conditions:
     - "Near coast"
     - "In NFO area"

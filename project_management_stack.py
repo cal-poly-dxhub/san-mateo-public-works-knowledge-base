@@ -211,12 +211,8 @@ class ProjectManagementStack(Stack):
             layers=[meeting_data_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "PROJECT_SETUP_MODEL_ID": config["models"][
-                    "project_setup_model_id"
-                ],
-                "TASK_GENERATION_MODEL_ID": config["models"][
-                    "task_generation_model_id"
-                ],
+                "PROJECT_SETUP_MODEL_ID": config["models"]["primary_llm"],
+                "TASK_GENERATION_MODEL_ID": config["models"]["primary_llm"],
                 "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
             },
         )
@@ -276,7 +272,8 @@ class ProjectManagementStack(Stack):
             layers=[common_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
+                "LESSONS_EXTRACTOR_MODEL_ID": config["models"]["lessons_extractor"],
+                "CONFLICT_DETECTOR_MODEL_ID": config["models"]["conflict_detector"],
                 "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
             },
         )
@@ -299,13 +296,31 @@ class ProjectManagementStack(Stack):
             layers=[common_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
+                "LESSONS_EXTRACTOR_MODEL_ID": config["models"]["lessons_extractor"],
+                "CONFLICT_DETECTOR_MODEL_ID": config["models"]["conflict_detector"],
+                "VECTOR_BUCKET_NAME": vector_bucket_name,
+                "INDEX_NAME": index_name,
+                "EMBEDDING_MODEL_ID": config["models"]["embeddings"],
             },
         )
         bucket.grant_read_write(async_lessons_processor)
         async_lessons_processor.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel"], resources=["*"]
+            )
+        )
+        async_lessons_processor.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "s3vectors:PutVectors",
+                    "s3vectors:DeleteVectors",
+                    "s3vectors:QueryVectors",
+                    "s3vectors:ListVectors",
+                    "s3vectors:GetVectors",
+                    "s3vectors:GetIndex",
+                    "s3vectors:GetVectorBucket",
+                ],
+                resources=["*"],
             )
         )
 
@@ -433,7 +448,7 @@ class ProjectManagementStack(Stack):
             timeout=cdk.Duration.minutes(5),
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "EMBEDDING_MODEL_ID": config["models"]["embedding_model_id"],
+                "EMBEDDING_MODEL_ID": config["models"]["embeddings"],
             },
         )
         bucket.grant_read_write(vector_ingestion_lambda)
@@ -601,7 +616,7 @@ class ProjectManagementStack(Stack):
                 "INDEX_NAME": index_name,
                 "VECTOR_BUCKET_ARN": f"arn:aws:s3vectors:{self.region}:{self.account}:bucket/{vector_bucket_name}",
                 "INDEX_ARN": f"arn:aws:s3vectors:{self.region}:{self.account}:bucket/{vector_bucket_name}/index/{index_name}",
-                "EMBEDDING_MODEL_ID": config["models"]["embedding_model_id"],
+                "EMBEDDING_MODEL_ID": config["models"]["embeddings"],
                 "BEDROCK_MODEL_ID": config["models"][
                     "ai_assistant_model_id"
                 ],  # Use AI assistant model for search
