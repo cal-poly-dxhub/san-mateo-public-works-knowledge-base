@@ -129,11 +129,11 @@ export default function LessonsLearnedMaster() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mt-2">
-                      {projectType.projects.length} projects
+                      {projectType.projects?.length || 0} projects
                     </p>
                     <div className="text-xs text-muted-foreground mt-1">
-                      {projectType.projects.slice(0, 3).join(", ")}
-                      {projectType.projects.length > 3 && "..."}
+                      {projectType.projects?.slice(0, 3).join(", ") || ""}
+                      {(projectType.projects?.length || 0) > 3 && "..."}
                     </div>
                   </CardContent>
                 </Card>
@@ -158,8 +158,8 @@ export default function LessonsLearnedMaster() {
                       const severityOrder = { High: 0, Medium: 1, Low: 2 };
                       return severityOrder[a.severity] - severityOrder[b.severity];
                     })
-                    .map((lesson) => (
-                      <Card key={lesson.id} className="hover:bg-muted/50 transition-colors">
+                    .map((lesson, index) => (
+                      <Card key={`${lesson.id}-${index}`} className="hover:bg-muted/50 transition-colors">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">

@@ -36,13 +36,15 @@ export default function AddLessonDialog({
 
     setLoading(true);
     try {
+      const contentWithPrompt = `INSTRUCTION: This is a note from a user. Generate only ONE lesson learned based on this note.\n\n${notes}`;
+      
       await apiRequest(
         `/projects/${encodeURIComponent(projectName)}/documents`,
         {
           method: "POST",
           body: JSON.stringify({
             filename: `lesson-${Date.now()}.txt`,
-            content: notes,
+            content: contentWithPrompt,
             extract_lessons: true,
             project_type: projectType,
           }),
