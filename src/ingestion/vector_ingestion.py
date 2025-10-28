@@ -1,9 +1,10 @@
 import json
 import logging
 import os
-import boto3
-from typing import List, Dict, Any
 from datetime import datetime, timezone
+from typing import Any, Dict, List
+
+import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -18,26 +19,34 @@ ssm_client = boto3.client("ssm")
 def handler(event, context):
     """Lambda handler for automatic vector ingestion"""
     try:
-        logger.info(f"Vector ingestion triggered with {len(event['Records'])} records")
+        logger.info(
+            f"Vector ingestion triggered with {len(event['Records'])} records"
+        )
 
         for record in event["Records"]:
             bucket_name = record["s3"]["bucket"]["name"]
             object_key = record["s3"]["object"]["key"]
 
             # Process text files in documents folder or lessons JSON files
-            is_document = object_key.endswith(".txt") and "documents" in object_key
+            is_document = (
+                object_key.endswith(".txt") and "documents" in object_key
+            )
             is_lesson = object_key.endswith("lessons-learned.json")
-            
+
             if not (is_document or is_lesson):
                 logger.info(f"Skipping non-document file: {object_key}")
                 continue
 
-            logger.info(f"Processing document for vector ingestion: {object_key}")
+            logger.info(
+                f"Processing document for vector ingestion: {object_key}"
+            )
 
             # Extract project name from path
             project_name = extract_project_name(object_key)
             if not project_name:
-                logger.warning(f"Could not extract project name from {object_key}")
+                logger.warning(
+                    f"Could not extract project name from {object_key}"
+                )
                 continue
 
             # Get file metadata
@@ -49,7 +58,11 @@ def handler(event, context):
             is_lesson = object_key.endswith("lessons-learned.json")
             if should_process_file(object_key, file_last_modified):
                 ingest_file_to_vector_index(
-                    bucket_name, object_key, project_name, file_last_modified, is_lesson
+                    bucket_name,
+                    object_key,
+                    project_name,
+                    file_last_modified,
+                    is_lesson,
                 )
             else:
                 logger.info(f"File {object_key} already processed, skipping")
@@ -97,7 +110,8 @@ def should_process_file(file_key: str, file_last_modified: str) -> bool:
     """Check if file needs processing using DynamoDB cache"""
     try:
         response = dynamodb_client.get_item(
-            TableName="vector-ingestion-cache", Key={"file_key": {"S": file_key}}
+            TableName="vector-ingestion-cache",
+            Key={"file_key": {"S": file_key}},
         )
 
         if "Item" not in response:
@@ -128,7 +142,9 @@ def update_cache(file_key: str, file_last_modified: str, vector_ids: List[str]):
         logger.error(f"Error updating cache for {file_key}: {e}")
 
 
-def chunk_text(text: str, chunk_size_tokens: int, overlap_tokens: int) -> List[str]:
+def chunk_text(
+    text: str, chunk_size_tokens: int, overlap_tokens: int
+) -> List[str]:
     """Chunk text with fixed size and overlap"""
     chunk_size_chars = chunk_size_tokens * 4
     overlap_chars = overlap_tokens * 4
@@ -165,13 +181,13 @@ def get_project_metadata(bucket_name: str, project_name: str) -> Dict[str, Any]:
     try:
         response = dynamodb_client.get_item(
             TableName=os.environ.get("PROJECTS_TABLE", "projects"),
-            Key={"project_name": {"S": project_name}}
+            Key={"project_name": {"S": project_name}},
         )
-        
+
         if "Item" not in response:
             logger.warning(f"No metadata found for project {project_name}")
             return {}
-        
+
         item = response["Item"]
         return {
             "project_type": item.get("project_type", {}).get("S", ""),
@@ -179,12 +195,18 @@ def get_project_metadata(bucket_name: str, project_name: str) -> Dict[str, Any]:
             "status": item.get("status", {}).get("S", ""),
         }
     except Exception as e:
-        logger.warning(f"Could not load project metadata for {project_name}: {e}")
+        logger.warning(
+            f"Could not load project metadata for {project_name}: {e}"
+        )
         return {}
 
 
 def ingest_file_to_vector_index(
-    bucket_name: str, file_key: str, project_name: str, file_last_modified: str, is_lesson: bool = False
+    bucket_name: str,
+    file_key: str,
+    project_name: str,
+    file_last_modified: str,
+    is_lesson: bool = False,
 ):
     """Ingest a single file into the vector index with project metadata"""
     logger.info(f"Starting vector ingestion for {file_key}")
@@ -196,16 +218,18 @@ def ingest_file_to_vector_index(
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
         raw_content = response["Body"].read().decode("utf-8")
-        
+
         # Handle JSON lessons files - each lesson becomes its own chunk
         if is_lesson:
             lessons_data = json.loads(raw_content)
             lessons_list = lessons_data.get("lessons", [])
-            logger.info(f"Processing {len(lessons_list)} individual lessons from {file_key}")
+            logger.info(
+                f"Processing {len(lessons_list)} individual lessons from {file_key}"
+            )
         else:
             content = raw_content
             lessons_list = None
-            
+
     except Exception as e:
         logger.error(f"Error reading {file_key}: {e}")
         return
@@ -224,23 +248,29 @@ def ingest_file_to_vector_index(
         for lesson in lessons_list:
             lesson_text = f"Title: {lesson.get('title', 'Untitled')}\n"
             lesson_text += f"Lesson: {lesson.get('lesson', '')}\n"
-            lesson_text += f"Details: {lesson.get('details', '')}\n"
             lesson_text += f"Impact: {lesson.get('impact', '')}\n"
-            lesson_text += f"Recommendation: {lesson.get('recommendation', '')}\n"
+            lesson_text += (
+                f"Recommendation: {lesson.get('recommendation', '')}\n"
+            )
             lesson_text += f"Severity: {lesson.get('severity', 'Unknown')}"
             chunks.append(lesson_text)
-            # Store source document name if available
-            lesson_metadata_list.append({
-                "source_document": lesson.get("source_document", "Unknown")
-            })
+            # Store source document name and lesson ID
+            lesson_metadata_list.append(
+                {
+                    "source_document": lesson.get("source_document", "Unknown"),
+                    "lesson_id": lesson.get("id", ""),
+                }
+            )
         logger.info(f"Created {len(chunks)} lesson chunks for {filename}")
     else:
-        chunks = chunk_text(content, config["chunk_size_tokens"], config["overlap_tokens"])
+        chunks = chunk_text(
+            content, config["chunk_size_tokens"], config["overlap_tokens"]
+        )
         lesson_metadata_list = None
         logger.info(f"Created {len(chunks)} chunks for {filename}")
 
     vector_ids = []
-    embedding_model_id = os.getenv("EMBEDDING_MODEL_ID", "amazon.titan-embed-text-v2:0")
+    embedding_model_id = os.environ["EMBEDDING_MODEL_ID"]
 
     # Process each chunk
     for i, chunk in enumerate(chunks):
@@ -250,13 +280,19 @@ def ingest_file_to_vector_index(
 
             # Create metadata with project context
             truncated_content = chunk[:1800] if len(chunk) > 1800 else chunk
-            
+
             # For lessons, use source_document if available
-            if is_lesson and lesson_metadata_list and i < len(lesson_metadata_list):
-                source_doc = lesson_metadata_list[i].get("source_document", filename)
+            if (
+                is_lesson
+                and lesson_metadata_list
+                and i < len(lesson_metadata_list)
+            ):
+                source_doc = lesson_metadata_list[i].get(
+                    "source_document", filename
+                )
             else:
                 source_doc = filename
-            
+
             metadata = {
                 "project_name": project_name,
                 "file_name": source_doc,  # Use source document name for lessons

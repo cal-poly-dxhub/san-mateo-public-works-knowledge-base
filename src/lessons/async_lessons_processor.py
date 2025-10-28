@@ -1,11 +1,10 @@
 import json
 import boto3
 import os
-from datetime import datetime
-from lessons_api import extract_lessons_from_document, append_to_project_lessons, update_master_lessons
+from lessons_processor import extract_and_merge_lessons
 
 def handler(event, context):
-    """Process lessons extraction asynchronously"""
+    """Process lessons extraction asynchronously with superseding logic"""
     try:
         project_name = event['project_name']
         project_type = event['project_type']
@@ -15,31 +14,36 @@ def handler(event, context):
         
         print(f"Starting async lessons processing for {project_name}")
         
-        # Extract lessons learned using LLM
-        lessons = extract_lessons_from_document(
-            content_text, 
-            project_name, 
-            datetime.now().strftime('%Y-%m-%d'),
-            filename  # Pass filename for source tracking
+        # Extract and merge lessons with superseding logic
+        stats = extract_and_merge_lessons(
+            content=content_text,
+            filename=filename,
+            project_name=project_name,
+            project_type=project_type,
+            bucket_name=bucket_name
         )
         
-        # Append to project lessons learned
-        append_to_project_lessons(bucket_name, project_name, lessons)
+        print(f"Lessons processing complete for {project_name}:")
+        print(f"  Project level: +{stats['project_added']} lessons, -{stats['project_deleted']} superseded")
+        print(f"  Type level: +{stats['type_added']} lessons, -{stats['type_deleted']} superseded")
         
-        # Update master lessons learned
-        update_master_lessons(bucket_name, project_type, project_name, lessons)
+        # Trigger vector ingestion for updated lessons files
+        trigger_vector_ingestion(bucket_name, project_name, project_type)
         
-        # Trigger vector ingestion for lessons files
-        trigger_vector_ingestion(bucket_name, project_name)
-        
-        print(f"Successfully processed {len(lessons)} lessons for {project_name}")
-        return {'statusCode': 200, 'message': 'Lessons processed successfully'}
+        return {
+            'statusCode': 200,
+            'message': 'Lessons processed successfully',
+            'stats': stats
+        }
         
     except Exception as e:
         print(f"Error processing lessons async: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {'statusCode': 500, 'error': str(e)}
 
-def trigger_vector_ingestion(bucket_name, project_name):
+
+def trigger_vector_ingestion(bucket_name, project_name, project_type):
     """Trigger vector ingestion for lessons learned files"""
     try:
         lambda_client = boto3.client('lambda')
@@ -59,7 +63,22 @@ def trigger_vector_ingestion(bucket_name, project_name):
             })
         )
         
-        print(f"Triggered vector ingestion for {project_lessons_key}")
+        # Trigger ingestion for project type master lessons file
+        type_lessons_key = f"lessons-learned/{project_type}/master-lessons.json"
+        lambda_client.invoke(
+            FunctionName=os.environ.get('VECTOR_INGESTION_LAMBDA_NAME'),
+            InvocationType='Event',
+            Payload=json.dumps({
+                'Records': [{
+                    's3': {
+                        'bucket': {'name': bucket_name},
+                        'object': {'key': type_lessons_key}
+                    }
+                }]
+            })
+        )
+        
+        print(f"Triggered vector ingestion for {project_lessons_key} and {type_lessons_key}")
         
     except Exception as e:
         print(f"Error triggering vector ingestion: {str(e)}")
