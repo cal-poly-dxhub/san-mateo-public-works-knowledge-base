@@ -40,9 +40,27 @@ def trigger_vector_ingestion(bucket_name: str, s3_key: str):
 
 
 def trigger_project_lessons_ingestion(bucket_name: str, project_name: str):
-    """Trigger vector ingestion for project lessons file"""
+    """Trigger vector sync for project lessons file"""
+    from sync_lessons_vectors import sync_lessons_to_vectors
+    import json
+    
+    # Read lessons from S3
     s3_key = f"projects/{project_name}/lessons-learned.json"
-    trigger_vector_ingestion(bucket_name, s3_key)
+    try:
+        s3_client = boto3.client('s3')
+        response = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
+        lessons_data = json.loads(response['Body'].read().decode('utf-8'))
+        lessons = lessons_data.get('lessons', [])
+        
+        # Sync directly
+        sync_lessons_to_vectors(
+            lessons=lessons,
+            project_name=project_name,
+            lessons_key=s3_key
+        )
+        print(f"Triggered vector sync for {s3_key}")
+    except Exception as e:
+        print(f"Error triggering vector sync for {s3_key}: {e}")
 
 
 def trigger_type_lessons_ingestion(bucket_name: str, project_type: str):
