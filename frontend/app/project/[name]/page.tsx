@@ -58,7 +58,9 @@ export default function ProjectPage() {
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [searchType, setSearchType] = useState<"both" | "lessons" | "documents">("both");
+  const [searchType, setSearchType] = useState<
+    "both" | "lessons" | "documents"
+  >("both");
 
   useEffect(() => {
     if (params.name) {
@@ -75,9 +77,9 @@ export default function ProjectPage() {
   const loadAvailableModels = async () => {
     try {
       const data = await apiRequest("/models");
-      console.log("Models API response:", data);
-      const models = Array.isArray(data) ? data : (data.available_search_models || []);
-      console.log("Parsed models:", models);
+      const models = Array.isArray(data)
+        ? data
+        : data.available_search_models || [];
       setAvailableModels(models);
       if (models.length > 0) {
         setSelectedModel(models[0].id);
@@ -131,7 +133,13 @@ export default function ProjectPage() {
       });
 
       if (ragEnabled) {
-        setSearchResults([{ answer: data.answer, sources: data.sources || [], query: projectSearch }]);
+        setSearchResults([
+          {
+            answer: data.answer,
+            sources: data.sources || [],
+            query: projectSearch,
+          },
+        ]);
       } else {
         setSearchResults(data.results || []);
       }
@@ -313,7 +321,7 @@ export default function ProjectPage() {
       </header>
 
       <div className="max-w-7xl mx-auto p-6">
-        <SearchComponent 
+        <SearchComponent
           projectName={project.name}
           placeholder="Search within this project..."
         />
