@@ -225,33 +225,6 @@ class ProjectManagementStack(Stack):
         )
 
         # AI Assistant Lambda
-        assistant_lambda = _lambda.Function(
-            self,
-            "AIAssistantLambda",
-            runtime=_lambda.Runtime.PYTHON_3_11,
-            handler="ai_assistant.handler",
-            code=_lambda.Code.from_asset("./src/assistant"),
-            timeout=cdk.Duration.minutes(2),
-            layers=[meeting_data_layer],
-            environment={
-                "BUCKET_NAME": bucket.bucket_name,
-                "AI_ASSISTANT_MODEL_ID": config["models"][
-                    "ai_assistant_model_id"
-                ],
-                "TEMPLATE_GENERATION_MODEL_ID": config["models"][
-                    "template_generation_model_id"
-                ],
-                "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
-            },
-        )
-        bucket.grant_read_write(assistant_lambda)
-        project_data_table.grant_read_write_data(assistant_lambda)
-        assistant_lambda.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["bedrock:InvokeModel"], resources=["*"]
-            )
-        )
-
         # Create Lambda Layer for common utilities
         common_layer = _lambda.LayerVersion(
             self,
@@ -738,14 +711,6 @@ class ProjectManagementStack(Stack):
         wizard_resource.add_method(
             "POST",
             apigateway.LambdaIntegration(wizard_lambda),
-            api_key_required=True,
-        )
-
-        # AI Assistant endpoint
-        assistant_resource = api.root.add_resource("assistant")
-        assistant_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(assistant_lambda),
             api_key_required=True,
         )
 
