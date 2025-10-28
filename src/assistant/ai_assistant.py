@@ -37,7 +37,7 @@ def answer_question(question, project_id):
     project_context = get_project_context(project_id) if project_id else {}
     
     # Search knowledge base for relevant information
-    knowledge_results = search_knowledge_base(question)
+    knowledge_results = search_knowledge_base(question, project_id)
     
     prompt = f"""You are an experienced Public Works senior engineer assistant.
 
@@ -214,7 +214,35 @@ def get_recent_activity(project_id):
     """Get recent project activity"""
     return []
 
-def search_knowledge_base(query):
-    """Search knowledge base for relevant information"""
-    # This would integrate with the vector search
-    return "Relevant regulations and procedures..."
+def search_knowledge_base(query, project_id=None):
+    """Search knowledge base for relevant information using vector search"""
+    try:
+        # Get project type if project_id provided
+        project_type = None
+        if project_id:
+            project_context = get_project_context(project_id)
+            project_type = project_context.get('projectType', '').lower().replace(' ', '-')
+        
+        # Call search Lambda
+        search_payload = {
+            "body": json.dumps({
+                "query": query,
+                "project": project_id,
+                "project_type": project_type
+            })
+        }
+        
+        response = lambda_client.invoke(
+            FunctionName=os.environ.get('SEARCH_LAMBDA_NAME'),
+            InvocationType='RequestResponse',
+            Payload=json.dumps(search_payload)
+        )
+        
+        result = json.loads(response['Payload'].read())
+        body = json.loads(result.get('body', '{}'))
+        
+        return body.get('response', 'No relevant information found.')
+        
+    except Exception as e:
+        print(f"Error searching knowledge base: {e}")
+        return "Unable to search knowledge base at this time."

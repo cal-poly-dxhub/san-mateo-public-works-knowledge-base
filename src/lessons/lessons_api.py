@@ -4,9 +4,7 @@ import os
 from datetime import datetime
 
 import boto3
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from common.vector_helper import trigger_project_lessons_ingestion
+from vector_helper import trigger_project_lessons_ingestion
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")

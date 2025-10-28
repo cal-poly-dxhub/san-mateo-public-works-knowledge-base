@@ -83,6 +83,43 @@ def extract_project_name(object_key: str) -> str:
     return ""
 
 
+def delete_existing_vectors_for_file(
+    vector_bucket_name: str,
+    index_name: str,
+    project_name: str,
+    file_key: str
+):
+    """Delete all existing vectors for a file before re-ingesting"""
+    try:
+        filename = file_key.split("/")[-1]
+        
+        # Query vectors with project_name and file_name metadata
+        response = s3vectors_client.query_vectors(
+            vectorBucketName=vector_bucket_name,
+            indexName=index_name,
+            metadataFilters={
+                "project_name": {"equals": project_name},
+                "file_name": {"equals": filename}
+            },
+            maxResults=1000
+        )
+        
+        vector_keys = [v["key"] for v in response.get("vectors", [])]
+        
+        if vector_keys:
+            s3vectors_client.delete_vectors(
+                vectorBucketName=vector_bucket_name,
+                indexName=index_name,
+                vectorKeys=vector_keys
+            )
+            logger.info(f"Deleted {len(vector_keys)} existing vectors for {file_key}")
+        else:
+            logger.info(f"No existing vectors found for {file_key}")
+            
+    except Exception as e:
+        logger.warning(f"Error deleting existing vectors for {file_key}: {e}")
+
+
 def load_config():
     """Load vector ingestion configuration from SSM"""
     chunk_size = ssm_client.get_parameter(
@@ -213,6 +250,14 @@ def ingest_file_to_vector_index(
 
     # Load configuration
     config = load_config()
+
+    # DELETE EXISTING VECTORS FOR THIS FILE FIRST
+    delete_existing_vectors_for_file(
+        config["vector_bucket_name"],
+        config["index_name"],
+        project_name,
+        file_key
+    )
 
     # Get file content
     try:

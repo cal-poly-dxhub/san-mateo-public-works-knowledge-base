@@ -256,6 +256,15 @@ class ProjectManagementStack(Stack):
             )
         )
 
+        # Create Lambda Layer for common utilities
+        common_layer = _lambda.LayerVersion(
+            self,
+            "CommonUtilitiesLayer",
+            code=_lambda.Code.from_asset("./src/common"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_11],
+            description="Common utilities including vector_helper",
+        )
+
         # Lessons Learned Lambda
         lessons_lambda = _lambda.Function(
             self,
@@ -264,6 +273,7 @@ class ProjectManagementStack(Stack):
             handler="lessons_api.handler",
             code=_lambda.Code.from_asset("./src/lessons"),
             timeout=cdk.Duration.seconds(300),  # 5 min for sync processing
+            layers=[common_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
                 "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
@@ -286,6 +296,7 @@ class ProjectManagementStack(Stack):
             handler="async_lessons_processor.handler",
             code=_lambda.Code.from_asset("./src/lessons"),
             timeout=cdk.Duration.minutes(5),  # Longer timeout for processing
+            layers=[common_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
                 "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],

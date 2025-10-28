@@ -1,9 +1,7 @@
 import json
 import boto3
 import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from common.vector_helper import trigger_project_lessons_ingestion, trigger_type_lessons_ingestion
+from vector_helper import trigger_project_lessons_ingestion, trigger_type_lessons_ingestion
 from lessons_processor import extract_and_merge_lessons
 
 def handler(event, context):
