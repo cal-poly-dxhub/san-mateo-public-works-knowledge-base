@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,8 @@ export default function SearchComponent({ projectName, placeholder = "Ask a ques
   const [loading, setLoading] = useState(false);
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
   const [searchType, setSearchType] = useState<"both" | "lessons" | "documents">("both");
+  const [ragEnabled, setRagEnabled] = useState(true);
+  const [docLimit, setDocLimit] = useState("10");
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
 
@@ -71,26 +74,37 @@ export default function SearchComponent({ projectName, placeholder = "Ask a ques
 
     setLoading(true);
     try {
-      const body: any = { query, limit: 10, model_id: selectedModel };
+      const body: any = { query, limit: parseInt(docLimit), model_id: selectedModel };
 
       // For documents, filter by project. For lessons, search globally
       if (searchType === "lessons") {
         body.is_lesson = true;
-        // Don't set project_name - search all lessons
       } else if (searchType === "documents") {
         body.is_lesson = false;
-        if (projectName) body.project_name = projectName; // Only project documents
+        if (projectName) body.project_name = projectName;
       } else if (searchType === "both") {
-        // Search project documents + all lessons
         if (projectName) body.project_name = projectName;
       }
 
-      const data = await apiRequest("/search-rag", {
+      // Choose endpoint based on RAG mode
+      const endpoint = ragEnabled ? "/search-rag" : "/search";
+      
+      const data = await apiRequest(endpoint, {
         method: "POST",
         body: JSON.stringify(body),
       });
       
-      setResult({ answer: data.answer, sources: data.sources || [] });
+      if (ragEnabled) {
+        // RAG response: { answer, sources }
+        setResult({ answer: data.answer, sources: data.sources || [] });
+        setExpandedSources(new Set()); // Collapse all in RAG mode
+      } else {
+        // Non-RAG response: { results } - already in correct format
+        const results = data.results || [];
+        setResult({ answer: "", sources: results });
+        // Auto-expand all sources in non-RAG mode
+        setExpandedSources(new Set(results.map((_: any, i: number) => i)));
+      }
     } catch (error) {
       console.error("Search error:", error);
     } finally {
@@ -144,18 +158,42 @@ export default function SearchComponent({ projectName, placeholder = "Ask a ques
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           className="flex-1"
         />
-        <Select value={selectedModel} onValueChange={setSelectedModel}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Select AI Model" />
+        {ragEnabled && (
+          <Select value={selectedModel} onValueChange={setSelectedModel}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select AI Model" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableModels.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                  {model.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <Select value={docLimit} onValueChange={setDocLimit}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {availableModels.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
-                {model.name}
+            {[5, 10, 15, 20].map((num) => (
+              <SelectItem key={num} value={num.toString()}>
+                {num} docs
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 px-3 border rounded-md">
+          <Switch
+            id="rag-mode"
+            checked={ragEnabled}
+            onCheckedChange={setRagEnabled}
+          />
+          <Label htmlFor="rag-mode" className="cursor-pointer whitespace-nowrap">
+            AI Summary
+          </Label>
+        </div>
         <Button onClick={handleSearch} disabled={loading}>
           <Search className="h-4 w-4 mr-2" />
           {loading ? "Searching..." : "Search"}
@@ -164,22 +202,26 @@ export default function SearchComponent({ projectName, placeholder = "Ask a ques
 
       {result && (
         <div className="space-y-6 mt-6">
-          {/* Answer */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Answer</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-2 [&_strong]:font-semibold [&_ul]:my-2 [&_li]:my-1">
-                <ReactMarkdown>{result.answer}</ReactMarkdown>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Answer - only show if RAG enabled */}
+          {ragEnabled && result.answer && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Answer</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm max-w-none [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-2 [&_strong]:font-semibold [&_ul]:my-2 [&_li]:my-1">
+                  <ReactMarkdown>{result.answer}</ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Sources */}
           {result.sources && result.sources.length > 0 && (
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">Sources</h3>
+              <h3 className="font-semibold text-lg">
+                {ragEnabled ? "Sources" : `Top ${result.sources.length} Results`}
+              </h3>
               {result.sources.map((source, index) => (
                 <Card key={index} className="border">
                   <CardHeader
