@@ -83,7 +83,7 @@ Return only the JSON array."""
     try:
         response = bedrock.converse(
             modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
-            messages=[{"role": "user", "content": [{"text": prompt}]}]
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
         )
 
         lessons_text = response["output"]["message"]["content"][0]["text"]
@@ -116,7 +116,9 @@ def merge_lessons_with_superseding(
 
     if not existing_lessons:
         save_lessons_file(bucket_name, existing_lessons_key, new_lessons)
-        sync_lessons_to_vectors(bucket_name, existing_lessons_key, new_lessons, project_name)
+        sync_lessons_to_vectors(
+            bucket_name, existing_lessons_key, new_lessons, project_name
+        )
         return {"added": len(new_lessons), "conflicts": 0}
 
     chunks = chunk_lessons(existing_lessons, CHUNK_SIZE)
@@ -132,9 +134,11 @@ def merge_lessons_with_superseding(
     updated_lessons.sort(key=lambda x: x["id"], reverse=True)
 
     save_lessons_file(bucket_name, existing_lessons_key, updated_lessons)
-    
+
     # Immediately sync to vectors (don't wait for S3 event)
-    sync_lessons_to_vectors(bucket_name, existing_lessons_key, updated_lessons, project_name)
+    sync_lessons_to_vectors(
+        bucket_name, existing_lessons_key, updated_lessons, project_name
+    )
 
     # Save conflicts for review
     if all_conflicts:
@@ -152,23 +156,27 @@ def compare_lessons_with_llm(new_lessons, existing_lessons_chunk, context_type):
 
     tools = [
         {
-            "name": "delete_lessons",
-            "description": "Delete lessons that are superseded by new lessons. Only delete if new lesson clearly replaces or makes obsolete an existing lesson.",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "lesson_ids": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Array of lesson IDs to delete",
-                    },
-                    "reasoning": {
-                        "type": "string",
-                        "description": "Brief explanation of why these lessons are being superseded",
-                    },
+            "toolSpec": {
+                "name": "delete_lessons",
+                "description": "Delete lessons that are superseded by new lessons. Only delete if new lesson clearly replaces or makes obsolete an existing lesson.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "lesson_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Array of lesson IDs to delete",
+                            },
+                            "reasoning": {
+                                "type": "string",
+                                "description": "Brief explanation of why these lessons are being superseded",
+                            },
+                        },
+                        "required": ["lesson_ids", "reasoning"],
+                    }
                 },
-                "required": ["lesson_ids", "reasoning"],
-            },
+            }
         }
     ]
 
@@ -192,7 +200,7 @@ Use the delete_lessons tool to specify which lesson IDs to delete. If no lessons
         response = bedrock.converse(
             modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
             messages=[{"role": "user", "content": [{"text": prompt}]}],
-            toolConfig={"tools": tools}
+            toolConfig={"tools": tools},
         )
 
         # Check if tool was used
@@ -253,26 +261,32 @@ def find_conflicts_with_llm(new_lessons, existing_lessons_chunk, context_type):
 
     tools = [
         {
-            "name": "report_conflicts",
-            "description": "Report lessons that conflict or overlap with new lessons",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "conflicts": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "new_lesson_id": {"type": "string"},
-                                "existing_lesson_id": {"type": "string"},
-                                "reason": {"type": "string"},
+            "toolSpec": {
+                "name": "report_conflicts",
+                "description": "Report lessons that conflict or overlap with new lessons",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "conflicts": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "new_lesson_id": {"type": "string"},
+                                        "existing_lesson_id": {
+                                            "type": "string"
+                                        },
+                                        "reason": {"type": "string"},
+                                    },
+                                },
+                                "description": "Array of conflicts found",
                             },
                         },
-                        "description": "Array of conflicts found",
-                    },
+                        "required": ["conflicts"],
+                    }
                 },
-                "required": ["conflicts"],
-            },
+            }
         }
     ]
 
@@ -291,24 +305,43 @@ Use report_conflicts tool. If none, call with empty array."""
         response = bedrock.converse(
             modelId=os.environ["CONFLICT_DETECTOR_MODEL_ID"],
             messages=[{"role": "user", "content": [{"text": prompt}]}],
-            toolConfig={"tools": tools}
+            toolConfig={"tools": tools},
         )
-        
+
         for content in response["output"]["message"]["content"]:
-            if content.get("toolUse") and content["toolUse"]["name"] == "report_conflicts":
+            if (
+                content.get("toolUse")
+                and content["toolUse"]["name"] == "report_conflicts"
+            ):
                 conflicts = content["toolUse"]["input"].get("conflicts", [])
                 enriched = []
                 for conflict in conflicts:
-                    new_lesson = next((l for l in new_lessons if l["id"] == conflict["new_lesson_id"]), None)
-                    existing_lesson = next((l for l in existing_lessons_chunk if l["id"] == conflict["existing_lesson_id"]), None)
+                    new_lesson = next(
+                        (
+                            l
+                            for l in new_lessons
+                            if l["id"] == conflict["new_lesson_id"]
+                        ),
+                        None,
+                    )
+                    existing_lesson = next(
+                        (
+                            l
+                            for l in existing_lessons_chunk
+                            if l["id"] == conflict["existing_lesson_id"]
+                        ),
+                        None,
+                    )
                     if new_lesson and existing_lesson:
-                        enriched.append({
-                            "id": f"conflict_{datetime.now(timezone.utc).isoformat()}",
-                            "new_lesson": new_lesson,
-                            "existing_lesson": existing_lesson,
-                            "reason": conflict["reason"],
-                            "status": "pending",
-                        })
+                        enriched.append(
+                            {
+                                "id": f"conflict_{datetime.now(timezone.utc).isoformat()}",
+                                "new_lesson": new_lesson,
+                                "existing_lesson": existing_lesson,
+                                "reason": conflict["reason"],
+                                "status": "pending",
+                            }
+                        )
                 return enriched
 
         return []
@@ -334,4 +367,3 @@ def save_conflicts_file(bucket_name, conflicts_key, conflicts):
         Body=json.dumps(existing_conflicts, indent=2),
         ContentType="application/json",
     )
-
