@@ -52,11 +52,12 @@ def trigger_project_lessons_ingestion(bucket_name: str, project_name: str):
         lessons_data = json.loads(response['Body'].read().decode('utf-8'))
         lessons = lessons_data.get('lessons', [])
         
-        # Sync directly
+        # Sync directly with correct parameter order
         sync_lessons_to_vectors(
+            bucket_name=bucket_name,
+            lessons_key=s3_key,
             lessons=lessons,
-            project_name=project_name,
-            lessons_key=s3_key
+            project_name=project_name
         )
         print(f"Triggered vector sync for {s3_key}")
     except Exception as e:
