@@ -27,13 +27,17 @@ def handler(event, context):
             bucket_name = record["s3"]["bucket"]["name"]
             object_key = record["s3"]["object"]["key"]
 
-            # Process text files in documents folder or lessons JSON files
+            # Skip lessons files - they're synced directly by lessons_processor
+            if "lessons-learned" in object_key and object_key.endswith(".json"):
+                logger.info(f"Skipping lesson file (synced by processor): {object_key}")
+                continue
+
+            # Process text files in documents folder
             is_document = (
                 object_key.endswith(".txt") and "documents" in object_key
             )
-            is_lesson = object_key.endswith("lessons-learned.json")
 
-            if not (is_document or is_lesson):
+            if not is_document:
                 logger.info(f"Skipping non-document file: {object_key}")
                 continue
 
@@ -55,14 +59,13 @@ def handler(event, context):
             )
 
             # Check if file needs processing
-            is_lesson = object_key.endswith("lessons-learned.json")
             if should_process_file(object_key, file_last_modified):
                 ingest_file_to_vector_index(
                     bucket_name,
                     object_key,
                     project_name,
                     file_last_modified,
-                    is_lesson,
+                    is_lesson=False,
                 )
             else:
                 logger.info(f"File {object_key} already processed, skipping")

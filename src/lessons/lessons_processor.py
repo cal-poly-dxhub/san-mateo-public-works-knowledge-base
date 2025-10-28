@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timezone
 
 import boto3
+from sync_lessons_vectors import sync_lessons_to_vectors
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")
@@ -120,6 +121,7 @@ def merge_lessons_with_superseding(
 
     if not existing_lessons:
         save_lessons_file(bucket_name, existing_lessons_key, new_lessons)
+        sync_lessons_to_vectors(bucket_name, existing_lessons_key, new_lessons, project_name)
         return {"added": len(new_lessons), "conflicts": 0}
 
     chunks = chunk_lessons(existing_lessons, CHUNK_SIZE)
@@ -135,6 +137,9 @@ def merge_lessons_with_superseding(
     updated_lessons.sort(key=lambda x: x["id"], reverse=True)
 
     save_lessons_file(bucket_name, existing_lessons_key, updated_lessons)
+    
+    # Immediately sync to vectors (don't wait for S3 event)
+    sync_lessons_to_vectors(bucket_name, existing_lessons_key, updated_lessons, project_name)
 
     # Save conflicts for review
     if all_conflicts:
