@@ -8,12 +8,12 @@ import ConflictsSection from "./ConflictsSection";
 
 interface Lesson {
   title: string;
-  dateEntered: string;
+  id: string;
   lesson: string;
-  details: string;
   impact: string;
   recommendation: string;
   severity: "Low" | "Medium" | "High";
+  source_document?: string;
 }
 
 interface LessonsData {
@@ -87,7 +87,7 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
                   <div className="flex items-center gap-3">
                     <CardTitle className="text-base">{lesson.title}</CardTitle>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(lesson.dateEntered).toLocaleDateString()}
+                      {new Date(lesson.id).toLocaleDateString()}
                     </span>
                   </div>
                   <Badge className={getSeverityColor(lesson.severity)}>
@@ -101,10 +101,6 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
                   <span className="text-sm ml-2">{lesson.lesson}</span>
                 </div>
                 <div>
-                  <span className="font-medium text-sm">Details:</span>
-                  <span className="text-sm ml-2 text-muted-foreground">{lesson.details}</span>
-                </div>
-                <div>
                   <span className="font-medium text-sm">Impact:</span>
                   <span className="text-sm ml-2 text-muted-foreground">{lesson.impact}</span>
                 </div>
@@ -112,6 +108,12 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
                   <span className="font-medium text-sm">Recommendation:</span>
                   <span className="text-sm ml-2 text-muted-foreground">{lesson.recommendation}</span>
                 </div>
+                {lesson.source_document && (
+                  <div>
+                    <span className="font-medium text-sm">Source:</span>
+                    <span className="text-sm ml-2 text-muted-foreground">{lesson.source_document}</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
