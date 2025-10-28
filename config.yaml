@@ -5,7 +5,7 @@ models:
 
   # Lessons extraction - Extracts lessons from documents (fast model)
   # Used by: Lesson extraction from uploaded documents
-  lessons_extractor: "meta.llama4-maverick-17b-instruct-v1:0"
+  lessons_extractor: "us.meta.llama4-maverick-17b-instruct-v1:0"
 
   # Conflict detection - Finds conflicts between lessons (reasoning model)
   # Used by: Detecting superseding lessons, conflict analysis

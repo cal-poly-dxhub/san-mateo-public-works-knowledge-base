@@ -514,9 +514,7 @@ class ProjectManagementStack(Stack):
                 "VECTOR_BUCKET_ARN": f"arn:aws:s3vectors:{self.region}:{self.account}:bucket/{vector_bucket_name}",
                 "INDEX_ARN": f"arn:aws:s3vectors:{self.region}:{self.account}:bucket/{vector_bucket_name}/index/{index_name}",
                 "EMBEDDING_MODEL_ID": config["models"]["embeddings"],
-                "BEDROCK_MODEL_ID": config["models"][
-                    "ai_assistant_model_id"
-                ],  # Use AI assistant model for search
+                "BEDROCK_MODEL_ID": config["models"]["primary_llm"],
             },
         )
         bucket.grant_read_write(search_lambda)
