@@ -267,9 +267,11 @@ class ProjectManagementStack(Stack):
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
                 "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
+                "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
             },
         )
         bucket.grant_read_write(lessons_lambda)
+        project_data_table.grant_read_data(lessons_lambda)
         lessons_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel"], resources=["*"]

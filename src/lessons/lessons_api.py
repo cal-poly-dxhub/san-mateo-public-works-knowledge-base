@@ -47,7 +47,13 @@ def upload_and_extract(event):
             content_text = file_content
 
         bucket_name = os.environ["BUCKET_NAME"]
-        project_type = body.get("project_type", "other")
+        
+        # Get project type from DynamoDB
+        dynamodb = boto3.resource("dynamodb")
+        table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
+        response = table.get_item(Key={"project_id": project_name, "item_id": "config"})
+        project_type_raw = response.get("Item", {}).get("projectType", "other")
+        project_type = project_type_raw.lower().replace(" ", "-")
 
         # Upload document to S3
         doc_key = f"projects/{project_name}/documents/{filename}"

@@ -20,6 +20,7 @@ import {
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import DocumentUploadDialog from "@/components/DocumentUploadDialog";
+import AddLessonDialog from "@/components/AddLessonDialog";
 import LessonsLearned from "@/components/LessonsLearned";
 import Checklist from "@/components/Checklist";
 import SearchComponent from "@/components/SearchComponent";
@@ -58,6 +59,7 @@ export default function ProjectPage() {
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [addLessonDialogOpen, setAddLessonDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<
     "both" | "lessons" | "documents"
   >("both");
@@ -310,13 +312,22 @@ export default function ProjectPage() {
           <h1 className="text-3xl font-semibold tracking-tight">
             {project?.name || "Loading..."}
           </h1>
-          <Button
-            onClick={() => setUploadDialogOpen(true)}
-            variant="outline"
-            size="sm"
-          >
-            Upload Document
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setAddLessonDialogOpen(true)}
+              variant="default"
+              size="sm"
+            >
+              Add Lesson
+            </Button>
+            <Button
+              onClick={() => setUploadDialogOpen(true)}
+              variant="default"
+              size="sm"
+            >
+              Upload Document
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -350,8 +361,17 @@ export default function ProjectPage() {
         projectName={project?.name || ""}
         projectType={project?.projectType || "other"}
         onUploadComplete={() => {
-          // Refresh lessons learned
           setUploadDialogOpen(false);
+        }}
+      />
+
+      <AddLessonDialog
+        open={addLessonDialogOpen}
+        onOpenChange={setAddLessonDialogOpen}
+        projectName={project?.name || ""}
+        projectType={project?.projectType || "other"}
+        onComplete={() => {
+          setAddLessonDialogOpen(false);
         }}
       />
     </div>

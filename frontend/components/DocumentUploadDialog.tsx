@@ -44,10 +44,8 @@ export default function DocumentUploadDialog({
 
     setLoading(true);
     try {
-      // Read file content
       const content = await file.text();
 
-      // Upload document
       await apiRequest(
         `/projects/${encodeURIComponent(projectName)}/documents`,
         {
@@ -61,26 +59,17 @@ export default function DocumentUploadDialog({
         },
       );
 
-      alert(
-        extractLessons
-          ? "Document upload started!"
-          : "Document uploaded successfully!",
-      );
-
+      alert(extractLessons ? "Document upload started!" : "Document uploaded successfully!");
       onUploadComplete();
       onOpenChange(false);
-      resetForm();
+      setFile(null);
+      setExtractLessons(false);
     } catch (error) {
       console.error("Error uploading document:", error);
       alert("Error uploading document");
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setFile(null);
-    setExtractLessons(false);
   };
 
   return (
@@ -119,8 +108,7 @@ export default function DocumentUploadDialog({
 
           {extractLessons && (
             <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
-              AI will analyze this document and extract key lessons learned for
-              future projects.
+              AI will analyze this document and extract key lessons learned.
             </div>
           )}
 
