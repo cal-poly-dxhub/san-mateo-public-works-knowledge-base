@@ -95,37 +95,53 @@ def delete_lesson_vectors_by_metadata(
 ):
     """Delete all lesson vectors for a project by listing and filtering"""
     try:
-        logger.info(f"Deleting existing lesson vectors for {project_name}")
+        logger.info(f"Deleting existing lesson vectors for {project_name} from {lessons_key}")
 
-        # List all vectors and filter by metadata
-        response = s3vectors_client.list_vectors(
-            vectorBucketName=vector_bucket,
-            indexName=index_name,
-            returnMetadata=True,
-            maxResults=1000
-        )
-
-        # Filter vectors by metadata
+        # List all vectors with pagination
         vector_keys = []
-        for v in response.get("vectors", []):
-            metadata = v.get("metadata", {})
-            if (metadata.get("project_name") == project_name and 
-                metadata.get("s3_key") == lessons_key and
-                metadata.get("is_lesson") == "true"):
-                vector_keys.append(v["key"])
+        next_token = None
+        
+        while True:
+            params = {
+                "vectorBucketName": vector_bucket,
+                "indexName": index_name,
+                "returnMetadata": True,
+                "maxResults": 500
+            }
+            if next_token:
+                params["nextToken"] = next_token
+                
+            response = s3vectors_client.list_vectors(**params)
+
+            # Filter vectors by metadata
+            for v in response.get("vectors", []):
+                metadata = v.get("metadata", {})
+                if (metadata.get("project_name") == project_name and 
+                    metadata.get("s3_key") == lessons_key and
+                    metadata.get("is_lesson") == "true"):
+                    vector_keys.append(v["key"])
+            
+            next_token = response.get("nextToken")
+            if not next_token:
+                break
 
         if vector_keys:
-            s3vectors_client.delete_vectors(
-                vectorBucketName=vector_bucket,
-                indexName=index_name,
-                keys=vector_keys
-            )
+            # Delete in batches of 100
+            for i in range(0, len(vector_keys), 100):
+                batch = vector_keys[i:i+100]
+                s3vectors_client.delete_vectors(
+                    vectorBucketName=vector_bucket,
+                    indexName=index_name,
+                    keys=batch
+                )
             logger.info(f"Deleted {len(vector_keys)} existing lesson vectors")
         else:
             logger.info(f"No existing lesson vectors found for {project_name}")
 
     except Exception as e:
-        logger.warning(f"Error deleting lesson vectors: {e}")
+        logger.error(f"Error deleting lesson vectors: {e}", exc_info=True)
+        raise
+
 
 
 def get_embedding(text: str, model_id: str) -> List[float]:

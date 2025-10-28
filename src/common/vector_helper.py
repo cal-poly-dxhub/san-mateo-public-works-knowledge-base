@@ -61,24 +61,40 @@ def delete_vectors_by_project(vector_bucket_name: str, index_name: str, project_
         project_name: Project name to filter by
     """
     try:
-        # Query vectors with project_name metadata filter
-        response = s3vectors_client.query_vectors(
-            vectorBucketName=vector_bucket_name,
-            indexName=index_name,
-            metadataFilters={
-                "project_name": {"equals": project_name}
-            },
-            maxResults=1000  # Adjust if needed
-        )
+        vector_ids = []
+        next_token = None
         
-        vector_ids = [v["key"] for v in response.get("vectors", [])]
+        # Paginate through all vectors
+        while True:
+            params = {
+                "vectorBucketName": vector_bucket_name,
+                "indexName": index_name,
+                "returnMetadata": True,
+                "maxResults": 500
+            }
+            if next_token:
+                params["nextToken"] = next_token
+                
+            response = s3vectors_client.list_vectors(**params)
+            
+            # Filter by project_name
+            for v in response.get("vectors", []):
+                if v.get("metadata", {}).get("project_name") == project_name:
+                    vector_ids.append(v["key"])
+            
+            next_token = response.get("nextToken")
+            if not next_token:
+                break
         
         if vector_ids:
-            s3vectors_client.delete_vectors(
-                vectorBucketName=vector_bucket_name,
-                indexName=index_name,
-                keys=vector_ids
-            )
+            # Delete in batches of 100
+            for i in range(0, len(vector_ids), 100):
+                batch = vector_ids[i:i+100]
+                s3vectors_client.delete_vectors(
+                    vectorBucketName=vector_bucket_name,
+                    indexName=index_name,
+                    keys=batch
+                )
             print(f"Deleted {len(vector_ids)} vectors for project {project_name}")
         else:
             print(f"No vectors found for project {project_name}")
@@ -98,24 +114,42 @@ def delete_vectors_by_file(vector_bucket_name: str, index_name: str, project_nam
         file_name: File name to filter by
     """
     try:
-        response = s3vectors_client.query_vectors(
-            vectorBucketName=vector_bucket_name,
-            indexName=index_name,
-            metadataFilters={
-                "project_name": {"equals": project_name},
-                "file_name": {"equals": file_name}
-            },
-            maxResults=1000
-        )
+        vector_ids = []
+        next_token = None
         
-        vector_ids = [v["key"] for v in response.get("vectors", [])]
+        # Paginate through all vectors
+        while True:
+            params = {
+                "vectorBucketName": vector_bucket_name,
+                "indexName": index_name,
+                "returnMetadata": True,
+                "maxResults": 500
+            }
+            if next_token:
+                params["nextToken"] = next_token
+                
+            response = s3vectors_client.list_vectors(**params)
+            
+            # Filter by project_name and file_name
+            for v in response.get("vectors", []):
+                metadata = v.get("metadata", {})
+                if (metadata.get("project_name") == project_name and 
+                    metadata.get("file_name") == file_name):
+                    vector_ids.append(v["key"])
+            
+            next_token = response.get("nextToken")
+            if not next_token:
+                break
         
         if vector_ids:
-            s3vectors_client.delete_vectors(
-                vectorBucketName=vector_bucket_name,
-                indexName=index_name,
-                keys=vector_ids
-            )
+            # Delete in batches of 100
+            for i in range(0, len(vector_ids), 100):
+                batch = vector_ids[i:i+100]
+                s3vectors_client.delete_vectors(
+                    vectorBucketName=vector_bucket_name,
+                    indexName=index_name,
+                    keys=batch
+                )
             print(f"Deleted {len(vector_ids)} vectors for {project_name}/{file_name}")
             
     except Exception as e:

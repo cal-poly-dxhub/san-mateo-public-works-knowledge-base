@@ -95,26 +95,42 @@ def delete_existing_vectors_for_file(
     """Delete all existing vectors for a file before re-ingesting"""
     try:
         filename = file_key.split("/")[-1]
+        vector_keys = []
+        next_token = None
         
-        # Query vectors with project_name and file_name metadata
-        response = s3vectors_client.query_vectors(
-            vectorBucketName=vector_bucket_name,
-            indexName=index_name,
-            metadataFilters={
-                "project_name": {"equals": project_name},
-                "file_name": {"equals": filename}
-            },
-            maxResults=1000
-        )
-        
-        vector_keys = [v["key"] for v in response.get("vectors", [])]
+        # Paginate through all vectors
+        while True:
+            params = {
+                "vectorBucketName": vector_bucket_name,
+                "indexName": index_name,
+                "returnMetadata": True,
+                "maxResults": 500
+            }
+            if next_token:
+                params["nextToken"] = next_token
+                
+            response = s3vectors_client.list_vectors(**params)
+            
+            # Filter by project_name and file_name
+            for v in response.get("vectors", []):
+                metadata = v.get("metadata", {})
+                if (metadata.get("project_name") == project_name and 
+                    metadata.get("file_name") == filename):
+                    vector_keys.append(v["key"])
+            
+            next_token = response.get("nextToken")
+            if not next_token:
+                break
         
         if vector_keys:
-            s3vectors_client.delete_vectors(
-                vectorBucketName=vector_bucket_name,
-                indexName=index_name,
-                keys=vector_keys
-            )
+            # Delete in batches of 100
+            for i in range(0, len(vector_keys), 100):
+                batch = vector_keys[i:i+100]
+                s3vectors_client.delete_vectors(
+                    vectorBucketName=vector_bucket_name,
+                    indexName=index_name,
+                    keys=batch
+                )
             logger.info(f"Deleted {len(vector_keys)} existing vectors for {file_key}")
         else:
             logger.info(f"No existing vectors found for {file_key}")
