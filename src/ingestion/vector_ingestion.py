@@ -113,7 +113,7 @@ def delete_existing_vectors_for_file(
             s3vectors_client.delete_vectors(
                 vectorBucketName=vector_bucket_name,
                 indexName=index_name,
-                vectorKeys=vector_keys
+                keys=vector_keys
             )
             logger.info(f"Deleted {len(vector_keys)} existing vectors for {file_key}")
         else:

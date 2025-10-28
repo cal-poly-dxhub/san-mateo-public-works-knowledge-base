@@ -77,7 +77,7 @@ def delete_vectors_by_project(vector_bucket_name: str, index_name: str, project_
             s3vectors_client.delete_vectors(
                 vectorBucketName=vector_bucket_name,
                 indexName=index_name,
-                vectorKeys=vector_ids
+                keys=vector_ids
             )
             print(f"Deleted {len(vector_ids)} vectors for project {project_name}")
         else:
@@ -114,7 +114,7 @@ def delete_vectors_by_file(vector_bucket_name: str, index_name: str, project_nam
             s3vectors_client.delete_vectors(
                 vectorBucketName=vector_bucket_name,
                 indexName=index_name,
-                vectorKeys=vector_ids
+                keys=vector_ids
             )
             print(f"Deleted {len(vector_ids)} vectors for {project_name}/{file_name}")
             
