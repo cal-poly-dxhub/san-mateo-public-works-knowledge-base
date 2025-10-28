@@ -1,6 +1,9 @@
 import json
 import boto3
 import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from common.vector_helper import trigger_project_lessons_ingestion, trigger_type_lessons_ingestion
 from lessons_processor import extract_and_merge_lessons
 
 def handler(event, context):
@@ -45,40 +48,6 @@ def handler(event, context):
 
 def trigger_vector_ingestion(bucket_name, project_name, project_type):
     """Trigger vector ingestion for lessons learned files"""
-    try:
-        lambda_client = boto3.client('lambda')
-        
-        # Trigger ingestion for project lessons file
-        project_lessons_key = f"projects/{project_name}/lessons-learned.json"
-        lambda_client.invoke(
-            FunctionName=os.environ.get('VECTOR_INGESTION_LAMBDA_NAME'),
-            InvocationType='Event',
-            Payload=json.dumps({
-                'Records': [{
-                    's3': {
-                        'bucket': {'name': bucket_name},
-                        'object': {'key': project_lessons_key}
-                    }
-                }]
-            })
-        )
-        
-        # Trigger ingestion for project type master lessons file
-        type_lessons_key = f"lessons-learned/{project_type}/master-lessons.json"
-        lambda_client.invoke(
-            FunctionName=os.environ.get('VECTOR_INGESTION_LAMBDA_NAME'),
-            InvocationType='Event',
-            Payload=json.dumps({
-                'Records': [{
-                    's3': {
-                        'bucket': {'name': bucket_name},
-                        'object': {'key': type_lessons_key}
-                    }
-                }]
-            })
-        )
-        
-        print(f"Triggered vector ingestion for {project_lessons_key} and {type_lessons_key}")
-        
-    except Exception as e:
-        print(f"Error triggering vector ingestion: {str(e)}")
+    trigger_project_lessons_ingestion(bucket_name, project_name)
+    trigger_type_lessons_ingestion(bucket_name, project_type)
+

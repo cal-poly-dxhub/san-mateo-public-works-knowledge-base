@@ -4,6 +4,9 @@ import os
 from datetime import datetime
 
 import boto3
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from common.vector_helper import trigger_project_lessons_ingestion
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")
@@ -508,6 +511,9 @@ def resolve_conflict(event):
             Body=json.dumps(conflicts, indent=2).encode("utf-8"),
             ContentType="application/json",
         )
+
+        # Trigger vector ingestion for updated lessons
+        trigger_project_lessons_ingestion(bucket_name, project_name)
 
         return {
             "statusCode": 200,
