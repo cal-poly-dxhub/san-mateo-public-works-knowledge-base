@@ -37,23 +37,29 @@ def handler(event, context):
 
         if path.endswith("/search-rag"):
             # Perform RAG search
-            result = search_with_rag(query, project_name, project_type, limit, is_lesson)
+            result = search_with_rag(
+                query, project_name, project_type, limit, is_lesson
+            )
             return {
                 "statusCode": 200,
                 "headers": {
                     "Content-Type": "application/json",
                     "Access-Control-Allow-Origin": "*",
                 },
-                "body": json.dumps({
-                    "query": query,
-                    "answer": result["answer"],
-                    "sources": result["sources"],
-                    "type": "rag"
-                }),
+                "body": json.dumps(
+                    {
+                        "query": query,
+                        "answer": result["answer"],
+                        "sources": result["sources"],
+                        "type": "rag",
+                    }
+                ),
             }
         else:
             # Perform regular vector search
-            results = search_vector_index(query, project_name, project_type, limit, is_lesson)
+            results = search_vector_index(
+                query, project_name, project_type, limit, is_lesson
+            )
             return {
                 "statusCode": 200,
                 "headers": {
@@ -81,18 +87,26 @@ def handler(event, context):
         }
 
 
-def search_with_rag(query: str, project_name: str = "", project_type: str = "", limit: int = 10, is_lesson = None) -> dict:
+def search_with_rag(
+    query: str,
+    project_name: str = "",
+    project_type: str = "",
+    limit: int = 10,
+    is_lesson=None,
+) -> dict:
     """
     Perform RAG search: retrieve relevant documents and generate answer using LLM
     """
     try:
         # First, get relevant documents using vector search
-        documents = search_vector_index(query, project_name, project_type, limit, is_lesson)
+        documents = search_vector_index(
+            query, project_name, project_type, limit, is_lesson
+        )
 
         if not documents:
             return {
-                "answer": "I couldn't find any relevant information in the meeting transcripts to answer your question.",
-                "sources": []
+                "answer": "I couldn't find any relevant information in the project documentation to answer your question.",
+                "sources": [],
             }
 
         # Prepare context from retrieved documents with citation numbers
@@ -107,11 +121,13 @@ def search_with_rag(query: str, project_name: str = "", project_type: str = "", 
         # Load RAG configuration
         config = load_config()
         rag_config = config.get("rag_search", {})
-        model_id = rag_config.get("model_id", "anthropic.claude-3-sonnet-20240229-v1:0")
-        
-        prompt = f"""You are an AI assistant that answers questions based on meeting transcripts and project documentation.
+        model_id = rag_config.get(
+            "model_id", "anthropic.claude-3-sonnet-20240229-v1:0"
+        )
 
-Use the following context from meeting transcripts to answer the user's question. When referencing information, include inline citations using [1], [2], [3] etc. to indicate which source you're using.
+        prompt = f"""You are an AI assistant that answers questions based on project documentation.
+
+Use the following context from the documentation to answer the user's question. When referencing information, include inline citations using [1], [2], [3] etc. to indicate which source you're using.
 
 IMPORTANT: Format your response using markdown syntax:
 - Start with a brief intro paragraph
@@ -144,16 +160,13 @@ Provide your answer in well-formatted markdown:"""
         result = json.loads(response["body"].read())
         answer = result["content"][0]["text"]
 
-        return {
-            "answer": answer,
-            "sources": documents
-        }
+        return {"answer": answer, "sources": documents}
 
     except Exception as e:
         print(f"Error in RAG search: {str(e)}")
         return {
             "answer": f"I encountered an error while processing your question: {str(e)}",
-            "sources": []
+            "sources": [],
         }
 
 
@@ -197,7 +210,11 @@ Answer:""",
 
 
 def search_vector_index(
-    query: str, project_name: str = "", project_type: str = "", limit: int = 10, is_lesson = None
+    query: str,
+    project_name: str = "",
+    project_type: str = "",
+    limit: int = 10,
+    is_lesson=None,
 ) -> List[Dict[str, Any]]:
     """
     Search the S3 vector index using embeddings
@@ -239,7 +256,7 @@ def search_vector_index(
             filters["project_type"] = project_type
         if is_lesson is not None:
             filters["is_lesson"] = "true" if is_lesson else "false"
-        
+
         if filters:
             search_params["filter"] = filters
             print(f"Applied filters: {filters}")
@@ -277,7 +294,9 @@ def search_vector_index(
         return []
 
 
-def chunk_text(text: str, chunk_size_tokens: int, overlap_tokens: int) -> List[str]:
+def chunk_text(
+    text: str, chunk_size_tokens: int, overlap_tokens: int
+) -> List[str]:
     """Chunk text with fixed size and overlap (same as ingestion script)"""
     chunk_size_chars = chunk_size_tokens * 4
     overlap_chars = overlap_tokens * 4
