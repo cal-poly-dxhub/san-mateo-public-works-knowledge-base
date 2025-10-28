@@ -25,8 +25,8 @@ def handler(event, context):
         )
         
         print(f"Lessons processing complete for {project_name}:")
-        print(f"  Project level: +{stats['project_added']} lessons, -{stats['project_deleted']} superseded")
-        print(f"  Type level: +{stats['type_added']} lessons, -{stats['type_deleted']} superseded")
+        print(f"  Project level: +{stats['project_added']} lessons, {stats.get('project_conflicts', 0)} conflicts")
+        print(f"  Type level: +{stats['type_added']} lessons, {stats.get('type_conflicts', 0)} conflicts")
         
         # Trigger vector ingestion for updated lessons files
         trigger_vector_ingestion(bucket_name, project_name, project_type)

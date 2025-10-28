@@ -24,7 +24,14 @@ def sync_lessons_to_vectors(
     try:
         vector_bucket = os.environ.get("VECTOR_BUCKET_NAME", "dxhub-meeting-kb-vectors")
         index_name = os.environ.get("INDEX_NAME", "meeting-kb-index")
-        embedding_model = os.environ["EMBEDDING_MODEL_ID"]
+        embedding_model = os.environ.get("EMBEDDING_MODEL_ID")
+        
+        if not embedding_model:
+            logger.error("EMBEDDING_MODEL_ID environment variable not set")
+            raise ValueError("EMBEDDING_MODEL_ID not configured")
+
+        logger.info(f"Starting vector sync for {project_name}: {len(lessons)} lessons")
+        logger.info(f"Vector bucket: {vector_bucket}, Index: {index_name}")
 
         # Delete all existing lesson vectors for this project
         delete_lesson_vectors_by_metadata(vector_bucket, index_name, project_name, lessons_key)
@@ -39,6 +46,7 @@ def sync_lessons_to_vectors(
                 # Create searchable content
                 content = f"{lesson.get('title', '')} {lesson.get('lesson', '')} {lesson.get('recommendation', '')}"
                 
+                logger.info(f"Generating embedding for lesson {lesson['id']}")
                 # Generate embedding
                 embedding = get_embedding(content, embedding_model)
 
@@ -55,6 +63,7 @@ def sync_lessons_to_vectors(
                 # Use lesson ID in vector key for easy correlation
                 vector_id = f"{project_name}_{lesson['id']}"
 
+                logger.info(f"Inserting vector {vector_id}")
                 # Insert into vector index
                 s3vectors_client.put_vectors(
                     vectorBucketName=vector_bucket,
@@ -68,44 +77,48 @@ def sync_lessons_to_vectors(
                     ],
                 )
 
-                logger.info(f"Added lesson vector {lesson['id']} for {project_name}")
+                logger.info(f"✓ Added lesson vector {lesson['id']} for {project_name}")
 
             except Exception as e:
-                logger.error(f"Error adding lesson {lesson.get('id')}: {e}")
+                logger.error(f"✗ Error adding lesson {lesson.get('id')}: {e}", exc_info=True)
+                raise
 
-        logger.info(f"Synced {len(lessons)} lessons for {project_name}")
+        logger.info(f"✓ Successfully synced {len(lessons)} lessons for {project_name}")
 
     except Exception as e:
-        logger.error(f"Error syncing lessons to vectors: {e}")
+        logger.error(f"✗ FATAL: Error syncing lessons to vectors: {e}", exc_info=True)
         raise
 
 
 def delete_lesson_vectors_by_metadata(
     vector_bucket: str, index_name: str, project_name: str, lessons_key: str
 ):
-    """Delete all lesson vectors for a project using metadata query"""
+    """Delete all lesson vectors for a project by listing and filtering"""
     try:
         logger.info(f"Deleting existing lesson vectors for {project_name}")
 
-        # Query vectors by metadata
-        response = s3vectors_client.query_vectors(
+        # List all vectors and filter by metadata
+        response = s3vectors_client.list_vectors(
             vectorBucketName=vector_bucket,
             indexName=index_name,
-            metadataFilters={
-                "project_name": {"equals": project_name},
-                "s3_key": {"equals": lessons_key},
-                "is_lesson": {"equals": "true"}
-            },
+            returnMetadata=True,
             maxResults=1000
         )
 
-        vector_keys = [v["key"] for v in response.get("vectors", [])]
+        # Filter vectors by metadata
+        vector_keys = []
+        for v in response.get("vectors", []):
+            metadata = v.get("metadata", {})
+            if (metadata.get("project_name") == project_name and 
+                metadata.get("s3_key") == lessons_key and
+                metadata.get("is_lesson") == "true"):
+                vector_keys.append(v["key"])
 
         if vector_keys:
             s3vectors_client.delete_vectors(
                 vectorBucketName=vector_bucket,
                 indexName=index_name,
-                vectorKeys=vector_keys
+                keys=vector_keys
             )
             logger.info(f"Deleted {len(vector_keys)} existing lesson vectors")
         else:
