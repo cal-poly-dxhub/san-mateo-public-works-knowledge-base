@@ -263,7 +263,7 @@ class ProjectManagementStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_11,
             handler="lessons_api.handler",
             code=_lambda.Code.from_asset("./src/lessons"),
-            timeout=cdk.Duration.seconds(30),  # Quick response
+            timeout=cdk.Duration.seconds(300),  # 5 min for sync processing
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
                 "LESSONS_MODEL_ID": config["models"]["ai_assistant_model_id"],
@@ -873,6 +873,21 @@ class ProjectManagementStack(Stack):
 
         documents_resource = project_detail_resource.add_resource("documents")
         documents_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(lessons_lambda),
+            api_key_required=True,
+        )
+
+        # Conflicts endpoints
+        conflicts_resource = project_detail_resource.add_resource("conflicts")
+        conflicts_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(lessons_lambda),
+            api_key_required=True,
+        )
+        
+        conflicts_resolve_resource = conflicts_resource.add_resource("resolve")
+        conflicts_resolve_resource.add_method(
             "POST",
             apigateway.LambdaIntegration(lessons_lambda),
             api_key_required=True,

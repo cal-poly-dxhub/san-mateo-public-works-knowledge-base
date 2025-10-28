@@ -59,7 +59,7 @@ export default function DocumentUploadDialog({
         },
       );
 
-      alert(extractLessons ? "Document upload started!" : "Document uploaded successfully!");
+      alert(extractLessons ? "Document uploaded! Processing lessons..." : "Document uploaded!");
       onUploadComplete();
       onOpenChange(false);
       setFile(null);

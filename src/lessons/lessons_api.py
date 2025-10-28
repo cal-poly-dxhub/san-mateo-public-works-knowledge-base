@@ -19,6 +19,10 @@ def handler(event, context):
         return upload_and_extract(event)
     elif method == "GET" and "/lessons-learned" in path:
         return get_lessons(event)
+    elif method == "GET" and "/conflicts" in path:
+        return get_conflicts(event)
+    elif method == "POST" and "/conflicts/resolve" in path:
+        return resolve_conflict(event)
 
     return {
         "statusCode": 404,
@@ -418,3 +422,100 @@ def error_response(message):
         "headers": {"Access-Control-Allow-Origin": "*"},
         "body": json.dumps({"error": message}),
     }
+
+
+def get_conflicts(event):
+    """Get pending conflicts for a project"""
+    try:
+        project_name = event["pathParameters"]["project_name"]
+        bucket_name = os.environ["BUCKET_NAME"]
+        conflicts_key = f"projects/{project_name}/lessons-learned-conflicts.json"
+
+        try:
+            response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
+            conflicts = json.loads(response["Body"].read().decode("utf-8"))
+            # Filter only pending conflicts
+            pending = [c for c in conflicts if c.get("status") == "pending"]
+        except:
+            pending = []
+
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"conflicts": pending}),
+        }
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return error_response(str(e))
+
+
+def resolve_conflict(event):
+    """Resolve a conflict with user decision"""
+    try:
+        project_name = event["pathParameters"]["project_name"]
+        body = json.loads(event.get("body", "{}"))
+        conflict_id = body.get("conflict_id")
+        decision = body.get("decision")  # "keep_new", "keep_existing", "keep_both", "delete_both"
+
+        bucket_name = os.environ["BUCKET_NAME"]
+        conflicts_key = f"projects/{project_name}/lessons-learned-conflicts.json"
+        lessons_key = f"projects/{project_name}/lessons-learned.json"
+
+        # Load conflicts
+        response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
+        conflicts = json.loads(response["Body"].read().decode("utf-8"))
+
+        # Find the conflict
+        conflict = next((c for c in conflicts if c["id"] == conflict_id), None)
+        if not conflict:
+            return error_response("Conflict not found")
+
+        # Load lessons
+        lessons_response = s3.get_object(Bucket=bucket_name, Key=lessons_key)
+        lessons_data = json.loads(lessons_response["Body"].read().decode("utf-8"))
+        lessons = lessons_data.get("lessons", [])
+
+        # Apply decision
+        new_id = conflict["new_lesson"]["id"]
+        existing_id = conflict["existing_lesson"]["id"]
+
+        if decision == "keep_new":
+            lessons = [l for l in lessons if l["id"] != existing_id]
+        elif decision == "keep_existing":
+            lessons = [l for l in lessons if l["id"] != new_id]
+        elif decision == "delete_both":
+            lessons = [l for l in lessons if l["id"] not in [new_id, existing_id]]
+        # keep_both: do nothing
+
+        # Save updated lessons
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=lessons_key,
+            Body=json.dumps({"lessons": lessons}, indent=2).encode("utf-8"),
+            ContentType="application/json",
+        )
+
+        # Mark conflict as resolved
+        for c in conflicts:
+            if c["id"] == conflict_id:
+                c["status"] = "resolved"
+                c["decision"] = decision
+
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=conflicts_key,
+            Body=json.dumps(conflicts, indent=2).encode("utf-8"),
+            ContentType="application/json",
+        )
+
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"message": "Conflict resolved"}),
+        }
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return error_response(str(e))
+

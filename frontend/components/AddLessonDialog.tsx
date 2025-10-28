@@ -49,7 +49,7 @@ export default function AddLessonDialog({
         },
       );
 
-      alert("Lesson added!");
+      alert("Lesson submitted! Processing in background...");
       onComplete();
       onOpenChange(false);
       setNotes("");
@@ -89,7 +89,7 @@ export default function AddLessonDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !notes.trim()}>
-              {loading ? "Adding..." : "Add Lesson"}
+              {loading ? "Submitting..." : "Add Lesson"}
             </Button>
           </div>
         </form>

@@ -49,9 +49,9 @@ def extract_and_merge_lessons(
 
     return {
         "project_added": project_stats["added"],
-        "project_deleted": project_stats["deleted"],
+        "project_conflicts": project_stats["conflicts"],
         "type_added": type_stats["added"],
-        "type_deleted": type_stats["deleted"],
+        "type_conflicts": type_stats["conflicts"],
     }
 
 
@@ -114,41 +114,37 @@ Return only the JSON array."""
 def merge_lessons_with_superseding(
     new_lessons, existing_lessons_key, bucket_name, context_type, project_name
 ):
-    """Merge new lessons with existing using LLM to determine superseding"""
+    """Merge new lessons and create conflicts for review"""
 
-    # Load existing lessons
     existing_lessons = load_lessons_file(bucket_name, existing_lessons_key)
 
     if not existing_lessons:
-        # No existing lessons, just save new ones
         save_lessons_file(bucket_name, existing_lessons_key, new_lessons)
-        return {"added": len(new_lessons), "deleted": 0}
+        return {"added": len(new_lessons), "conflicts": 0}
 
-    # Chunk existing lessons if too large
     chunks = chunk_lessons(existing_lessons, CHUNK_SIZE)
 
-    all_ids_to_delete = []
+    all_conflicts = []
 
-    # Compare new lessons against each chunk
     for chunk in chunks:
-        ids_to_delete = compare_lessons_with_llm(
-            new_lessons, chunk, context_type
-        )
-        all_ids_to_delete.extend(ids_to_delete)
+        conflicts = find_conflicts_with_llm(new_lessons, chunk, context_type)
+        all_conflicts.extend(conflicts)
 
-    # Apply changes: remove superseded, add new
-    updated_lessons = [
-        l for l in existing_lessons if l["id"] not in all_ids_to_delete
-    ]
-    updated_lessons.extend(new_lessons)
-
-    # Sort by id (timestamp) descending
+    # Add all new lessons (don't delete anything)
+    updated_lessons = existing_lessons + new_lessons
     updated_lessons.sort(key=lambda x: x["id"], reverse=True)
 
-    # Save updated lessons
     save_lessons_file(bucket_name, existing_lessons_key, updated_lessons)
 
-    return {"added": len(new_lessons), "deleted": len(all_ids_to_delete)}
+    # Save conflicts for review
+    if all_conflicts:
+        conflicts_key = existing_lessons_key.replace(".json", "-conflicts.json")
+        save_conflicts_file(bucket_name, conflicts_key, all_conflicts)
+
+    return {
+        "added": len(new_lessons),
+        "conflicts": len(all_conflicts),
+    }
 
 
 def compare_lessons_with_llm(new_lessons, existing_lessons_chunk, context_type):
@@ -260,3 +256,100 @@ def save_lessons_file(bucket_name, key, lessons):
     except Exception as e:
         print(f"Error saving lessons to {key}: {e}")
         raise
+
+
+def find_conflicts_with_llm(new_lessons, existing_lessons_chunk, context_type):
+    """Use LLM to find potential conflicts between new and existing lessons"""
+
+    tools = [
+        {
+            "name": "report_conflicts",
+            "description": "Report lessons that conflict or overlap with new lessons",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "conflicts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "new_lesson_id": {"type": "string"},
+                                "existing_lesson_id": {"type": "string"},
+                                "reason": {"type": "string"},
+                            },
+                        },
+                        "description": "Array of conflicts found",
+                    },
+                },
+                "required": ["conflicts"],
+            },
+        }
+    ]
+
+    prompt = f"""Compare NEW lessons against EXISTING lessons.
+
+NEW:
+{json.dumps(new_lessons, indent=2)}
+
+EXISTING:
+{json.dumps(existing_lessons_chunk, indent=2)}
+
+Find conflicts where new lesson covers same topic, contradicts, or makes existing obsolete.
+Use report_conflicts tool. If none, call with empty array."""
+
+    try:
+        response = bedrock.invoke_model(
+            modelId=os.environ["LESSONS_MODEL_ID"],
+            body=json.dumps(
+                {
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": 4096,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "tools": tools,
+                }
+            ),
+        )
+
+        result = json.loads(response["body"].read())
+        
+        for content in result.get("content", []):
+            if content.get("type") == "tool_use" and content.get("name") == "report_conflicts":
+                conflicts = content.get("input", {}).get("conflicts", [])
+                enriched = []
+                for conflict in conflicts:
+                    new_lesson = next((l for l in new_lessons if l["id"] == conflict["new_lesson_id"]), None)
+                    existing_lesson = next((l for l in existing_lessons_chunk if l["id"] == conflict["existing_lesson_id"]), None)
+                    if new_lesson and existing_lesson:
+                        enriched.append({
+                            "id": f"conflict_{datetime.now(timezone.utc).isoformat()}",
+                            "new_lesson": new_lesson,
+                            "existing_lesson": existing_lesson,
+                            "reason": conflict["reason"],
+                            "status": "pending",
+                        })
+                return enriched
+
+        return []
+
+    except Exception as e:
+        print(f"Error finding conflicts: {e}")
+        return []
+
+
+def save_conflicts_file(bucket_name, conflicts_key, conflicts):
+    """Save or append conflicts to S3"""
+    try:
+        response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
+        existing_conflicts = json.loads(response["Body"].read())
+    except:
+        existing_conflicts = []
+
+    existing_conflicts.extend(conflicts)
+
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=conflicts_key,
+        Body=json.dumps(existing_conflicts, indent=2),
+        ContentType="application/json",
+    )
+

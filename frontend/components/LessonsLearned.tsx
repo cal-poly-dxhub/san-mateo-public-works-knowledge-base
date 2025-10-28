@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/api";
+import ConflictsSection from "./ConflictsSection";
 
 interface Lesson {
   title: string;
@@ -60,60 +61,62 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
 
   if (loading) return <div>Loading lessons learned...</div>;
 
-  if (!lessonsData || sortedLessons.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          No lessons learned yet for this project.
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Lessons Learned ({sortedLessons.length})</h3>
-        <span className="text-sm text-muted-foreground">
-          Last updated: {new Date(lessonsData.lastUpdated).toLocaleDateString()}
-        </span>
-      </div>
-      
-      {sortedLessons.map((lesson, index) => (
-        <Card key={index} className="border-l-4 border-l-current">
-          <CardHeader className="pb-0">
-            <div className="flex justify-between items-start">
-              <div className="flex items-center gap-3">
-                <CardTitle className="text-base">{lesson.title}</CardTitle>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(lesson.dateEntered).toLocaleDateString()}
-                </span>
-              </div>
-              <Badge className={getSeverityColor(lesson.severity)}>
-                {lesson.severity}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2 pt-0">
-            <div>
-              <span className="font-medium text-sm">Lesson:</span>
-              <span className="text-sm ml-2">{lesson.lesson}</span>
-            </div>
-            <div>
-              <span className="font-medium text-sm">Details:</span>
-              <span className="text-sm ml-2 text-muted-foreground">{lesson.details}</span>
-            </div>
-            <div>
-              <span className="font-medium text-sm">Impact:</span>
-              <span className="text-sm ml-2 text-muted-foreground">{lesson.impact}</span>
-            </div>
-            <div>
-              <span className="font-medium text-sm">Recommendation:</span>
-              <span className="text-sm ml-2 text-muted-foreground">{lesson.recommendation}</span>
-            </div>
+      <ConflictsSection projectName={projectName} onResolved={loadLessons} />
+
+      {sortedLessons.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            No lessons learned yet for this project.
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Lessons Learned ({sortedLessons.length})</h3>
+            <span className="text-sm text-muted-foreground">
+              Last updated: {new Date(lessonsData!.lastUpdated).toLocaleDateString()}
+            </span>
+          </div>
+          
+          {sortedLessons.map((lesson, index) => (
+            <Card key={index} className="border-l-4 border-l-current">
+              <CardHeader className="pb-0">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <CardTitle className="text-base">{lesson.title}</CardTitle>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(lesson.dateEntered).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <Badge className={getSeverityColor(lesson.severity)}>
+                    {lesson.severity}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                <div>
+                  <span className="font-medium text-sm">Lesson:</span>
+                  <span className="text-sm ml-2">{lesson.lesson}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-sm">Details:</span>
+                  <span className="text-sm ml-2 text-muted-foreground">{lesson.details}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-sm">Impact:</span>
+                  <span className="text-sm ml-2 text-muted-foreground">{lesson.impact}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-sm">Recommendation:</span>
+                  <span className="text-sm ml-2 text-muted-foreground">{lesson.recommendation}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </>
+      )}
     </div>
   );
 }
