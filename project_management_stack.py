@@ -245,8 +245,12 @@ class ProjectManagementStack(Stack):
             layers=[common_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "LESSONS_EXTRACTOR_MODEL_ID": config["models"]["lessons_extractor"],
-                "CONFLICT_DETECTOR_MODEL_ID": config["models"]["conflict_detector"],
+                "LESSONS_EXTRACTOR_MODEL_ID": config["models"][
+                    "lessons_extractor"
+                ],
+                "CONFLICT_DETECTOR_MODEL_ID": config["models"][
+                    "conflict_detector"
+                ],
                 "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
             },
         )
@@ -269,8 +273,12 @@ class ProjectManagementStack(Stack):
             layers=[common_layer],
             environment={
                 "BUCKET_NAME": bucket.bucket_name,
-                "LESSONS_EXTRACTOR_MODEL_ID": config["models"]["lessons_extractor"],
-                "CONFLICT_DETECTOR_MODEL_ID": config["models"]["conflict_detector"],
+                "LESSONS_EXTRACTOR_MODEL_ID": config["models"][
+                    "lessons_extractor"
+                ],
+                "CONFLICT_DETECTOR_MODEL_ID": config["models"][
+                    "conflict_detector"
+                ],
                 "VECTOR_BUCKET_NAME": vector_bucket_name,
                 "INDEX_NAME": index_name,
                 "EMBEDDING_MODEL_ID": config["models"]["embeddings"],
@@ -338,79 +346,6 @@ class ProjectManagementStack(Stack):
         )
         project_data_table.grant_read_write_data(task_lambda)
 
-        # Generate Assets Lambda (for reports and documents)
-        assets_lambda = _lambda.Function(
-            self,
-            "GenerateAssetsLambda",
-            runtime=_lambda.Runtime.PYTHON_3_11,
-            handler="generate_assets.lambda_handler",
-            code=_lambda.Code.from_asset("src/assets"),
-            timeout=cdk.Duration.minutes(5),
-            environment={
-                "BUCKET_NAME": bucket.bucket_name,
-                "ASSET_MODEL_ID": config["models"][
-                    "template_generation_model_id"
-                ],
-            },
-        )
-        bucket.grant_read_write(assets_lambda)
-        assets_lambda.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["bedrock:InvokeModel"], resources=["*"]
-            )
-        )
-        assets_lambda.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["lambda:InvokeFunction"],
-                resources=[
-                    f"arn:aws:lambda:{self.region}:{self.account}:function:*"
-                ],
-            )
-        )
-
-        # Grant SSM permissions to assets lambda
-        assets_lambda.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["ssm:GetParameter"],
-                resources=[
-                    f"arn:aws:ssm:{self.region}:{self.account}:parameter/project-management/*"
-                ],
-            )
-        )
-
-        # Async Asset Processor Lambda
-        async_asset_processor = _lambda.Function(
-            self,
-            "AsyncAssetProcessorLambda",
-            runtime=_lambda.Runtime.PYTHON_3_11,
-            handler="async_asset_processor.lambda_handler",
-            code=_lambda.Code.from_asset("src/assets"),
-            timeout=cdk.Duration.minutes(15),
-            environment={
-                "BUCKET_NAME": bucket.bucket_name,
-                "ASSET_MODEL_ID": config["models"][
-                    "template_generation_model_id"
-                ],
-            },
-        )
-        bucket.grant_read_write(async_asset_processor)
-        async_asset_processor.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["bedrock:InvokeModel"], resources=["*"]
-            )
-        )
-
-        # Add async processor name to assets lambda environment
-        assets_lambda.add_environment(
-            "ASYNC_ASSET_PROCESSOR_NAME", async_asset_processor.function_name
-        )
-        assets_lambda.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["lambda:InvokeFunction"],
-                resources=[async_asset_processor.function_arn],
-            )
-        )
-
         # Vector Ingestion Lambda
         vector_ingestion_lambda = _lambda.Function(
             self,
@@ -471,17 +406,6 @@ class ProjectManagementStack(Stack):
             iam.PolicyStatement(
                 actions=["lambda:InvokeFunction"],
                 resources=[vector_ingestion_lambda.function_arn],
-            )
-        )
-
-        # Add assets lambda name to wizard lambda environment
-        wizard_lambda.add_environment(
-            "ASSETS_LAMBDA_NAME", assets_lambda.function_name
-        )
-        wizard_lambda.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=["lambda:InvokeFunction"],
-                resources=[assets_lambda.function_arn],
             )
         )
 
@@ -750,58 +674,6 @@ class ProjectManagementStack(Stack):
             api_key_required=True,
         )
 
-        # Add executive review and web story endpoints
-        executive_review_resource = project_detail_resource.add_resource(
-            "executive-review"
-        )
-        executive_review_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(assets_lambda),
-            api_key_required=True,
-        )
-
-        web_story_resource = project_detail_resource.add_resource("web-story")
-        web_story_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(assets_lambda),
-            api_key_required=True,
-        )
-
-        # Generate Asset resource
-        generate_asset_resource = api.root.add_resource("generate-asset")
-        generate_asset_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(assets_lambda),
-            api_key_required=True,
-        )
-
-        # Executive summary endpoint
-        executive_summary_resource = project_detail_resource.add_resource(
-            "executive-summary"
-        )
-        executive_summary_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(assets_lambda),
-            api_key_required=True,
-        )
-
-        # Webstory endpoint
-        webstory_resource = project_detail_resource.add_resource("webstory")
-        webstory_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(assets_lambda),
-            api_key_required=True,
-        )
-
-        # Assets endpoint for downloading generated files
-        assets_resource = project_detail_resource.add_resource("assets")
-        assets_file_resource = assets_resource.add_resource("{filename}")
-        assets_file_resource.add_method(
-            "GET",
-            apigateway.LambdaIntegration(dashboard_lambda),
-            api_key_required=True,
-        )
-
         # Lessons learned endpoints
         lessons_resource = project_detail_resource.add_resource(
             "lessons-learned"
@@ -876,7 +748,7 @@ class ProjectManagementStack(Stack):
             apigateway.LambdaIntegration(lessons_lambda),
             api_key_required=True,
         )
-        
+
         conflicts_resolve_resource = conflicts_resource.add_resource("resolve")
         conflicts_resolve_resource.add_method(
             "POST",
