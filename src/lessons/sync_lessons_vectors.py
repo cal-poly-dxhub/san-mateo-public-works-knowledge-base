@@ -58,14 +58,26 @@ def sync_lessons_to_vectors(
                 # Generate embedding
                 embedding = get_embedding(content, embedding_model)
 
+                # Create searchable content for display (truncated to 1800 chars like regular docs)
+                display_content = f"Title: {lesson.get('title', 'Untitled')}\n"
+                display_content += f"Lesson: {lesson.get('lesson', '')}\n"
+                display_content += f"Impact: {lesson.get('impact', '')}\n"
+                display_content += f"Recommendation: {lesson.get('recommendation', '')}\n"
+                display_content += f"Severity: {lesson.get('severity', 'Unknown')}"
+                truncated_content = display_content[:1800] if len(display_content) > 1800 else display_content
+
                 # Create metadata with lesson ID reference
                 metadata = {
                     "lesson_id": lesson["id"],
                     "s3_key": lessons_key,
                     "project_name": project_name,
+                    "file_name": lesson.get("source_document", "master-lessons.json"),
                     "title": lesson.get("title", "")[:500],
                     "severity": lesson.get("severity", "Medium"),
                     "is_lesson": "true",
+                    "content": truncated_content,  # Add content field for search display
+                    "chunk_index": "0",
+                    "total_chunks": "1",
                 }
 
                 # Use lesson ID in vector key for easy correlation

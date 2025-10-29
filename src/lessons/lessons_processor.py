@@ -28,7 +28,7 @@ def extract_and_merge_lessons(
             "type_deleted": 0,
         }
 
-    # Process project-level lessons
+    # Process project-level lessons (no vector sync)
     project_stats = merge_lessons_with_superseding(
         new_lessons=new_lessons,
         existing_lessons_key=f"projects/{project_name}/lessons-learned.json",
@@ -36,6 +36,7 @@ def extract_and_merge_lessons(
         context_type="project",
         project_name=project_name,
         project_type=project_type,
+        sync_to_vectors=False,  # Don't sync project-specific lessons
     )
 
     # Process project-type-level lessons (add project_name attribution)
@@ -49,6 +50,7 @@ def extract_and_merge_lessons(
         context_type="project_type",
         project_name=project_name,
         project_type=project_type,
+        sync_to_vectors=True,  # Only sync master list
     )
 
     return {
@@ -110,7 +112,7 @@ Return only the JSON array."""
 
 
 def merge_lessons_with_superseding(
-    new_lessons, existing_lessons_key, bucket_name, context_type, project_name, project_type=None
+    new_lessons, existing_lessons_key, bucket_name, context_type, project_name, project_type=None, sync_to_vectors=True
 ):
     """Merge new lessons and create conflicts for review"""
 
@@ -118,9 +120,10 @@ def merge_lessons_with_superseding(
 
     if not existing_lessons:
         save_lessons_file(bucket_name, existing_lessons_key, new_lessons)
-        sync_lessons_to_vectors(
-            bucket_name, existing_lessons_key, new_lessons, project_name, project_type
-        )
+        if sync_to_vectors:
+            sync_lessons_to_vectors(
+                bucket_name, existing_lessons_key, new_lessons, project_name, project_type
+            )
         return {"added": len(new_lessons), "conflicts": 0}
 
     chunks = chunk_lessons(existing_lessons, CHUNK_SIZE)
@@ -137,10 +140,11 @@ def merge_lessons_with_superseding(
 
     save_lessons_file(bucket_name, existing_lessons_key, updated_lessons)
 
-    # Immediately sync to vectors (don't wait for S3 event)
-    sync_lessons_to_vectors(
-        bucket_name, existing_lessons_key, updated_lessons, project_name, project_type
-    )
+    # Sync to vectors only if enabled
+    if sync_to_vectors:
+        sync_lessons_to_vectors(
+            bucket_name, existing_lessons_key, updated_lessons, project_name, project_type
+        )
 
     # Save conflicts for review
     if all_conflicts:

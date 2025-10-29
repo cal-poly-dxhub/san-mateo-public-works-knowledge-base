@@ -333,8 +333,7 @@ export default function ProjectPage() {
 
       <div className="max-w-7xl mx-auto p-6">
         <SearchComponent
-          projectName={project.name}
-          placeholder="Search within this project..."
+          placeholder="Search knowledge base..."
         />
 
         {/* Removed project overview and status cards - now handled in tabs */}

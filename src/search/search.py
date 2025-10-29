@@ -13,14 +13,9 @@ def handler(event, context):
         # Parse request body
         body = json.loads(event.get("body", "{}"))
         query = body.get("query", "")
-        project_name = body.get("project", "") or body.get("project_name", "")
-        project_type = body.get("project_type", "")
         limit = body.get("limit", 10)
-        is_lesson = body.get("is_lesson")  # Optional: true/false/null
 
-        print(
-            f"Search request - Query: {query}, Project: {project_name}, ProjectType: {project_type}, Limit: {limit}, IsLesson: {is_lesson}"
-        )
+        print(f"Search request - Query: {query}, Limit: {limit}")
 
         # Check if this is a RAG search request
         path = event.get("path", "")
@@ -37,9 +32,7 @@ def handler(event, context):
 
         if path.endswith("/search-rag"):
             # Perform RAG search
-            result = search_with_rag(
-                query, project_name, project_type, limit, is_lesson
-            )
+            result = search_with_rag(query, limit)
             return {
                 "statusCode": 200,
                 "headers": {
@@ -57,9 +50,7 @@ def handler(event, context):
             }
         else:
             # Perform regular vector search
-            results = search_vector_index(
-                query, project_name, project_type, limit, is_lesson
-            )
+            results = search_vector_index(query, limit)
             return {
                 "statusCode": 200,
                 "headers": {
@@ -87,21 +78,13 @@ def handler(event, context):
         }
 
 
-def search_with_rag(
-    query: str,
-    project_name: str = "",
-    project_type: str = "",
-    limit: int = 10,
-    is_lesson=None,
-) -> dict:
+def search_with_rag(query: str, limit: int = 10) -> dict:
     """
     Perform RAG search: retrieve relevant documents and generate answer using LLM
     """
     try:
         # First, get relevant documents using vector search
-        documents = search_vector_index(
-            query, project_name, project_type, limit, is_lesson
-        )
+        documents = search_vector_index(query, limit)
 
         if not documents:
             return {
@@ -209,13 +192,7 @@ Answer:""",
         }
 
 
-def search_vector_index(
-    query: str,
-    project_name: str = "",
-    project_type: str = "",
-    limit: int = 10,
-    is_lesson=None,
-) -> List[Dict[str, Any]]:
+def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
     """
     Search the S3 vector index using embeddings
     """
@@ -239,29 +216,16 @@ def search_vector_index(
         # Prepare search parameters
         search_params = {
             "vectorBucketName": os.environ.get(
-                "VECTOR_BUCKET_NAME", "dxhub-meeting-kb-vectors"
+                "VECTOR_BUCKET_NAME", "dpw-project-mgmt-vectors"
             ),
-            "indexName": os.environ.get("INDEX_NAME", "meeting-kb-index"),
+            "indexName": os.environ.get("INDEX_NAME", "project-mgmt-index"),
             "queryVector": {"float32": query_embedding},
             "topK": limit,
             "returnDistance": True,
             "returnMetadata": True,
         }
 
-        # Build filter
-        filters = {}
-        if project_name:
-            filters["project_name"] = project_name
-        if project_type:
-            filters["project_type"] = project_type
-        if is_lesson is not None:
-            filters["is_lesson"] = "true" if is_lesson else "false"
-
-        if filters:
-            search_params["filter"] = filters
-            print(f"Applied filters: {filters}")
-        else:
-            print("No filters applied")
+        print("Searching all documents in knowledge base")
 
         # Perform vector search
         search_response = s3vectors_client.query_vectors(**search_params)

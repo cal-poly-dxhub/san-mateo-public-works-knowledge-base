@@ -34,11 +34,10 @@ interface SearchResult {
 }
 
 interface SearchComponentProps {
-  projectName?: string; // Optional - if provided, searches within project
   placeholder?: string;
 }
 
-export default function SearchComponent({ projectName, placeholder = "Ask a question..." }: SearchComponentProps) {
+export default function SearchComponent({ placeholder = "Ask a question..." }: SearchComponentProps) {
   const { apiKey } = useApiKey();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -76,14 +75,11 @@ export default function SearchComponent({ projectName, placeholder = "Ask a ques
     try {
       const body: any = { query, limit: parseInt(docLimit), model_id: selectedModel };
 
-      // For documents, filter by project. For lessons, search globally
+      // Filter by type only (no project filtering)
       if (searchType === "lessons") {
         body.is_lesson = true;
       } else if (searchType === "documents") {
         body.is_lesson = false;
-        if (projectName) body.project_name = projectName;
-      } else if (searchType === "both") {
-        if (projectName) body.project_name = projectName;
       }
 
       // Choose endpoint based on RAG mode
