@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/api";
+import MasterConflictsSection from "@/components/MasterConflictsSection";
 
 interface Lesson {
   id: string;
@@ -21,14 +22,6 @@ interface Lesson {
   projectName: string;
 }
 
-interface Conflict {
-  id: string;
-  new_lesson: Lesson;
-  existing_lesson: Lesson;
-  reason: string;
-  status: string;
-}
-
 interface ProjectType {
   type: string;
   count: number;
@@ -39,7 +32,6 @@ export default function LessonsLearnedMaster() {
   const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,39 +56,10 @@ export default function LessonsLearnedMaster() {
       const data = await apiRequest(`/lessons/by-type/${encodeURIComponent(projectType)}`);
       setLessons(data.lessons || []);
       setSelectedType(projectType);
-      
-      // Load conflicts for this type
-      await loadConflicts(projectType);
     } catch (error) {
       console.error("Error loading lessons:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadConflicts = async (projectType: string) => {
-    try {
-      const data = await apiRequest(`/lessons/conflicts/by-type/${encodeURIComponent(projectType)}`);
-      setConflicts(data.conflicts || []);
-    } catch (error) {
-      console.error("Error loading conflicts:", error);
-      setConflicts([]);
-    }
-  };
-
-  const resolveConflict = async (conflictId: string, keepNew: boolean) => {
-    try {
-      await apiRequest(`/lessons/conflicts/resolve/${conflictId}`, {
-        method: "POST",
-        body: JSON.stringify({ keepNew }),
-      });
-      
-      // Reload lessons and conflicts
-      if (selectedType) {
-        await loadLessonsForType(selectedType);
-      }
-    } catch (error) {
-      console.error("Error resolving conflict:", error);
     }
   };
 
@@ -180,81 +143,12 @@ export default function LessonsLearnedMaster() {
           ) : (
             // Lessons List for Selected Type
             <div className="space-y-4">
+              <MasterConflictsSection projectType={selectedType} onResolved={() => loadLessonsForType(selectedType)} />
+              
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">{selectedType} - Lessons Learned</h3>
                 <Badge variant="outline">{lessons.length} lessons</Badge>
               </div>
-              
-              {/* Conflicts Section */}
-              {conflicts.length > 0 && (
-                <Card className="border-orange-200 bg-orange-50">
-                  <CardHeader>
-                    <CardTitle className="text-orange-800 flex items-center gap-2">
-                      <span>⚠️</span> Conflicts Requiring Review ({conflicts.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {conflicts.map((conflict) => (
-                      <Card key={conflict.id} className="bg-white">
-                        <CardContent className="p-4">
-                          <div className="mb-3">
-                            <Badge variant="outline" className="mb-2">Conflict Reason</Badge>
-                            <p className="text-sm text-muted-foreground">{conflict.reason}</p>
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* New Lesson */}
-                            <div className="border-l-4 border-green-500 pl-3">
-                              <Badge className="bg-green-100 text-green-800 mb-2">New Lesson</Badge>
-                              <h4 className="font-semibold text-sm mb-1">{conflict.new_lesson.title}</h4>
-                              <p className="text-xs text-muted-foreground mb-1">
-                                From: {conflict.new_lesson.projectName}
-                              </p>
-                              <p className="text-sm">{conflict.new_lesson.lesson}</p>
-                              {conflict.new_lesson.recommendation && (
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  <strong>Recommendation:</strong> {conflict.new_lesson.recommendation}
-                                </p>
-                              )}
-                            </div>
-                            
-                            {/* Existing Lesson */}
-                            <div className="border-l-4 border-blue-500 pl-3">
-                              <Badge className="bg-blue-100 text-blue-800 mb-2">Existing Lesson</Badge>
-                              <h4 className="font-semibold text-sm mb-1">{conflict.existing_lesson.title}</h4>
-                              <p className="text-xs text-muted-foreground mb-1">
-                                From: {conflict.existing_lesson.projectName}
-                              </p>
-                              <p className="text-sm">{conflict.existing_lesson.lesson}</p>
-                              {conflict.existing_lesson.recommendation && (
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  <strong>Recommendation:</strong> {conflict.existing_lesson.recommendation}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex justify-end gap-2 mt-4">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => resolveConflict(conflict.id, false)}
-                            >
-                              Keep Existing
-                            </Button>
-                            <Button 
-                              size="sm"
-                              onClick={() => resolveConflict(conflict.id, true)}
-                            >
-                              Keep New
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
               
               {loading ? (
                 <div className="text-center text-muted-foreground py-8">Loading lessons...</div>

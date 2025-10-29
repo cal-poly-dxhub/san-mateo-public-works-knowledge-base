@@ -20,10 +20,6 @@ def handler(event, context):
         return upload_and_extract(event)
     elif method == "GET" and "/lessons-learned" in path:
         return get_lessons(event)
-    elif method == "GET" and "/conflicts" in path and "/by-type/" in path:
-        return get_master_conflicts(event)
-    elif method == "POST" and "/conflicts/" in path and "/resolve" in path:
-        return resolve_master_conflict(event)
     elif method == "GET" and "/conflicts" in path:
         return get_conflicts(event)
     elif method == "POST" and "/conflicts/resolve" in path:

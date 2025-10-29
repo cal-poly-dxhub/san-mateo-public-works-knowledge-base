@@ -1,5 +1,6 @@
 import json
 import os
+from urllib.parse import unquote
 
 import boto3
 
@@ -26,17 +27,17 @@ def handler(event, context):
         if "/project-types" in path and method == "GET":
             return get_project_types()
 
-        elif "/by-type/" in path and method == "GET":
-            project_type = event["pathParameters"]["project_type"]
-            return get_lessons_by_type(project_type)
-
         elif "/conflicts/resolve/" in path and method == "POST":
-            conflict_id = event["pathParameters"]["conflict_id"]
+            conflict_id = unquote(event["pathParameters"]["conflict_id"])
             return resolve_master_conflict(event, conflict_id)
 
         elif "/conflicts/by-type/" in path and method == "GET":
             project_type = event["pathParameters"]["project_type"]
             return get_master_conflicts(project_type)
+
+        elif "/by-type/" in path and method == "GET":
+            project_type = event["pathParameters"]["project_type"]
+            return get_lessons_by_type(project_type)
 
         return {
             "statusCode": 404,
@@ -166,80 +167,95 @@ def get_master_conflicts(project_type):
 def resolve_master_conflict(event, conflict_id):
     """Resolve a master lesson conflict with user decision"""
     try:
+        print(f"Received conflict_id: {conflict_id}")
+        print(f"Event pathParameters: {event.get('pathParameters')}")
+        
         body = json.loads(event.get("body", "{}"))
-        keep_new = body.get("keepNew", True)
+        decision = body.get("decision")  # "keep_new", "keep_existing", "keep_both", "delete_both"
+        project_type = body.get("project_type")
+        
+        print(f"Decision: {decision}, Project Type: {project_type}")
+
+        if not project_type:
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "project_type required"}),
+            }
 
         bucket_name = os.environ["BUCKET_NAME"]
+        conflicts_key = f"lessons-learned/{project_type}/master-lessons-conflicts.json"
+        lessons_key = f"lessons-learned/{project_type}/master-lessons.json"
 
-        # Find which project type this conflict belongs to
-        # We need to search through all project types
-        project_types = ["Reconstruction", "Resurface", "Slurry Seal", "Drainage", "Utilities", "Other"]
+        # Load conflicts
+        response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
+        conflicts = json.loads(response["Body"].read().decode("utf-8"))
         
-        conflict = None
-        project_type = None
-        conflicts_key = None
-        
-        for pt in project_types:
-            try:
-                key = f"lessons-learned/{pt}/master-lessons-conflicts.json"
-                response = s3.get_object(Bucket=bucket_name, Key=key)
-                conflicts = json.loads(response["Body"].read().decode("utf-8"))
-                
-                found = next((c for c in conflicts if c["id"] == conflict_id), None)
-                if found:
-                    conflict = found
-                    project_type = pt
-                    conflicts_key = key
-                    break
-            except s3.exceptions.NoSuchKey:
-                continue
+        print(f"Loaded {len(conflicts)} conflicts")
+        print(f"Conflict IDs: {[c.get('id') for c in conflicts[:3]]}")
 
+        # Find the conflict
+        conflict = next((c for c in conflicts if c["id"] == conflict_id), None)
         if not conflict:
+            print(f"Conflict {conflict_id} not found in conflicts")
             return {
                 "statusCode": 404,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Conflict not found"}),
             }
 
-        # Load master lessons
-        lessons_key = f"lessons-learned/{project_type}/master-lessons.json"
+        # Load lessons
         lessons_response = s3.get_object(Bucket=bucket_name, Key=lessons_key)
-        lessons = json.loads(lessons_response["Body"].read().decode("utf-8"))
+        lessons_data = json.loads(lessons_response["Body"].read().decode("utf-8"))
+        lessons = lessons_data.get("lessons", [])
 
         # Apply decision
         new_id = conflict["new_lesson"]["id"]
         existing_id = conflict["existing_lesson"]["id"]
 
-        if keep_new:
-            # Remove existing, keep new
+        if decision == "keep_new":
             lessons = [l for l in lessons if l["id"] != existing_id]
-        else:
-            # Remove new, keep existing
+        elif decision == "keep_existing":
             lessons = [l for l in lessons if l["id"] != new_id]
+        elif decision == "delete_both":
+            lessons = [l for l in lessons if l["id"] not in [new_id, existing_id]]
+        # keep_both: do nothing
 
         # Save updated lessons
+        lessons_data["lessons"] = lessons
         s3.put_object(
             Bucket=bucket_name,
             Key=lessons_key,
-            Body=json.dumps(lessons, indent=2).encode("utf-8"),
+            Body=json.dumps(lessons_data, indent=2).encode("utf-8"),
             ContentType="application/json",
         )
 
         # Mark conflict as resolved
-        response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
-        all_conflicts = json.loads(response["Body"].read().decode("utf-8"))
-        
-        for c in all_conflicts:
+        for c in conflicts:
             if c["id"] == conflict_id:
                 c["status"] = "resolved"
-                c["decision"] = "keep_new" if keep_new else "keep_existing"
+                c["decision"] = decision
 
         s3.put_object(
             Bucket=bucket_name,
             Key=conflicts_key,
-            Body=json.dumps(all_conflicts, indent=2).encode("utf-8"),
+            Body=json.dumps(conflicts, indent=2).encode("utf-8"),
             ContentType="application/json",
         )
+
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"message": "Conflict resolved"}),
+        }
+
+    except Exception as e:
+        print(f"Error resolving master conflict: {str(e)}")
+        return {
+            "statusCode": 500,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"error": str(e)}),
+        }
 
         return {
             "statusCode": 200,
