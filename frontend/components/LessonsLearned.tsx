@@ -14,6 +14,7 @@ interface Lesson {
   recommendation: string;
   severity: "Low" | "Medium" | "High";
   source_document?: string;
+  created_at?: string;
 }
 
 interface LessonsData {
@@ -75,20 +76,19 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
         <>
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Lessons Learned ({sortedLessons.length})</h3>
-            <span className="text-sm text-muted-foreground">
-              Last updated: {new Date(lessonsData!.lastUpdated).toLocaleDateString()}
-            </span>
           </div>
           
           {sortedLessons.map((lesson, index) => (
-            <Card key={index} className="border-l-4 border-l-current">
+            <Card key={lesson.id} className="border-l-4 border-l-current">
               <CardHeader className="pb-0">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <CardTitle className="text-base">{lesson.title}</CardTitle>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(lesson.id).toLocaleDateString()}
-                    </span>
+                    {lesson.created_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(lesson.created_at).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                   <Badge className={getSeverityColor(lesson.severity)}>
                     {lesson.severity}

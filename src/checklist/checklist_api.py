@@ -117,7 +117,7 @@ def get_checklist(project_name):
         # Get all tasks for this project
         response = table.query(
             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
-            ExpressionAttributeValues={":pid": project_id, ":task": "task#"},
+            ExpressionAttributeValues={":pid": project_name, ":task": "task#"},
         )
 
         tasks = []

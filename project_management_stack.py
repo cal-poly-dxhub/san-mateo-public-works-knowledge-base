@@ -732,6 +732,25 @@ class ProjectManagementStack(Stack):
             api_key_required=True,
         )
 
+        # GET /lessons/conflicts/by-type/{project_type}
+        conflicts_master_resource = lessons_master_resource.add_resource("conflicts")
+        conflicts_by_type_resource = conflicts_master_resource.add_resource("by-type")
+        conflicts_type_resource = conflicts_by_type_resource.add_resource("{project_type}")
+        conflicts_type_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(lessons_master_lambda),
+            api_key_required=True,
+        )
+
+        # POST /lessons/conflicts/resolve/{conflict_id}
+        conflict_resolve_base = conflicts_master_resource.add_resource("resolve")
+        conflict_resolve_resource = conflict_resolve_base.add_resource("{conflict_id}")
+        conflict_resolve_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(lessons_master_lambda),
+            api_key_required=True,
+        )
+
         documents_resource = project_detail_resource.add_resource("documents")
         documents_resource.add_method(
             "POST",
