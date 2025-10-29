@@ -35,6 +35,7 @@ def extract_and_merge_lessons(
         bucket_name=bucket_name,
         context_type="project",
         project_name=project_name,
+        project_type=project_type,
     )
 
     # Process project-type-level lessons (add project_name attribution)
@@ -47,6 +48,7 @@ def extract_and_merge_lessons(
         bucket_name=bucket_name,
         context_type="project_type",
         project_name=project_name,
+        project_type=project_type,
     )
 
     return {
@@ -108,7 +110,7 @@ Return only the JSON array."""
 
 
 def merge_lessons_with_superseding(
-    new_lessons, existing_lessons_key, bucket_name, context_type, project_name
+    new_lessons, existing_lessons_key, bucket_name, context_type, project_name, project_type=None
 ):
     """Merge new lessons and create conflicts for review"""
 
@@ -117,7 +119,7 @@ def merge_lessons_with_superseding(
     if not existing_lessons:
         save_lessons_file(bucket_name, existing_lessons_key, new_lessons)
         sync_lessons_to_vectors(
-            bucket_name, existing_lessons_key, new_lessons, project_name
+            bucket_name, existing_lessons_key, new_lessons, project_name, project_type
         )
         return {"added": len(new_lessons), "conflicts": 0}
 
@@ -137,7 +139,7 @@ def merge_lessons_with_superseding(
 
     # Immediately sync to vectors (don't wait for S3 event)
     sync_lessons_to_vectors(
-        bucket_name, existing_lessons_key, updated_lessons, project_name
+        bucket_name, existing_lessons_key, updated_lessons, project_name, project_type
     )
 
     # Save conflicts for review

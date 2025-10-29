@@ -14,7 +14,7 @@ s3vectors_client = boto3.client("s3vectors")
 
 
 def sync_lessons_to_vectors(
-    bucket_name: str, lessons_key: str, lessons: List[dict], project_name: str
+    bucket_name: str, lessons_key: str, lessons: List[dict], project_name: str, project_type: str = None
 ):
     """
     Sync lessons to vector store
@@ -43,8 +43,16 @@ def sync_lessons_to_vectors(
         # Add each lesson as vector using lesson ID
         for lesson in lessons:
             try:
-                # Create searchable content
-                content = f"{lesson.get('title', '')} {lesson.get('lesson', '')} {lesson.get('recommendation', '')}"
+                # Create searchable content with project type context
+                content_parts = []
+                if project_type:
+                    content_parts.append(f"Lessons learned for {project_type} projects")
+                content_parts.extend([
+                    lesson.get('title', ''),
+                    lesson.get('lesson', ''),
+                    lesson.get('recommendation', '')
+                ])
+                content = ' '.join(content_parts)
                 
                 logger.info(f"Generating embedding for lesson {lesson['id']}")
                 # Generate embedding

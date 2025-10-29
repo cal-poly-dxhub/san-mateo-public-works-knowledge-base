@@ -14,10 +14,11 @@ def handler(event, context):
             lessons_key = event["lessons_key"]
             lessons = event["lessons"]
             project_name = event["project_name"]
+            project_type = event.get("project_type")
 
             print(f"Syncing vectors only for {project_name}")
             sync_lessons_to_vectors(
-                bucket_name, lessons_key, lessons, project_name
+                bucket_name, lessons_key, lessons, project_name, project_type
             )
             print(f"Vector sync complete for {project_name}")
             return

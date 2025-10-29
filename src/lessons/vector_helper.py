@@ -47,10 +47,20 @@ def trigger_project_lessons_ingestion(bucket_name: str, project_name: str):
 
     s3_key = f"projects/{project_name}/lessons-learned.json"
     try:
-        # Read lessons from S3 to get the data
         s3_client = boto3.client("s3")
+        
+        # Read lessons from S3
         response = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
         lessons_data = json.loads(response["Body"].read().decode("utf-8"))
+        
+        # Try to get project type from project metadata
+        project_type = None
+        try:
+            metadata_response = s3_client.get_object(Bucket=bucket_name, Key=f"projects/{project_name}/metadata.json")
+            metadata = json.loads(metadata_response["Body"].read().decode("utf-8"))
+            project_type = metadata.get("projectType")
+        except:
+            pass
 
         # Invoke async processor with a sync-only event
         lambda_client.invoke(
@@ -63,6 +73,7 @@ def trigger_project_lessons_ingestion(bucket_name: str, project_name: str):
                     "lessons_key": s3_key,
                     "lessons": lessons_data.get("lessons", []),
                     "project_name": project_name,
+                    "project_type": project_type,
                 }
             ),
         )
