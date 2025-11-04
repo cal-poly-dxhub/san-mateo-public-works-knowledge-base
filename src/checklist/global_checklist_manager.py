@@ -6,8 +6,6 @@ import boto3
 
 dynamodb = boto3.resource("dynamodb")
 
-CHECKLIST_PATH = os.path.join(os.path.dirname(__file__), "../wizard/design_checklist.json")
-
 
 def handler(event, context):
     """Manage global checklist CRUD operations"""
@@ -197,7 +195,8 @@ def initialize_global_checklist():
             return cors_response(400, {"error": "Global checklist already initialized"})
         
         # Load from JSON
-        with open(CHECKLIST_PATH, "r") as f:
+        checklist_path = "/var/task/design_checklist.json"
+        with open(checklist_path, "r") as f:
             checklist = json.load(f)
         
         version = datetime.utcnow().isoformat()
