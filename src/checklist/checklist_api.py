@@ -32,12 +32,8 @@ def handler(event, context):
                 "body": "",
             }
 
-        if "/metadata" in path and method == "PUT":
-            project_name = event["pathParameters"]["project_name"]
-            body = json.loads(event.get("body", "{}"))
-            return update_metadata(project_name, body)
-
-        elif "/checklist/task" in path and method == "POST":
+        # Check /checklist/task paths BEFORE /checklist to avoid incorrect matching
+        if "/checklist/task" in path and method == "POST":
             project_name = event["pathParameters"]["project_name"]
             body = json.loads(event.get("body", "{}"))
             return add_task(project_name, body)
@@ -51,6 +47,11 @@ def handler(event, context):
             project_name = event["pathParameters"]["project_name"]
             body = json.loads(event.get("body", "{}"))
             return edit_task(project_name, body)
+
+        elif "/metadata" in path and method == "PUT":
+            project_name = event["pathParameters"]["project_name"]
+            body = json.loads(event.get("body", "{}"))
+            return update_metadata(project_name, body)
 
         elif "/checklist" in path and method == "GET":
             project_name = event["pathParameters"]["project_name"]
@@ -277,6 +278,15 @@ def is_valid_date(date_str):
         return False
 
 
+def is_valid_task_id(task_id):
+    """Check if task ID contains only valid characters"""
+    if not task_id:
+        return False
+    # Allow alphanumeric, dashes, underscores, and periods
+    import re
+    return bool(re.match(r'^[a-zA-Z0-9._-]+$', task_id))
+
+
 def update_metadata(project_name, metadata):
     """Update project metadata"""
     try:
@@ -333,8 +343,47 @@ def add_task(project_name, task_data):
             }
         
         project_id = response["Items"][0]["project_id"]
-        task_number = task_data.get("task_id", "")
+        # Accept either task_id or checklist_task_id from frontend
+        task_number = (task_data.get("task_id") or task_data.get("checklist_task_id", "")).strip()
+        
+        # Validate task ID
+        if not task_number:
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Task ID is required"}),
+            }
+        
+        # Validate task ID format (alphanumeric, dashes, underscores only)
+        if not is_valid_task_id(task_number):
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, and underscores"}),
+            }
+        
         task_id = f"task#{task_number}"
+        
+        # Check if task ID already exists
+        existing_task = table.get_item(
+            Key={"project_id": project_id, "item_id": task_id}
+        )
+        
+        if "Item" in existing_task:
+            return {
+                "statusCode": 409,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": f"Task ID '{task_number}' already exists"}),
+            }
+        
+        # Validate dates if provided
+        projected_date = task_data.get("projected_date", "")
+        if projected_date and not is_valid_date(projected_date):
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Projected date must be in YYYY-MM-DD format"}),
+            }
         
         table.put_item(
             Item={
@@ -342,11 +391,11 @@ def add_task(project_name, task_data):
                 "item_id": task_id,
                 "taskData": {
                     "task_id": task_number,
-                    "description": task_data.get("description", ""),
-                    "projected_date": task_data.get("projected_date", ""),
+                    "description": task_data.get("description", "").strip(),
+                    "projected_date": projected_date,
                     "actual_date": "",
                     "required": task_data.get("required", True),
-                    "notes": task_data.get("notes", "")
+                    "notes": task_data.get("notes", "").strip()
                 },
                 "status": "not_started",
                 "createdDate": datetime.utcnow().isoformat()
@@ -415,26 +464,123 @@ def edit_task(project_name, task_data):
         
         project_id = response["Items"][0]["project_id"]
         task_id = task_data.get("task_id")
+        new_task_number = task_data.get("checklist_task_id", "").strip()
         
-        table.update_item(
-            Key={"project_id": project_id, "item_id": task_id},
-            UpdateExpression="SET taskData = :taskData",
-            ExpressionAttributeValues={
-                ":taskData": {
-                    "task_id": task_data.get("checklist_task_id", ""),
-                    "description": task_data.get("description", ""),
-                    "projected_date": task_data.get("projected_date", ""),
-                    "actual_date": task_data.get("actual_date", ""),
-                    "required": task_data.get("required", True),
-                    "notes": task_data.get("notes", "")
-                }
+        # Validate task exists
+        if not task_id:
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Task ID is required"}),
             }
+        
+        existing_task = table.get_item(
+            Key={"project_id": project_id, "item_id": task_id}
         )
+        
+        if "Item" not in existing_task:
+            return {
+                "statusCode": 404,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Task not found"}),
+            }
+        
+        # Validate new task number
+        if not new_task_number:
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Task ID is required"}),
+            }
+        
+        # Validate task ID format
+        if not is_valid_task_id(new_task_number):
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, and underscores"}),
+            }
+        
+        # Check if changing to a different task ID that already exists
+        new_task_id = f"task#{new_task_number}"
+        if new_task_id != task_id:
+            duplicate_check = table.get_item(
+                Key={"project_id": project_id, "item_id": new_task_id}
+            )
+            if "Item" in duplicate_check:
+                return {
+                    "statusCode": 409,
+                    "headers": {"Access-Control-Allow-Origin": "*"},
+                    "body": json.dumps({"error": f"Task ID '{new_task_number}' already exists"}),
+                }
+        
+        # Validate dates
+        projected_date = task_data.get("projected_date", "")
+        actual_date = task_data.get("actual_date", "")
+        
+        if projected_date and not is_valid_date(projected_date):
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Projected date must be in YYYY-MM-DD format"}),
+            }
+        
+        if actual_date and not is_valid_date(actual_date):
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Actual date must be in YYYY-MM-DD format"}),
+            }
+        
+        # If task ID changed, delete old and create new
+        if new_task_id != task_id:
+            # Get old task data to preserve status and dates
+            old_task = existing_task["Item"]
+            
+            # Delete old task
+            table.delete_item(
+                Key={"project_id": project_id, "item_id": task_id}
+            )
+            
+            # Create new task with updated ID
+            table.put_item(
+                Item={
+                    "project_id": project_id,
+                    "item_id": new_task_id,
+                    "taskData": {
+                        "task_id": new_task_number,
+                        "description": task_data.get("description", "").strip(),
+                        "projected_date": projected_date,
+                        "actual_date": actual_date,
+                        "required": task_data.get("required", True),
+                        "notes": task_data.get("notes", "").strip()
+                    },
+                    "status": old_task.get("status", "not_started"),
+                    "completed_date": old_task.get("completed_date", ""),
+                    "createdDate": old_task.get("createdDate", datetime.utcnow().isoformat())
+                }
+            )
+        else:
+            # Just update the task data
+            table.update_item(
+                Key={"project_id": project_id, "item_id": task_id},
+                UpdateExpression="SET taskData = :taskData",
+                ExpressionAttributeValues={
+                    ":taskData": {
+                        "task_id": new_task_number,
+                        "description": task_data.get("description", "").strip(),
+                        "projected_date": projected_date,
+                        "actual_date": actual_date,
+                        "required": task_data.get("required", True),
+                        "notes": task_data.get("notes", "").strip()
+                    }
+                }
+            )
         
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"message": "Task updated"}),
+            "body": json.dumps({"message": "Task updated", "task_id": new_task_id}),
         }
     except Exception as e:
         print(f"Error editing task: {str(e)}")

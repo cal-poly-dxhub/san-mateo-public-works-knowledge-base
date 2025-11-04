@@ -166,8 +166,8 @@ export default function Checklist({ projectName }: ChecklistProps) {
       setAddingTask(false);
       setNewTask({ checklist_task_id: "", description: "", projected_date: "", required: true, notes: "" });
       loadChecklist();
-    } catch (error) {
-      console.error("Error adding task:", error);
+    } catch (error: any) {
+      alert(error?.message || "Failed to add task");
     }
   };
 
@@ -194,8 +194,8 @@ export default function Checklist({ projectName }: ChecklistProps) {
       setEditingTask(null);
       setEditedTask(null);
       loadChecklist();
-    } catch (error) {
-      console.error("Error editing task:", error);
+    } catch (error: any) {
+      alert(error?.message || "Failed to update task");
     }
   };
 

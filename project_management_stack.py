@@ -799,6 +799,24 @@ class ProjectManagementStack(Stack):
             apigateway.LambdaIntegration(checklist_lambda),
             api_key_required=True,
         )
+        
+        # Checklist task endpoints for add/edit/delete
+        checklist_task_resource = checklist_resource.add_resource("task")
+        checklist_task_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(checklist_lambda),
+            api_key_required=True,
+        )
+        checklist_task_resource.add_method(
+            "PUT",
+            apigateway.LambdaIntegration(checklist_lambda),
+            api_key_required=True,
+        )
+        checklist_task_resource.add_method(
+            "DELETE",
+            apigateway.LambdaIntegration(checklist_lambda),
+            api_key_required=True,
+        )
 
         # Metadata endpoint
         metadata_resource = project_detail_resource.add_resource("metadata")
