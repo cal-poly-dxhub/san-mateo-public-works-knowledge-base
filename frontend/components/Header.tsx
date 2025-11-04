@@ -44,6 +44,9 @@ export default function Header() {
           <Link href="/lessons-learned" className="text-sm hover:underline hover:text-accent transition-colors text-secondary-foreground">
             Lessons Learned
           </Link>
+          <Link href="/global-checklist" className="text-sm hover:underline hover:text-accent transition-colors text-secondary-foreground">
+            Global Checklist
+          </Link>
         </div>
       </div>
       <Input

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/api";
+import { useApiKey } from "@/lib/api-context";
 import ConflictsSection from "./ConflictsSection";
 
 interface Lesson {
@@ -30,6 +31,26 @@ interface LessonsLearnedProps {
 export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
   const [lessonsData, setLessonsData] = useState<LessonsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { apiKey } = useApiKey();
+
+  const openDocument = async (filename: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || ''}/file/projects/${projectName}/documents/${filename}`,
+        {
+          headers: {
+            'x-api-key': apiKey
+          }
+        }
+      );
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Error opening document:', error);
+      alert('Failed to open document');
+    }
+  };
 
   useEffect(() => {
     loadLessons();
@@ -111,7 +132,12 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
                 {lesson.source_document && (
                   <div>
                     <span className="font-medium text-sm">Source:</span>
-                    <span className="text-sm ml-2 text-muted-foreground">{lesson.source_document}</span>
+                    <button
+                      onClick={() => openDocument(lesson.source_document!)}
+                      className="text-sm ml-2 text-primary hover:underline cursor-pointer"
+                    >
+                      {lesson.source_document}
+                    </button>
                   </div>
                 )}
               </CardContent>
