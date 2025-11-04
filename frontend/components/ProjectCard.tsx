@@ -18,10 +18,11 @@ interface Project {
   };
   team_size?: number;
   recent_activity?: string[];
-  next_tasks?: Array<{
-    task: string;
-    assignee: string;
-  }>;
+  next_task?: {
+    number: string;
+    text: string;
+    projected_date: string;
+  };
   health?: string;
 }
 
@@ -34,6 +35,7 @@ interface ProjectCardProps {
 export default function ProjectCard({ project, onClick, onDelete }: ProjectCardProps) {
   const { apiKey } = useApiKey();
   const [deleting, setDeleting] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const deleteProject = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -145,32 +147,41 @@ export default function ProjectCard({ project, onClick, onDelete }: ProjectCardP
           </div>
         </div>
 
-        <div className="border-t pt-4 mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div
-              className={`w-3 h-3 rounded-full ${getHealthColor(health)}`}
-            ></div>
-            <span className="font-medium">Project Health</span>
-          </div>
-          {project.recent_activity?.slice(0, 2).map((activity, index) => (
-            <div key={index} className="text-sm text-muted-foreground mb-1">
-              {activity}
-            </div>
-          )) || (
-            <div className="text-sm text-muted-foreground">
-              No recent activity
-            </div>
-          )}
-        </div>
-
         <div className="border-t pt-4">
-          <div className="font-medium mb-2">Next Tasks</div>
-          {project.next_tasks?.slice(0, 3).map((task, index) => (
-            <div key={index} className="text-sm mb-1">
-              • {task.task} -{" "}
-              <span className="font-medium text-primary">{task.assignee}</span>
+          <div className="font-medium mb-2">Next Task</div>
+          {project.next_task ? (
+            <div className="text-sm">
+              <div className="font-medium text-primary mb-1">
+                {project.next_task.number}
+              </div>
+              <div className="mb-1">
+                {expanded || project.next_task.text.length <= 100
+                  ? project.next_task.text
+                  : `${project.next_task.text.substring(0, 100)}...`}
+                {project.next_task.text.length > 100 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpanded(!expanded);
+                    }}
+                    className="ml-2 text-primary hover:underline"
+                  >
+                    {expanded ? "Show less" : "Show more"}
+                  </button>
+                )}
+              </div>
+              {project.next_task.projected_date && (
+                <div className="text-muted-foreground">
+                  Projected: {project.next_task.projected_date}
+                </div>
+              )}
+              {!project.next_task.projected_date && (
+                <div className="text-muted-foreground">
+                  Projected: None
+                </div>
+              )}
             </div>
-          )) || (
+          ) : (
             <div className="text-sm text-muted-foreground">
               No tasks assigned
             </div>

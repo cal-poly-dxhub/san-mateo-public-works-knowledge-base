@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, LayoutGrid, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -32,10 +32,11 @@ interface Project {
   };
   team_size?: number;
   recent_activity?: string[];
-  next_tasks?: Array<{
-    task: string;
-    assignee: string;
-  }>;
+  next_task?: {
+    number: string;
+    text: string;
+    projected_date: string;
+  };
   health?: string;
 }
 
@@ -56,6 +57,8 @@ export default function Home() {
   const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadProjects();
@@ -160,7 +163,8 @@ export default function Home() {
       </div>
 
       <div className="flex gap-4 mb-8">
-      <div className="flex gap-4 mb-8">
+      <div className="flex gap-4 mb-8 justify-between items-center">
+        <div className="flex gap-4">
         <Button
           variant="secondary"
           onClick={() => setCreateProjectOpen(true)}
@@ -174,6 +178,24 @@ export default function Home() {
             </Button>
           )}
         </div>
+        
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === "grid" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
+        </div>
       </div>
 
       {projects.length === 0 ? (
@@ -183,7 +205,7 @@ export default function Home() {
             Upload a video to create your first project
           </p>
         </div>
-      ) : (
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
             <ProjectCard
@@ -193,6 +215,69 @@ export default function Home() {
               onDelete={loadProjects}
             />
           ))}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {projects.map((project) => {
+            const isExpanded = expandedTasks.has(project.name);
+            const taskText = project.next_task?.text || "";
+            const shouldTruncate = taskText.length > 100;
+            
+            return (
+              <div
+                key={project.name}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                onClick={() => handleProjectClick(project.name)}
+              >
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{project.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {project.task_progress?.completed || 0} / {project.task_progress?.total || 0} tasks completed
+                    </p>
+                    {project.next_task && (
+                      <div className="text-sm text-primary mt-1">
+                        <span className="font-medium">{project.next_task.number}: </span>
+                        {isExpanded || !shouldTruncate
+                          ? taskText
+                          : `${taskText.substring(0, 100)}...`}
+                        {shouldTruncate && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedTasks(prev => {
+                                const next = new Set(prev);
+                                if (next.has(project.name)) {
+                                  next.delete(project.name);
+                                } else {
+                                  next.add(project.name);
+                                }
+                                return next;
+                              });
+                            }}
+                            className="ml-2 underline hover:no-underline"
+                          >
+                            {isExpanded ? "Show less" : "Show more"}
+                          </button>
+                        )}
+                        <span className="text-muted-foreground ml-2">
+                          • Projected: {project.next_task.projected_date || "None"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-semibold">
+                      {project.task_progress?.total 
+                        ? Math.round((project.task_progress.completed / project.task_progress.total) * 100)
+                        : 0}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Progress</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

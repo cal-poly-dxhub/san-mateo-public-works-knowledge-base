@@ -1,6 +1,5 @@
 import json
 import os
-import uuid
 from datetime import datetime
 
 import boto3
@@ -8,13 +7,6 @@ import boto3
 bedrock = boto3.client("bedrock-runtime")
 s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
-
-# Load design checklist template
-CHECKLIST_PATH = os.path.join(
-    os.path.dirname(__file__), "design_checklist.json"
-)
-with open(CHECKLIST_PATH, "r") as f:
-    DESIGN_CHECKLIST = json.load(f)
 
 
 def handler(event, context):
@@ -28,39 +20,46 @@ def handler(event, context):
         area_size = body.get("areaSize")
         special_conditions = body.get("specialConditions", [])
 
-        # Load tasks from design checklist
+        # Load tasks from global checklist in DynamoDB
+        table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
+        
+        global_response = table.query(
+            KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
+            ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": "task#"}
+        )
+        
+        if not global_response["Items"]:
+            return {
+                "statusCode": 500,
+                "headers": {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type",
+                },
+                "body": json.dumps({"error": "Global checklist not initialized"}),
+            }
+        
+        global_version = global_response["Items"][0].get("version", datetime.utcnow().isoformat())
+        
         project_config = {
-            "metadata": DESIGN_CHECKLIST["document"]["metadata"].copy(),
-            "tasks": [],
-        }
-
-        # Add project creation fields to metadata
-        project_config["metadata"].update(
-            {
+            "metadata": {
+                "date": "",
+                "project": "",
+                "work_authorization": "",
+                "office_plans_file_no": "",
+                "design_engineer": "",
+                "survey_books": "",
+                "project_manager": "",
                 "project_type": project_type,
                 "location": location,
                 "area_size": area_size,
                 "special_conditions": special_conditions,
-            }
-        )
-
-        # Convert checklist items to tasks
-        for item in DESIGN_CHECKLIST["document"]["checklist_items"]:
-            for task in item["tasks"]:
-                project_config["tasks"].append(
-                    {
-                        "task_id": task["task_id"],
-                        "description": task["description"],
-                        "required": task.get("required", True),
-                        "projected_date": task.get("projected_date", ""),
-                        "actual_date": task.get("actual_date", ""),
-                        "notes": task.get("notes", ""),
-                    }
-                )
+            },
+            "tasks": [],
+        }
 
         # Use project name as project_id (slugified)
         project_id = project_name.lower().replace(" ", "-")
-        table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
 
         # Check if project already exists
         try:
@@ -80,7 +79,7 @@ def handler(event, context):
                     ),
                 }
         except:
-            pass  # Project doesn't exist, continue
+            pass
 
         table.put_item(
             Item={
@@ -108,7 +107,6 @@ def handler(event, context):
             for folder in folders:
                 s3.put_object(Bucket=bucket_name, Key=folder)
 
-            # Create initial lessons-learned.md file
             lessons_content = f"# Lessons Learned - {project_name}\n\nNo lessons learned yet. Upload documents with 'Extract Lessons Learned' enabled to populate this file.\n"
             s3.put_object(
                 Bucket=bucket_name,
@@ -117,15 +115,16 @@ def handler(event, context):
                 ContentType="text/markdown",
             )
 
-        # Store tasks separately for easier querying
-        for task in project_config.get("tasks", []):
-            task_id = str(uuid.uuid4())
+        # Copy tasks from global checklist
+        for global_task in global_response["Items"]:
+            task_data = global_task["taskData"]
             table.put_item(
                 Item={
                     "project_id": project_id,
-                    "item_id": f"task#{task_id}",
-                    "taskData": task,
+                    "item_id": f"task#{task_data['task_id']}",
+                    "taskData": task_data,
                     "status": "not_started",
+                    "global_version": global_version,
                     "createdDate": datetime.utcnow().isoformat(),
                 }
             )

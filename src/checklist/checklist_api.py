@@ -26,7 +26,7 @@ def handler(event, context):
                 "statusCode": 200,
                 "headers": {
                     "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
+                    "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type, X-Api-Key",
                 },
                 "body": "",
@@ -36,6 +36,21 @@ def handler(event, context):
             project_name = event["pathParameters"]["project_name"]
             body = json.loads(event.get("body", "{}"))
             return update_metadata(project_name, body)
+
+        elif "/checklist/task" in path and method == "POST":
+            project_name = event["pathParameters"]["project_name"]
+            body = json.loads(event.get("body", "{}"))
+            return add_task(project_name, body)
+
+        elif "/checklist/task" in path and method == "DELETE":
+            project_name = event["pathParameters"]["project_name"]
+            body = json.loads(event.get("body", "{}"))
+            return delete_task(project_name, body.get("task_id"))
+
+        elif "/checklist/task" in path and method == "PUT":
+            project_name = event["pathParameters"]["project_name"]
+            body = json.loads(event.get("body", "{}"))
+            return edit_task(project_name, body)
 
         elif "/checklist" in path and method == "GET":
             project_name = event["pathParameters"]["project_name"]
@@ -297,4 +312,130 @@ def update_metadata(project_name, metadata):
 
     except Exception as e:
         print(f"Error updating metadata: {str(e)}")
+        raise
+
+
+def add_task(project_name, task_data):
+    """Add a new task to the checklist"""
+    try:
+        table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
+        
+        response = table.scan(
+            FilterExpression="projectName = :pname",
+            ExpressionAttributeValues={":pname": project_name},
+        )
+        
+        if not response["Items"]:
+            return {
+                "statusCode": 404,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Project not found"}),
+            }
+        
+        project_id = response["Items"][0]["project_id"]
+        task_number = task_data.get("task_id", "")
+        task_id = f"task#{task_number}"
+        
+        table.put_item(
+            Item={
+                "project_id": project_id,
+                "item_id": task_id,
+                "taskData": {
+                    "task_id": task_number,
+                    "description": task_data.get("description", ""),
+                    "projected_date": task_data.get("projected_date", ""),
+                    "actual_date": "",
+                    "required": task_data.get("required", True),
+                    "notes": task_data.get("notes", "")
+                },
+                "status": "not_started",
+                "createdDate": datetime.utcnow().isoformat()
+            }
+        )
+        
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"message": "Task added", "task_id": task_id}),
+        }
+    except Exception as e:
+        print(f"Error adding task: {str(e)}")
+        raise
+
+
+def delete_task(project_name, task_id):
+    """Delete a task from the checklist"""
+    try:
+        table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
+        
+        response = table.scan(
+            FilterExpression="projectName = :pname",
+            ExpressionAttributeValues={":pname": project_name},
+        )
+        
+        if not response["Items"]:
+            return {
+                "statusCode": 404,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Project not found"}),
+            }
+        
+        project_id = response["Items"][0]["project_id"]
+        
+        table.delete_item(
+            Key={"project_id": project_id, "item_id": task_id}
+        )
+        
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"message": "Task deleted"}),
+        }
+    except Exception as e:
+        print(f"Error deleting task: {str(e)}")
+        raise
+
+
+def edit_task(project_name, task_data):
+    """Edit task details"""
+    try:
+        table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
+        
+        response = table.scan(
+            FilterExpression="projectName = :pname",
+            ExpressionAttributeValues={":pname": project_name},
+        )
+        
+        if not response["Items"]:
+            return {
+                "statusCode": 404,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Project not found"}),
+            }
+        
+        project_id = response["Items"][0]["project_id"]
+        task_id = task_data.get("task_id")
+        
+        table.update_item(
+            Key={"project_id": project_id, "item_id": task_id},
+            UpdateExpression="SET taskData = :taskData",
+            ExpressionAttributeValues={
+                ":taskData": {
+                    "task_id": task_data.get("checklist_task_id", ""),
+                    "description": task_data.get("description", ""),
+                    "projected_date": task_data.get("projected_date", ""),
+                    "actual_date": task_data.get("actual_date", ""),
+                    "required": task_data.get("required", True),
+                    "notes": task_data.get("notes", "")
+                }
+            }
+        )
+        
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"message": "Task updated"}),
+        }
+    except Exception as e:
+        print(f"Error editing task: {str(e)}")
         raise

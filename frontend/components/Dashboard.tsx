@@ -30,7 +30,11 @@ interface Project {
   action_items?: { open: number; total: number };
   team_size?: number;
   recent_activity?: string[];
-  next_tasks?: { task: string; assignee: string }[];
+  next_task?: {
+    number: string;
+    text: string;
+    projected_date: string;
+  };
   health?: string;
   description?: string;
   action_items_detail?: any[];

@@ -118,6 +118,27 @@ def get_projects_list(bucket_name):
                             "completed": completed_tasks,
                             "total": total_tasks
                         }
+                        
+                        # Get next incomplete task
+                        incomplete_tasks = [t for t in tasks if t.get("status") != "completed"]
+                        if incomplete_tasks:
+                            # Sort by task_id numerically (e.g., 3.2, 7.1, 10.1)
+                            def parse_task_id(task):
+                                task_id = task.get("taskData", {}).get("task_id", "999.999")
+                                try:
+                                    parts = task_id.split(".")
+                                    return (int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+                                except:
+                                    return (999, 999)
+                            
+                            incomplete_tasks.sort(key=parse_task_id)
+                            next_task = incomplete_tasks[0]
+                            task_data = next_task.get("taskData", {})
+                            project_data["next_task"] = {
+                                "number": task_data.get("task_id", ""),
+                                "text": task_data.get("description", ""),
+                                "projected_date": task_data.get("projected_date", "")
+                            }
                     except Exception as e:
                         print(f"Error fetching tasks for {project_name}: {e}")
                         project_data["task_count"] = 0

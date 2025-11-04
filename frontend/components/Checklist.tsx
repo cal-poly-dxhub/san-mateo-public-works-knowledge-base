@@ -7,6 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Pencil, Trash2, Plus, Save, X } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
 interface Task {
@@ -45,6 +48,17 @@ export default function Checklist({ projectName }: ChecklistProps) {
   const [editedMetadata, setEditedMetadata] = useState<Metadata | null>(null);
   const [progress, setProgress] = useState({ total: 0, completed: 0, percentage: 0 });
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
+  const [editedTask, setEditedTask] = useState<Task | null>(null);
+  const [addingTask, setAddingTask] = useState(false);
+  const [newTask, setNewTask] = useState<Partial<Task>>({
+    checklist_task_id: "",
+    description: "",
+    projected_date: "",
+    required: true,
+    notes: ""
+  });
 
   useEffect(() => {
     loadChecklist();
@@ -140,6 +154,48 @@ export default function Checklist({ projectName }: ChecklistProps) {
       setEditingMetadata(false);
     } catch (error) {
       console.error("Error updating metadata:", error);
+    }
+  };
+
+  const handleAddTask = async () => {
+    try {
+      await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist/task`, {
+        method: "POST",
+        body: JSON.stringify(newTask),
+      });
+      setAddingTask(false);
+      setNewTask({ checklist_task_id: "", description: "", projected_date: "", required: true, notes: "" });
+      loadChecklist();
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+    try {
+      await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist/task`, {
+        method: "DELETE",
+        body: JSON.stringify({ task_id: taskId }),
+      });
+      loadChecklist();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
+  const handleEditTask = async () => {
+    if (!editedTask) return;
+    try {
+      await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist/task`, {
+        method: "PUT",
+        body: JSON.stringify(editedTask),
+      });
+      setEditingTask(null);
+      setEditedTask(null);
+      loadChecklist();
+    } catch (error) {
+      console.error("Error editing task:", error);
     }
   };
 
@@ -360,12 +416,58 @@ export default function Checklist({ projectName }: ChecklistProps) {
       {/* Checklist */}
       <Card>
         <CardHeader>
-          <CardTitle>Project Checklist</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Track project tasks and milestones
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Project Checklist</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Track project tasks and milestones
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="edit-mode">Edit Mode</Label>
+              <Switch id="edit-mode" checked={editMode} onCheckedChange={setEditMode} />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
+          {editMode && (
+            <Button onClick={() => setAddingTask(true)} className="mb-4" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
+            </Button>
+          )}
+          
+          {addingTask && (
+            <div className="mb-4 p-4 border rounded-lg space-y-2">
+              <Input
+                placeholder="Task Number (e.g., 3.2)"
+                value={newTask.checklist_task_id}
+                onChange={(e) => setNewTask({ ...newTask, checklist_task_id: e.target.value })}
+              />
+              <Input
+                placeholder="Description"
+                value={newTask.description}
+                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              />
+              <Input
+                type="date"
+                placeholder="Projected Date"
+                value={newTask.projected_date}
+                onChange={(e) => setNewTask({ ...newTask, projected_date: e.target.value })}
+              />
+              <div className="flex gap-2">
+                <Button onClick={handleAddTask} size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </Button>
+                <Button onClick={() => setAddingTask(false)} variant="outline" size="sm">
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+          
           {tasks.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               No tasks found. Tasks will be generated when you create a project.
@@ -377,16 +479,46 @@ export default function Checklist({ projectName }: ChecklistProps) {
                   key={task.task_id}
                   className="flex items-start gap-3 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                 >
-                  <Checkbox
-                    checked={!!task.actual_date}
-                    onCheckedChange={() => toggleTask(task)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {task.checklist_task_id}
-                      </span>
+                  {editingTask === task.task_id ? (
+                    <div className="flex-1 space-y-2">
+                      <Input
+                        placeholder="Task Number"
+                        value={editedTask?.checklist_task_id}
+                        onChange={(e) => setEditedTask({ ...editedTask!, checklist_task_id: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Description"
+                        value={editedTask?.description}
+                        onChange={(e) => setEditedTask({ ...editedTask!, description: e.target.value })}
+                      />
+                      <Input
+                        type="date"
+                        value={editedTask?.projected_date}
+                        onChange={(e) => setEditedTask({ ...editedTask!, projected_date: e.target.value })}
+                      />
+                      <div className="flex gap-2">
+                        <Button onClick={handleEditTask} size="sm">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button onClick={() => { setEditingTask(null); setEditedTask(null); }} variant="outline" size="sm">
+                          <X className="h-4 w-4 mr-2" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <Checkbox
+                        checked={!!task.actual_date}
+                        onCheckedChange={() => toggleTask(task)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {task.checklist_task_id}
+                          </span>
                       {task.required && (
                         <Badge variant="outline" className="text-xs">Required</Badge>
                       )}
@@ -420,6 +552,29 @@ export default function Checklist({ projectName }: ChecklistProps) {
                       </div>
                     </div>
                   </div>
+                  {editMode && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingTask(task.task_id);
+                          setEditedTask(task);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteTask(task.task_id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  )}
+                    </>
+                  )}
                 </div>
               ))}
             </div>
