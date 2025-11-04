@@ -136,6 +136,20 @@ def sync_to_all_projects():
             
             project_task_ids = {item["taskData"]["task_id"]: item for item in project_tasks_response["Items"]}
             
+            # Find highest completed task ID
+            completed_tasks = [
+                item["taskData"]["task_id"] 
+                for item in project_tasks_response["Items"] 
+                if item.get("status") == "completed"
+            ]
+            highest_completed = None
+            if completed_tasks:
+                # Sort task IDs numerically (e.g., "5.3" -> [5, 3])
+                def parse_task_id(task_id):
+                    return [int(x) for x in task_id.split(".")]
+                completed_tasks.sort(key=parse_task_id, reverse=True)
+                highest_completed = completed_tasks[0]
+            
             # Delete tasks not in global (if unchecked)
             for task_id, task_item in project_task_ids.items():
                 if task_id not in global_tasks and task_item.get("status") != "completed":
@@ -144,6 +158,11 @@ def sync_to_all_projects():
             
             # Add/update tasks from global
             for task_id, global_task in global_tasks.items():
+                # Skip adding new tasks with IDs lower than highest completed
+                if task_id not in project_task_ids and highest_completed:
+                    if parse_task_id(task_id) < parse_task_id(highest_completed):
+                        continue  # Skip this task - it's before completed work
+                
                 if task_id in project_task_ids:
                     # Update only if unchecked
                     project_task = project_task_ids[task_id]
