@@ -59,6 +59,7 @@ export default function Home() {
   const [projects, setProjects] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<"alphabetical" | "progress" | "date">("alphabetical");
 
   useEffect(() => {
     loadProjects();
@@ -146,6 +147,26 @@ export default function Home() {
     }
   };
 
+  const getSortedProjects = () => {
+    const sorted = [...projects];
+    if (sortBy === "alphabetical") {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === "progress") {
+      sorted.sort((a, b) => {
+        const progressA = a.task_progress?.total ? (a.task_progress.completed / a.task_progress.total) : 0;
+        const progressB = b.task_progress?.total ? (b.task_progress.completed / b.task_progress.total) : 0;
+        return progressB - progressA;
+      });
+    } else if (sortBy === "date") {
+      sorted.sort((a, b) => {
+        const dateA = new Date(a.next_task?.projected_date || "9999-12-31").getTime();
+        const dateB = new Date(b.next_task?.projected_date || "9999-12-31").getTime();
+        return dateA - dateB;
+      });
+    }
+    return sorted;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -179,7 +200,17 @@ export default function Home() {
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alphabetical">Alphabetical</SelectItem>
+              <SelectItem value="progress">Progress (High to Low)</SelectItem>
+              <SelectItem value="date">Earliest Date</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant={viewMode === "grid" ? "default" : "outline"}
             size="sm"
@@ -207,7 +238,7 @@ export default function Home() {
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {getSortedProjects().map((project) => (
             <ProjectCard
               key={project.name}
               project={project}
@@ -218,29 +249,28 @@ export default function Home() {
         </div>
       ) : (
         <div className="space-y-2">
-          {projects.map((project) => {
+          {getSortedProjects().map((project) => {
             const isExpanded = expandedTasks.has(project.name);
             const taskText = project.next_task?.text || "";
-            const shouldTruncate = taskText.length > 100;
+            const shouldTruncate = taskText.length > 60;
             
             return (
               <div
                 key={project.name}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
                 onClick={() => handleProjectClick(project.name)}
               >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{project.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {project.task_progress?.completed || 0} / {project.task_progress?.total || 0} tasks completed
-                    </p>
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <h3 className="font-semibold truncate">{project.name}</h3>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {project.task_progress?.completed || 0}/{project.task_progress?.total || 0}
+                      </span>
+                    </div>
                     {project.next_task && (
-                      <div className="text-sm text-primary mt-1">
-                        <span className="font-medium">{project.next_task.number}: </span>
-                        {isExpanded || !shouldTruncate
-                          ? taskText
-                          : `${taskText.substring(0, 100)}...`}
+                      <div className="text-xs text-primary">
+                        <span className="font-medium">{project.next_task.number}:</span> {isExpanded || !shouldTruncate ? taskText : `${taskText.substring(0, 60)}...`}
                         {shouldTruncate && (
                           <button
                             onClick={(e) => {
@@ -255,24 +285,21 @@ export default function Home() {
                                 return next;
                               });
                             }}
-                            className="ml-2 underline hover:no-underline"
+                            className="ml-1 underline hover:no-underline"
                           >
-                            {isExpanded ? "Show less" : "Show more"}
+                            {isExpanded ? "less" : "more"}
                           </button>
                         )}
-                        <span className="text-muted-foreground ml-2">
-                          • Projected: {project.next_task.projected_date || "None"}
-                        </span>
+                        <span className="text-muted-foreground ml-1">• Projected: {project.next_task.projected_date || "None"}</span>
                       </div>
                     )}
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-semibold">
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-lg font-semibold">
                       {project.task_progress?.total 
                         ? Math.round((project.task_progress.completed / project.task_progress.total) * 100)
                         : 0}%
                     </div>
-                    <div className="text-sm text-muted-foreground">Progress</div>
                   </div>
                 </div>
               </div>

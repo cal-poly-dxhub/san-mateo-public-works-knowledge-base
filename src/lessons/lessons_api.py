@@ -390,7 +390,7 @@ Return ONLY a JSON array of the merged lessons, no other text."""
 
 
 def get_lessons(event):
-    """Get project lessons learned"""
+    """Get project lessons learned with source documents from S3"""
     try:
         project_name = event["pathParameters"]["project_name"]
         bucket_name = os.environ["BUCKET_NAME"]
@@ -405,6 +405,20 @@ def get_lessons(event):
                 "lastUpdated": datetime.utcnow().isoformat() + "Z",
                 "lessons": [],
             }
+
+        # Fetch source documents for each lesson
+        lessons = lessons_data.get("lessons", [])
+        for lesson in lessons:
+            source_doc = lesson.get("source_document")
+            if source_doc:
+                try:
+                    doc_key = f"projects/{project_name}/documents/{source_doc}"
+                    doc_response = s3.get_object(Bucket=bucket_name, Key=doc_key)
+                    doc_content = doc_response["Body"].read().decode("utf-8")
+                    lesson["source_content"] = doc_content
+                except Exception as e:
+                    print(f"Could not fetch source document {source_doc}: {str(e)}")
+                    lesson["source_content"] = "Source document not available"
 
         return {
             "statusCode": 200,
