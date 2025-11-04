@@ -15,6 +15,7 @@ interface Lesson {
   recommendation: string;
   severity: "Low" | "Medium" | "High";
   source_document?: string;
+  source_content?: string;
   created_at?: string;
 }
 
@@ -33,25 +34,6 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
   const [loading, setLoading] = useState(true);
   const { apiKey } = useApiKey();
 
-  const openDocument = async (filename: string) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || ''}/file/projects/${projectName}/documents/${filename}`,
-        {
-          headers: {
-            'x-api-key': apiKey
-          }
-        }
-      );
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    } catch (error) {
-      console.error('Error opening document:', error);
-      alert('Failed to open document');
-    }
-  };
-
   useEffect(() => {
     loadLessons();
   }, [projectName]);
@@ -64,6 +46,25 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
       console.error("Error loading lessons:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openSourceFile = async (filename: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/file/projects/${encodeURIComponent(projectName)}/documents/${encodeURIComponent(filename)}`,
+        {
+          headers: {
+            'x-api-key': apiKey
+          }
+        }
+      );
+      if (!response.ok) throw new Error('File not found');
+      const data = await response.json();
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Error opening file:', error);
+      alert('Failed to open file');
     }
   };
 
@@ -133,8 +134,8 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
                   <div>
                     <span className="font-medium text-sm">Source:</span>
                     <button
-                      onClick={() => openDocument(lesson.source_document!)}
-                      className="text-sm ml-2 text-primary hover:underline cursor-pointer"
+                      onClick={() => openSourceFile(lesson.source_document!)}
+                      className="text-sm ml-2 text-primary hover:underline"
                     >
                       {lesson.source_document}
                     </button>

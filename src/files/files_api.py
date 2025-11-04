@@ -12,7 +12,15 @@ def handler(event, context):
         method = event.get("httpMethod", "GET")
         bucket_name = os.environ["BUCKET_NAME"]
 
+        # Check API key for file access
         if path.startswith("/file/"):
+            api_key = event.get("headers", {}).get("x-api-key") or event.get("headers", {}).get("X-Api-Key")
+            if not api_key:
+                return {
+                    "statusCode": 401,
+                    "headers": {"Access-Control-Allow-Origin": "*"},
+                    "body": json.dumps({"error": "API key required"}),
+                }
             file_path = path.replace("/file/", "")
             return get_file_content(bucket_name, file_path)
 
@@ -45,31 +53,25 @@ def handler(event, context):
 
 
 def get_file_content(bucket_name, file_path):
-    """Get file content from S3"""
+    """Generate presigned URL for S3 file"""
     try:
         # Decode URL-encoded path
         file_path = unquote(file_path)
 
-        # Get file from S3
-        response = s3_client.get_object(Bucket=bucket_name, Key=file_path)
-        content = response["Body"].read()
-
-        # Determine content type
-        content_type = "text/plain"
-        if file_path.endswith(".json"):
-            content_type = "application/json"
-        elif file_path.endswith(".md"):
-            content_type = "text/markdown"
-        elif file_path.endswith(".html"):
-            content_type = "text/html"
+        # Generate presigned URL (valid for 1 hour)
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': file_path},
+            ExpiresIn=3600
+        )
 
         return {
             "statusCode": 200,
             "headers": {
-                "Content-Type": content_type,
+                "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
             },
-            "body": content.decode("utf-8"),
+            "body": json.dumps({"url": presigned_url}),
         }
     except s3_client.exceptions.NoSuchKey:
         return {

@@ -49,6 +49,25 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
 
+  const openSourceFile = async (source: Source) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/file/documents/${encodeURIComponent(source.source)}`,
+        {
+          headers: {
+            'x-api-key': apiKey
+          }
+        }
+      );
+      if (!response.ok) throw new Error('File not found');
+      const data = await response.json();
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Error opening file:', error);
+      alert('Failed to open file');
+    }
+  };
+
   useEffect(() => {
     if (apiKey) {
       loadAvailableModels();
@@ -228,16 +247,16 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
                       <div className="flex items-center gap-3">
                         <Badge variant="outline">[{index + 1}]</Badge>
                         <div>
-                          <a 
-                            href={`${process.env.NEXT_PUBLIC_API_URL || 'https://42redkfdhl.execute-api.us-west-2.amazonaws.com/prod'}/projects/${encodeURIComponent(source.project)}/assets/${encodeURIComponent(source.source)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openSourceFile(source);
+                            }}
                             className="font-medium text-primary hover:underline flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
                           >
                             {source.source}
                             <ExternalLink className="h-3 w-3" />
-                          </a>
+                          </button>
                           <p className="text-sm text-muted-foreground">
                             Project: {source.project} • Chunk {source.chunk_index}/{source.total_chunks}
                           </p>
