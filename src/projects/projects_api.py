@@ -263,58 +263,8 @@ def get_project_detail(bucket_name, project_name):
 
 
 def delete_project(project_name, bucket_name):
-    """Delete a project and all its files"""
+    """Delete a project and all its files. KB will auto-sync when S3 files are deleted."""
     try:
-        # Delete vectors from S3 vector bucket
-        try:
-            s3vectors_client = boto3.client("s3vectors")
-            vector_bucket = os.environ.get(
-                "VECTOR_BUCKET_NAME", "dxhub-meeting-kb-vectors"
-            )
-            index_name = os.environ.get("INDEX_NAME", "meeting-kb-index")
-
-            vector_keys = []
-            next_token = None
-
-            # Paginate through all vectors
-            while True:
-                params = {
-                    "vectorBucketName": vector_bucket,
-                    "indexName": index_name,
-                }
-                if next_token:
-                    params["nextToken"] = next_token
-
-                vector_response = s3vectors_client.list_vectors(**params)
-
-                for obj in vector_response.get("vectors", []):
-                    metadata = obj.get("metadata", {})
-                    if (
-                        isinstance(metadata, dict)
-                        and metadata.get("project_name") == project_name
-                    ):
-                        vector_keys.append(obj["key"])
-
-                next_token = vector_response.get("nextToken")
-                if not next_token:
-                    break
-
-            if vector_keys:
-                # Delete in batches of 500
-                batch_size = 500
-                total_deleted = 0
-                for i in range(0, len(vector_keys), batch_size):
-                    batch = vector_keys[i : i + batch_size]
-                    s3vectors_client.delete_vectors(
-                        vectorBucketName=vector_bucket,
-                        indexName=index_name,
-                        keys=batch,
-                    )
-                    total_deleted += len(batch)
-                print(f"Deleted {total_deleted} S3 vectors for project: {project_name}")
-        except Exception as e:
-            print(f"Warning: Could not delete vectors: {e}")
-
         # Delete all DynamoDB items for this project
         try:
             table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
