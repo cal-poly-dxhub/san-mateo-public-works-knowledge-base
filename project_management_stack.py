@@ -847,10 +847,6 @@ class ProjectManagementStack(Stack):
             apigateway.LambdaIntegration(files_lambda),
             api_key_required=True,
         )
-        file_proxy.add_method(
-            "OPTIONS",
-            apigateway.LambdaIntegration(files_lambda),
-        )
 
         # Available models endpoint (keep with dashboard)
         models_resource = api.root.add_resource("models")

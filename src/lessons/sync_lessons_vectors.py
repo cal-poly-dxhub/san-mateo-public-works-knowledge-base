@@ -22,8 +22,8 @@ def sync_lessons_to_vectors(
     - Adds each lesson as individual vector with lesson ID
     """
     try:
-        vector_bucket = os.environ.get("VECTOR_BUCKET_NAME", "dxhub-meeting-kb-vectors")
-        index_name = os.environ.get("INDEX_NAME", "meeting-kb-index")
+        vector_bucket = os.environ.get("VECTOR_BUCKET_NAME", "dpw-project-mgmt-vectors")
+        index_name = os.environ.get("INDEX_NAME", "project-mgmt-index")
         embedding_model = os.environ.get("EMBEDDING_MODEL_ID")
         
         if not embedding_model:

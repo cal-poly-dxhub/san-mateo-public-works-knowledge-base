@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Save, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Save, RefreshCw, Pencil } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 import {
   Dialog,
@@ -26,11 +26,16 @@ interface Task {
 
 export default function GlobalChecklistPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [originalTasks, setOriginalTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  const hasChanges = JSON.stringify(tasks) !== JSON.stringify(originalTasks);
+  const [originalTask, setOriginalTask] = useState<Task | null>(null);
 
   useEffect(() => {
     loadChecklist();
@@ -40,6 +45,7 @@ export default function GlobalChecklistPage() {
     try {
       const data = await apiRequest("/global-checklist");
       setTasks(data.tasks || []);
+      setOriginalTasks(data.tasks || []);
     } catch (error) {
       console.error("Error loading checklist:", error);
     } finally {
@@ -61,9 +67,53 @@ export default function GlobalChecklistPage() {
       const newTasks = [...tasks];
       newTasks.splice(index + 1, 0, newTask);
       setTasks(newTasks);
+      setEditingIndex(index + 1);
     } else {
       setTasks([...tasks, newTask]);
+      setEditingIndex(tasks.length);
     }
+  };
+
+  const confirmTask = (index: number) => {
+    const task = tasks[index];
+    
+    // Validate task_id
+    if (!task.task_id) {
+      alert("Task ID is required");
+      return;
+    }
+    
+    // Check for duplicates
+    const duplicateExists = tasks.some((t, i) => i !== index && t.task_id === task.task_id);
+    if (duplicateExists) {
+      alert(`Task ID "${task.task_id}" already exists. Please use a unique ID.`);
+      return;
+    }
+    
+    // Sort tasks
+    const newTasks = [...tasks];
+    newTasks.sort((a, b) => {
+      const aParts = a.task_id.split(".").map(n => parseInt(n) || 0);
+      const bParts = b.task_id.split(".").map(n => parseInt(n) || 0);
+      for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+        const aVal = aParts[i] || 0;
+        const bVal = bParts[i] || 0;
+        if (aVal !== bVal) return aVal - bVal;
+      }
+      return 0;
+    });
+    
+    setTasks(newTasks);
+    setEditingIndex(null);
+  };
+
+  const cancelTask = (index: number) => {
+    const task = tasks[index];
+    if (!task.task_id && !task.description) {
+      // Remove empty task
+      setTasks(tasks.filter((_, i) => i !== index));
+    }
+    setEditingIndex(null);
   };
 
   const deleteTask = (taskId: string) => {
@@ -87,6 +137,7 @@ export default function GlobalChecklistPage() {
         method: "PUT",
         body: JSON.stringify({ tasks })
       });
+      setOriginalTasks([...tasks]);
       alert("Global checklist updated successfully");
       setConfirmOpen(false);
     } catch (error) {
@@ -97,8 +148,23 @@ export default function GlobalChecklistPage() {
     }
   };
 
-  const handleSync = () => {
-    setSyncConfirmOpen(true);
+  const handleSync = async () => {
+    // Save first
+    setSaving(true);
+    try {
+      await apiRequest("/global-checklist", {
+        method: "PUT",
+        body: JSON.stringify({ tasks })
+      });
+      setOriginalTasks([...tasks]);
+      setSaving(false);
+      // Then sync
+      setSyncConfirmOpen(true);
+    } catch (error) {
+      console.error("Error saving checklist:", error);
+      alert("Error saving checklist before sync");
+      setSaving(false);
+    }
   };
 
   const confirmSync = async () => {
@@ -136,63 +202,106 @@ export default function GlobalChecklistPage() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync to All Projects
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
+            {hasChanges && (
+              <Button onClick={handleSave} disabled={saving}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+            )}
           </div>
         </div>
 
         <div className="space-y-2">
           {tasks.map((task, index) => (
             <div key={index} className="border rounded-lg p-3 bg-card hover:bg-accent/50 transition-colors">
-              <div className="flex gap-3 items-start">
-                <Input
-                  value={task.task_id}
-                  onChange={(e) => updateTask(index, "task_id", e.target.value)}
-                  placeholder="ID"
-                  className="w-20"
-                />
-                <Textarea
-                  value={task.description}
-                  onChange={(e) => updateTask(index, "description", e.target.value)}
-                  placeholder="Task description"
-                  rows={2}
-                  className="flex-1"
-                />
-                <Input
-                  value={task.notes}
-                  onChange={(e) => updateTask(index, "notes", e.target.value)}
-                  placeholder="Notes"
-                  className="w-48"
-                />
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={task.required}
-                    onCheckedChange={(checked) => updateTask(index, "required", !!checked)}
+              {editingIndex === index ? (
+                <div className="flex gap-3 items-start">
+                  <Input
+                    value={task.task_id}
+                    onChange={(e) => updateTask(index, "task_id", e.target.value)}
+                    placeholder="ID"
+                    className="w-20"
                   />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => addTask(task.task_id)}
-                    title="Add task below"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteTask(task.task_id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                  <Textarea
+                    value={task.description}
+                    onChange={(e) => updateTask(index, "description", e.target.value)}
+                    placeholder="Task description"
+                    rows={2}
+                    className="flex-1"
+                  />
+                  <Input
+                    value={task.notes}
+                    onChange={(e) => updateTask(index, "notes", e.target.value)}
+                    placeholder="Notes"
+                    className="w-48"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={task.required}
+                      onCheckedChange={(checked) => updateTask(index, "required", !!checked)}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => confirmTask(index)}
+                      title="Confirm task"
+                    >
+                      <Save className="h-4 w-4 text-green-500" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => cancelTask(index)}
+                      title="Cancel"
+                    >
+                      <Trash2 className="h-4 w-4 text-gray-500" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex gap-3 items-center">
+                  <div className="w-20 font-mono text-sm">{task.task_id}</div>
+                  <div className="flex-1 text-sm">{task.description}</div>
+                  <div className="w-48 text-sm text-muted-foreground">{task.notes}</div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={task.required}
+                      disabled
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingIndex(index)}
+                      title="Edit task"
+                      disabled={editingIndex !== null}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addTask(task.task_id)}
+                      title="Add task below"
+                      disabled={editingIndex !== null}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteTask(task.task_id)}
+                      disabled={editingIndex !== null}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
-        <Button onClick={() => addTask()} className="mt-4" variant="outline">
+        <Button onClick={() => addTask()} className="mt-4" variant="outline" disabled={editingIndex !== null}>
           <Plus className="h-4 w-4 mr-2" />
           Add Task at End
         </Button>
