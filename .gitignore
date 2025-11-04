@@ -53,3 +53,5 @@ src/*/prompts/
 src/*/templates/
 
 test_config.py
+
+scripts/
