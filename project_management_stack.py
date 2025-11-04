@@ -331,6 +331,20 @@ class ProjectManagementStack(Stack):
         )
         project_data_table.grant_read_write_data(checklist_lambda)
 
+        # Global Checklist Manager Lambda
+        global_checklist_lambda = _lambda.Function(
+            self,
+            "GlobalChecklistLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="global_checklist_manager.handler",
+            code=_lambda.Code.from_asset("./src/checklist"),
+            timeout=cdk.Duration.seconds(60),
+            environment={
+                "PROJECT_DATA_TABLE_NAME": project_data_table.table_name,
+            },
+        )
+        project_data_table.grant_read_write_data(global_checklist_lambda)
+
         # Task Manager Lambda
         task_lambda = _lambda.Function(
             self,
@@ -794,10 +808,48 @@ class ProjectManagementStack(Stack):
             api_key_required=True,
         )
 
+        # Global Checklist endpoints
+        global_checklist_resource = api.root.add_resource("global-checklist")
+        global_checklist_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(global_checklist_lambda),
+            api_key_required=True,
+        )
+        global_checklist_resource.add_method(
+            "PUT",
+            apigateway.LambdaIntegration(global_checklist_lambda),
+            api_key_required=True,
+        )
+        
+        # Global checklist sync endpoint
+        global_sync_resource = global_checklist_resource.add_resource("sync")
+        global_sync_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(global_checklist_lambda),
+            api_key_required=True,
+        )
+        
+        # Global checklist initialize endpoint
+        global_init_resource = global_checklist_resource.add_resource("initialize")
+        global_init_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(global_checklist_lambda),
+            api_key_required=True,
+        )
+
         file_resource = api.root.add_resource("file")
         file_proxy = file_resource.add_proxy(
             default_integration=apigateway.LambdaIntegration(files_lambda),
-            any_method=True,
+            any_method=False,
+        )
+        file_proxy.add_method(
+            "GET",
+            apigateway.LambdaIntegration(files_lambda),
+            api_key_required=True,
+        )
+        file_proxy.add_method(
+            "OPTIONS",
+            apigateway.LambdaIntegration(files_lambda),
         )
 
         # Available models endpoint (keep with dashboard)
