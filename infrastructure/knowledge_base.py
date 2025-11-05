@@ -20,7 +20,7 @@ class KnowledgeBaseResources(Construct):
 
         self.kb_role.add_to_policy(
             iam.PolicyStatement(
-                actions=["bedrock:InvokeModel"],
+                actions=["bedrock:InvokeModel", "bedrock:GetInferenceProfile"],
                 resources=[f"arn:aws:bedrock:{cdk.Stack.of(self).region}::foundation-model/*"],
             )
         )

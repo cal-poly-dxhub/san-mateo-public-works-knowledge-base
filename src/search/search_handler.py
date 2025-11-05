@@ -19,6 +19,7 @@ def handler(event, context):
         # Parse request body
         body = json.loads(event.get("body", "{}"))
         query = body.get("query", "")
+        selected_model = body.get("model", None)
 
         if not query:
             return {
@@ -30,8 +31,8 @@ def handler(event, context):
         # Perform global search without filtering
         results = search_global(query)
 
-        # Generate RAG response
-        response = generate_rag_response(query, results)
+        # Generate RAG response with selected model
+        response = generate_rag_response(query, results, selected_model)
 
         return {
             "statusCode": 200,
@@ -79,9 +80,9 @@ def search_global(query: str) -> List[Dict]:
     return response.get("retrievalResults", [])
 
 
-def generate_rag_response(query: str, search_results: List[Dict]) -> str:
+def generate_rag_response(query: str, search_results: List[Dict], selected_model: str = None) -> str:
     """Generate RAG response using Claude"""
-    model_id = os.getenv("BEDROCK_MODEL_ID")
+    model_id = selected_model or os.getenv("BEDROCK_MODEL_ID")
 
     # Prepare context from search results
     context_parts = []
