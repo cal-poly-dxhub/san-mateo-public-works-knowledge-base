@@ -82,34 +82,6 @@ export default function ProjectLessonsSearch({ projectType }: ProjectLessonsSear
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Search Type Filter */}
-        <div className="flex flex-col gap-2">
-          <Label>Search Type</Label>
-          <div className="flex gap-2">
-            <Button
-              variant={searchType === "both" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("both")}
-            >
-              Both
-            </Button>
-            <Button
-              variant={searchType === "lessons" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("lessons")}
-            >
-              Lessons Only
-            </Button>
-            <Button
-              variant={searchType === "documents" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSearchType("documents")}
-            >
-              Documents Only
-            </Button>
-          </div>
-        </div>
-
         {/* Search Input */}
         <div className="flex gap-2">
           <Input

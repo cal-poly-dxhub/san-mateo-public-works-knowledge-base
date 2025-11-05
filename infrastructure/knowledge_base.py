@@ -21,9 +21,7 @@ class KnowledgeBaseResources(Construct):
         self.kb_role.add_to_policy(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel"],
-                resources=[
-                    f"arn:aws:bedrock:{cdk.Stack.of(self).region}::foundation-model/amazon.titan-embed-text-v2:0"
-                ],
+                resources=[f"arn:aws:bedrock:{cdk.Stack.of(self).region}::foundation-model/*"],
             )
         )
 

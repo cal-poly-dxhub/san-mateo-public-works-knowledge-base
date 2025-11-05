@@ -139,31 +139,6 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
 
   return (
     <div className="space-y-4">
-      {/* Search Type Filter */}
-      <div className="flex gap-2">
-        <Button
-          variant={searchType === "both" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setSearchType("both")}
-        >
-          Both
-        </Button>
-        <Button
-          variant={searchType === "lessons" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setSearchType("lessons")}
-        >
-          Lessons Only
-        </Button>
-        <Button
-          variant={searchType === "documents" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setSearchType("documents")}
-        >
-          Documents Only
-        </Button>
-      </div>
-
       {/* Search Bar */}
       <div className="flex gap-2">
         <Input
