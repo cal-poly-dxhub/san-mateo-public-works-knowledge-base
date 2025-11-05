@@ -47,7 +47,6 @@ def sync_lessons_to_vectors(
             Metadata={
                 "project_name": project_name,
                 "project_type": project_type or "unknown",
-                "is_lesson": "true",
                 "content_type": "lesson",
                 "lesson_count": str(len(lessons))
             }

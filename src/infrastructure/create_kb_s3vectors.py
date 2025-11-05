@@ -38,7 +38,7 @@ def on_event(event, context):
                     indexName=index_name,
                     dataType="float32",
                     dimension=1024,
-                    distanceMetric="euclidean"
+                    distanceMetric="cosine"
                 )
                 print("✓ Index created")
             except s3v.exceptions.ConflictException:
@@ -87,8 +87,14 @@ def on_event(event, context):
                     "chunkingConfiguration": {
                         "chunkingStrategy": "FIXED_SIZE",
                         "fixedSizeChunkingConfiguration": {
-                            "maxTokens": 500,
-                            "overlapPercentage": 20
+                            "maxTokens": 300,
+                            "overlapPercentage": 10
+                        }
+                    },
+                    "parsingConfiguration": {
+                        "parsingStrategy": "BEDROCK_FOUNDATION_MODEL",
+                        "bedrockFoundationModelConfiguration": {
+                            "modelArn": f"arn:aws:bedrock:{region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
                         }
                     }
                 }

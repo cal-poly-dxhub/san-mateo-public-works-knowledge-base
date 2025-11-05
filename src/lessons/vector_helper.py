@@ -150,24 +150,13 @@ def query_kb_lessons_only(query: str, project_name: str = None, limit: int = 10)
         if not kb_id:
             raise ValueError("KB_ID environment variable not set")
 
-        # Build filter
-        filter_config = {"equals": {"key": "is_lesson", "value": True}}
-        
-        if project_name:
-            filter_config = {
-                "andAll": [
-                    {"equals": {"key": "is_lesson", "value": True}},
-                    {"equals": {"key": "project_name", "value": project_name}}
-                ]
-            }
-
+        # Query KB without any filtering
         response = bedrock_agent_client.retrieve(
             knowledgeBaseId=kb_id,
             retrievalQuery={"text": query},
             retrievalConfiguration={
                 "vectorSearchConfiguration": {
-                    "numberOfResults": limit,
-                    "filter": filter_config
+                    "numberOfResults": limit
                 }
             }
         )
