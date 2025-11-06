@@ -33,17 +33,33 @@ export default function GlobalChecklistPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
+
+  // Listen for changes from header toggle
+  useEffect(() => {
+    const handleChecklistTypeChange = (event: CustomEvent) => {
+      setChecklistType(event.detail);
+    };
+    
+    // Get initial value from localStorage
+    const stored = localStorage.getItem('checklistType') as "design" | "construction";
+    if (stored) setChecklistType(stored);
+    
+    window.addEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
+    return () => window.removeEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
+  }, []);
 
   const hasChanges = JSON.stringify(tasks) !== JSON.stringify(originalTasks);
   const [originalTask, setOriginalTask] = useState<Task | null>(null);
 
   useEffect(() => {
     loadChecklist();
-  }, []);
+  }, [checklistType]);
 
   const loadChecklist = async () => {
+    setLoading(true);
     try {
-      const data = await apiRequest("/global-checklist");
+      const data = await apiRequest(`/global-checklist?type=${checklistType}`);
       setTasks(data.tasks || []);
       setOriginalTasks(data.tasks || []);
     } catch (error) {
@@ -133,7 +149,7 @@ export default function GlobalChecklistPage() {
   const confirmSave = async () => {
     setSaving(true);
     try {
-      await apiRequest("/global-checklist", {
+      await apiRequest(`/global-checklist?type=${checklistType}`, {
         method: "PUT",
         body: JSON.stringify({ tasks })
       });
@@ -152,7 +168,7 @@ export default function GlobalChecklistPage() {
     // Save first
     setSaving(true);
     try {
-      await apiRequest("/global-checklist", {
+      await apiRequest(`/global-checklist?type=${checklistType}`, {
         method: "PUT",
         body: JSON.stringify({ tasks })
       });
@@ -192,7 +208,7 @@ export default function GlobalChecklistPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Global Checklist Manager</h1>
+            <h1 className="text-3xl font-bold">Global {checklistType.charAt(0).toUpperCase() + checklistType.slice(1)} Checklist</h1>
             <p className="text-muted-foreground mt-2">
               {tasks.length} tasks • Edit in place, add tasks between items
             </p>

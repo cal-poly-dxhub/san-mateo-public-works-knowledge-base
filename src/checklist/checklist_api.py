@@ -55,7 +55,9 @@ def handler(event, context):
 
         elif "/checklist" in path and method == "GET":
             project_name = event["pathParameters"]["project_name"]
-            return get_checklist(project_name)
+            query_params = event.get("queryStringParameters") or {}
+            checklist_type = query_params.get("type", "design")
+            return get_checklist(project_name, checklist_type)
 
         elif "/checklist" in path and method == "PUT":
             project_name = event["pathParameters"]["project_name"]
@@ -87,7 +89,7 @@ def handler(event, context):
         }
 
 
-def get_checklist(project_name):
+def get_checklist(project_name, checklist_type="design"):
     """Get all tasks for a project from DynamoDB"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
@@ -130,10 +132,11 @@ def get_checklist(project_name):
             },
         )
 
-        # Get all tasks for this project
+        # Get all tasks for this project filtered by checklist type
+        task_prefix = f"task#{checklist_type}#"
         response = table.query(
             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
-            ExpressionAttributeValues={":pid": project_name, ":task": "task#"},
+            ExpressionAttributeValues={":pid": project_name, ":task": task_prefix},
         )
 
         tasks = []

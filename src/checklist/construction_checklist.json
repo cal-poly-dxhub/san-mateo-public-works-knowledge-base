@@ -1,0 +1,239 @@
+{
+  "document": {
+    "title": "CONSTRUCTION SCHEDULE CHECKLIST",
+    "version": "1.0",
+    "last_updated": "2024-01-01",
+    "metadata": {
+      "date": "",
+      "project": "",
+      "work_authorization": "",
+      "contractor": "",
+      "construction_manager": "",
+      "inspector": "",
+      "project_manager": ""
+    },
+    "checklist_items": [
+      {
+        "id": 1,
+        "tasks": [
+          {
+            "task_id": "1.1",
+            "description": "Pre-construction meeting scheduled and completed with contractor, inspector, and project team.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "1.2",
+            "description": "Construction permits obtained and posted at job site.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "tasks": [
+          {
+            "task_id": "2.1",
+            "description": "Site mobilization and staging area established.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "2.2",
+            "description": "Traffic control plan implemented and approved.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "tasks": [
+          {
+            "task_id": "3.1",
+            "description": "Utility locates completed and verified.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "3.2",
+            "description": "Potholing completed for critical utilities.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "tasks": [
+          {
+            "task_id": "4.1",
+            "description": "Demolition and removal work completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "tasks": [
+          {
+            "task_id": "5.1",
+            "description": "Excavation and grading work completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "5.2",
+            "description": "Compaction testing completed and approved.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "tasks": [
+          {
+            "task_id": "6.1",
+            "description": "Underground utilities installed (water, sewer, storm drain).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "6.2",
+            "description": "Pressure testing and video inspection completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "tasks": [
+          {
+            "task_id": "7.1",
+            "description": "Base material placed and compacted.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "7.2",
+            "description": "Base testing completed and approved.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "tasks": [
+          {
+            "task_id": "8.1",
+            "description": "Paving completed (asphalt or concrete).",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "8.2",
+            "description": "Pavement thickness and density testing completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "tasks": [
+          {
+            "task_id": "9.1",
+            "description": "Striping and pavement markings completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "9.2",
+            "description": "Signage installed per approved plans.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "tasks": [
+          {
+            "task_id": "10.1",
+            "description": "Landscaping and irrigation installed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": false
+          },
+          {
+            "task_id": "10.2",
+            "description": "Site cleanup and restoration completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "tasks": [
+          {
+            "task_id": "11.1",
+            "description": "Final inspection completed and approved.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "11.2",
+            "description": "Punch list items completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "tasks": [
+          {
+            "task_id": "12.1",
+            "description": "As-built drawings submitted and approved.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          },
+          {
+            "task_id": "12.2",
+            "description": "Project closeout documentation completed.",
+            "projected_date": "",
+            "actual_date": "",
+            "required": true
+          }
+        ]
+      }
+    ]
+  }
+}

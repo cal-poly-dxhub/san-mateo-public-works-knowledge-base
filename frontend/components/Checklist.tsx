@@ -59,16 +59,36 @@ export default function Checklist({ projectName }: ChecklistProps) {
     required: true,
     notes: ""
   });
+  const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
+
+  // Listen for changes from header toggle
+  useEffect(() => {
+    const handleChecklistTypeChange = (event: CustomEvent) => {
+      setChecklistType(event.detail);
+    };
+    
+    // Get initial value from localStorage
+    const stored = localStorage.getItem('checklistType') as "design" | "construction";
+    if (stored) setChecklistType(stored);
+    
+    window.addEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
+    return () => window.removeEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
+  }, []);
 
   useEffect(() => {
     loadChecklist();
-  }, [projectName]);
+  }, [projectName, checklistType]);
 
   const loadChecklist = async () => {
     try {
-      const data = await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist`);
+      // Load single checklist type
+      const data = await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist?type=${checklistType}`);
+      const allTasks = data.tasks || [];
+      const combinedProgress = data.progress || { total: 0, completed: 0, percentage: 0 };
+      setMetadata(data.metadata || null);
+      setEditedMetadata(data.metadata || null);
       
-      const sortedTasks = (data.tasks || []).sort((a, b) => {
+      const sortedTasks = allTasks.sort((a, b) => {
         const parseTaskId = (id: string) => id.split('.').map(Number);
         const aParts = parseTaskId(a.checklist_task_id);
         const bParts = parseTaskId(b.checklist_task_id);
@@ -82,9 +102,7 @@ export default function Checklist({ projectName }: ChecklistProps) {
       });
       
       setTasks(sortedTasks);
-      setMetadata(data.metadata || null);
-      setEditedMetadata(data.metadata || null);
-      setProgress(data.progress || { total: 0, completed: 0, percentage: 0 });
+      setProgress(combinedProgress);
     } catch (error) {
       console.error("Error loading checklist:", error);
     } finally {
@@ -423,9 +441,11 @@ export default function Checklist({ projectName }: ChecklistProps) {
                 Track project tasks and milestones
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="edit-mode">Edit Mode</Label>
-              <Switch id="edit-mode" checked={editMode} onCheckedChange={setEditMode} />
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="edit-mode">Edit Mode</Label>
+                <Switch id="edit-mode" checked={editMode} onCheckedChange={setEditMode} />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -474,9 +494,13 @@ export default function Checklist({ projectName }: ChecklistProps) {
             </div>
           ) : (
             <div className="space-y-2">
-              {tasks.map((task) => (
+              {tasks.map((task) => {
+                // Create unique key using task_id
+                const uniqueKey = task.task_id;
+                
+                return (
                 <div
-                  key={task.task_id}
+                  key={uniqueKey}
                   className="flex items-start gap-3 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                 >
                   {editingTask === task.task_id ? (
@@ -519,10 +543,10 @@ export default function Checklist({ projectName }: ChecklistProps) {
                           <span className="text-xs font-mono text-muted-foreground">
                             {task.checklist_task_id}
                           </span>
-                      {task.required && (
-                        <Badge variant="outline" className="text-xs">Required</Badge>
-                      )}
-                    </div>
+                          {task.required && (
+                            <Badge variant="outline" className="text-xs">Required</Badge>
+                          )}
+                        </div>
                     <p className={`${task.actual_date ? "line-through text-muted-foreground" : ""}`}>
                       {task.description}
                     </p>
@@ -576,7 +600,8 @@ export default function Checklist({ projectName }: ChecklistProps) {
                     </>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

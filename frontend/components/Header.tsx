@@ -14,6 +14,56 @@ enum ApiKeyState {
   invalid,
 }
 
+function ChecklistToggle() {
+  const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
+  const [mounted, setMounted] = useState(false);
+  
+  React.useEffect(() => {
+    setMounted(true);
+    // Get initial value from localStorage only on client
+    const stored = localStorage.getItem('checklistType') as "design" | "construction";
+    if (stored) {
+      setChecklistType(stored);
+    } else {
+      // Set default and store it
+      localStorage.setItem('checklistType', 'design');
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!mounted) return;
+    // Store in localStorage and dispatch event for other components
+    localStorage.setItem('checklistType', checklistType);
+    window.dispatchEvent(new CustomEvent('checklistTypeChange', { detail: checklistType }));
+  }, [checklistType, mounted]);
+
+  if (!mounted) {
+    return (
+      <select className="h-8 px-2 rounded-md border border-input bg-background text-xs text-secondary-foreground">
+        <option>Design</option>
+      </select>
+    );
+  }
+
+  return (
+    <select
+      value={checklistType}
+      onChange={(e) => setChecklistType(e.target.value as "design" | "construction")}
+      className="h-8 px-2 rounded-md border border-input bg-background text-xs text-secondary-foreground"
+    >
+      <option value="design">Design</option>
+      <option value="construction">Construction</option>
+    </select>
+  );
+}
+
+enum ApiKeyState {
+  empty,
+  checking,
+  valid,
+  invalid,
+}
+
 export default function Header() {
   const { apiKey, setApiKey, triggerRefresh } = useApiKey();
   const [apiKeyValid, setApiKeyValid] = useState<ApiKeyState>(
@@ -47,6 +97,7 @@ export default function Header() {
           <Link href="/global-checklist" className="text-sm hover:underline hover:text-accent transition-colors text-secondary-foreground">
             Global Checklist
           </Link>
+          <ChecklistToggle />
         </div>
       </div>
       <Input

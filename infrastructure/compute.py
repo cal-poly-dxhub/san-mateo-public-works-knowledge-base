@@ -39,6 +39,7 @@ class ComputeResources(Construct):
             runtime=_lambda.Runtime.PYTHON_3_11,
             handler="bucket_setup.handler",
             code=_lambda.Code.from_asset("./src/setup"),
+            timeout=Duration.seconds(30),
             environment={"BUCKET_NAME": storage.bucket.bucket_name},
         )
 

@@ -17,11 +17,15 @@ def handler(event, context):
             return cors_response(200, "")
 
         if method == "GET" and "/global-checklist" in path:
-            return get_global_checklist()
+            query_params = event.get("queryStringParameters") or {}
+            checklist_type = query_params.get("type", "design")
+            return get_global_checklist(checklist_type)
         
         elif method == "PUT" and "/global-checklist" in path:
             body = json.loads(event.get("body", "{}"))
-            return update_global_checklist(body)
+            query_params = event.get("queryStringParameters") or {}
+            checklist_type = query_params.get("type", "design")
+            return update_global_checklist(body, checklist_type)
         
         elif method == "POST" and "/global-checklist/sync" in path:
             return sync_to_all_projects()
@@ -36,14 +40,15 @@ def handler(event, context):
         return cors_response(500, {"error": str(e)})
 
 
-def get_global_checklist():
+def get_global_checklist(checklist_type="design"):
     """Get global checklist from DynamoDB"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
         
+        task_prefix = f"task#{checklist_type}#"
         response = table.query(
             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
-            ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": "task#"}
+            ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": task_prefix}
         )
         
         tasks = []
@@ -67,30 +72,32 @@ def get_global_checklist():
         raise
 
 
-def update_global_checklist(body):
+def update_global_checklist(body, checklist_type="design"):
     """Update global checklist tasks"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
         tasks = body.get("tasks", [])
         version = datetime.utcnow().isoformat()
         
-        # Get existing tasks
+        task_prefix = f"task#{checklist_type}#"
+        
+        # Get existing tasks for this checklist type
         response = table.query(
             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
-            ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": "task#"}
+            ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": task_prefix}
         )
         existing_task_ids = {item["taskData"]["task_id"] for item in response["Items"]}
         new_task_ids = {task["task_id"] for task in tasks}
         
         # Delete removed tasks
         for task_id in existing_task_ids - new_task_ids:
-            table.delete_item(Key={"project_id": "__GLOBAL__", "item_id": f"task#{task_id}"})
+            table.delete_item(Key={"project_id": "__GLOBAL__", "item_id": f"{task_prefix}{task_id}"})
         
         # Update/create tasks
         for task in tasks:
             table.put_item(Item={
                 "project_id": "__GLOBAL__",
-                "item_id": f"task#{task['task_id']}",
+                "item_id": f"{task_prefix}{task['task_id']}",
                 "taskData": task,
                 "version": version,
                 "lastUpdated": version
@@ -199,7 +206,7 @@ def sync_to_all_projects():
 
 
 def initialize_global_checklist():
-    """Initialize global checklist from design_checklist.json"""
+    """Initialize global checklist from design_checklist.json and construction_checklist.json"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
         
@@ -213,25 +220,39 @@ def initialize_global_checklist():
         if response["Items"]:
             return cors_response(400, {"error": "Global checklist already initialized"})
         
-        # Load from JSON
-        checklist_path = "/var/task/design_checklist.json"
-        with open(checklist_path, "r") as f:
-            checklist = json.load(f)
-        
         version = datetime.utcnow().isoformat()
         
-        # Store each task
-        for item in checklist["document"]["checklist_items"]:
+        # Load and store design checklist
+        design_path = "/var/task/design_checklist.json"
+        with open(design_path, "r") as f:
+            design_checklist = json.load(f)
+        
+        for item in design_checklist["document"]["checklist_items"]:
             for task in item["tasks"]:
                 table.put_item(Item={
                     "project_id": "__GLOBAL__",
-                    "item_id": f"task#{task['task_id']}",
+                    "item_id": f"task#design#{task['task_id']}",
                     "taskData": task,
                     "version": version,
                     "lastUpdated": version
                 })
         
-        return cors_response(200, {"message": "Global checklist initialized", "version": version})
+        # Load and store construction checklist
+        construction_path = "/var/task/construction_checklist.json"
+        with open(construction_path, "r") as f:
+            construction_checklist = json.load(f)
+        
+        for item in construction_checklist["document"]["checklist_items"]:
+            for task in item["tasks"]:
+                table.put_item(Item={
+                    "project_id": "__GLOBAL__",
+                    "item_id": f"task#construction#{task['task_id']}",
+                    "taskData": task,
+                    "version": version,
+                    "lastUpdated": version
+                })
+        
+        return cors_response(200, {"message": "Global checklists initialized (design and construction)", "version": version})
     
     except Exception as e:
         print(f"Error initializing global checklist: {str(e)}")

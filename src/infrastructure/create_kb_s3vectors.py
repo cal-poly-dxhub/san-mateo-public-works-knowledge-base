@@ -1,9 +1,9 @@
 import os
 import boto3
-import cfnresponse
 import traceback
 
 def on_event(event, context):
+    """CDK Custom Resource handler - returns data directly"""
     print(f"Event: {event}")
     request_type = event["RequestType"]
     props = event["ResourceProperties"]
@@ -103,15 +103,16 @@ def on_event(event, context):
             ds_id = ds_response["dataSource"]["dataSourceId"]
             print(f"✓ Data source created: {ds_id}")
             
-            data = {
-                "KnowledgeBaseId": kb_id,
-                "DataSourceId": ds_id,
-                "VectorBucketName": vector_bucket_name,
-                "IndexName": index_name
+            # Return data for CDK Custom Resource
+            return {
+                "PhysicalResourceId": kb_id,
+                "Data": {
+                    "KnowledgeBaseId": kb_id,
+                    "DataSourceId": ds_id,
+                    "VectorBucketName": vector_bucket_name,
+                    "IndexName": index_name
+                }
             }
-            print(f"Sending SUCCESS response with data: {data}")
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, data, physicalResourceId=kb_id)
-            print("✓ Response sent")
             
         elif request_type == "Delete":
             kb_id = event.get("PhysicalResourceId")
@@ -122,11 +123,12 @@ def on_event(event, context):
                     print("✓ KB deleted")
                 except Exception as e:
                     print(f"Delete error (ignored): {e}")
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+            return {"PhysicalResourceId": kb_id}
         else:
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+            # Update - no changes needed
+            return {"PhysicalResourceId": event.get("PhysicalResourceId")}
             
     except Exception as e:
         print(f"❌ ERROR: {str(e)}")
         traceback.print_exc()
-        cfnresponse.send(event, context, cfnresponse.FAILED, {"Error": str(e)})
+        raise
