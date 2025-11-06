@@ -25,7 +25,7 @@ class ProjectManagementStack(Stack):
 
         # Create modular resources
         storage = StorageResources(self, "Storage")
-        kb = KnowledgeBaseResources(self, "KnowledgeBase", storage.docs_bucket)
+        kb = KnowledgeBaseResources(self, "KnowledgeBase", storage.bucket)
         compute = ComputeResources(self, "Compute", config, storage, kb.kb_id)
         IAMPermissions(self, "IAM", compute, storage, kb.kb_id)
         SSMParameters(self, "Parameters", config, kb.kb_id)

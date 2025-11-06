@@ -70,7 +70,6 @@ class ComputeResources(Construct):
             layers=[self.common_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
-                "DOCS_BUCKET_NAME": storage.docs_bucket.bucket_name,
                 "LESSONS_EXTRACTOR_MODEL_ID": config["models"]["lessons_extractor"],
                 "CONFLICT_DETECTOR_MODEL_ID": config["models"]["conflict_detector"],
                 "KB_ID": kb_id,
@@ -209,7 +208,6 @@ class ComputeResources(Construct):
             timeout=Duration.minutes(1),
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
-                "DOCS_BUCKET_NAME": storage.docs_bucket.bucket_name,
                 "KB_ID": kb_id,
                 "BEDROCK_MODEL_ID": config["models"]["primary_llm"],
             },

@@ -27,7 +27,6 @@ class IAMPermissions(Construct):
 
         # Async lessons processor permissions
         storage.bucket.grant_read_write(compute.async_lessons_processor)
-        storage.docs_bucket.grant_read_write(compute.async_lessons_processor)
         compute.async_lessons_processor.add_to_role_policy(
             iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
         )
@@ -98,7 +97,6 @@ class IAMPermissions(Construct):
 
         # Search Lambda permissions
         storage.bucket.grant_read_write(compute.search_lambda)
-        storage.docs_bucket.grant_read_write(compute.search_lambda)
         compute.search_lambda.add_to_role_policy(
             iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=["*"])
         )

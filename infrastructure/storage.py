@@ -7,12 +7,14 @@ class StorageResources(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # Main project management bucket
+        # Main project management bucket (used for everything including Knowledge Base)
         self.bucket = s3.Bucket(
             self,
             "ProjectManagementBucket",
             bucket_name="dpw-project-management",
             removal_policy=cdk.RemovalPolicy.DESTROY,
+            versioned=True,
+            encryption=s3.BucketEncryption.S3_MANAGED,
             cors=[
                 s3.CorsRule(
                     allowed_headers=["*"],
@@ -28,16 +30,6 @@ class StorageResources(Construct):
                     max_age=3000,
                 )
             ],
-        )
-
-        # Docs bucket for knowledge base
-        self.docs_bucket = s3.Bucket(
-            self,
-            "DocsBucket",
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            enforce_ssl=True,
-            versioned=True,
-            encryption=s3.BucketEncryption.S3_MANAGED,
         )
 
         # DynamoDB table for project data

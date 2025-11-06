@@ -14,8 +14,9 @@ def handler(event, context):
         body = json.loads(event.get("body", "{}"))
         query = body.get("query", "")
         limit = body.get("limit", 10)
+        model_id = body.get("model_id")
 
-        print(f"Search request - Query: {query}, Limit: {limit}")
+        print(f"Search request - Query: {query}, Limit: {limit}, Model: {model_id}")
 
         # Check if this is a RAG search request
         path = event.get("path", "")
@@ -32,7 +33,7 @@ def handler(event, context):
 
         if path.endswith("/search-rag"):
             # Perform RAG search
-            result = search_with_rag(query, limit)
+            result = search_with_rag(query, limit, model_id)
             return {
                 "statusCode": 200,
                 "headers": {
@@ -78,7 +79,7 @@ def handler(event, context):
         }
 
 
-def search_with_rag(query: str, limit: int = 10) -> dict:
+def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> dict:
     """
     Perform RAG search using Knowledge Base retrieve_and_generate
     """
@@ -86,10 +87,17 @@ def search_with_rag(query: str, limit: int = 10) -> dict:
         bedrock_agent_client = boto3.client("bedrock-agent-runtime")
         
         kb_id = os.environ.get("KB_ID")
-        model_id = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
+        model_id = selected_model or os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
         
         if not kb_id:
             raise ValueError("KB_ID environment variable not set")
+
+        # Determine if model is an inference profile or foundation model
+        region = os.environ.get('AWS_REGION', 'us-west-2')
+        if model_id.startswith("us.") or model_id.startswith("eu."):
+            model_arn = f"arn:aws:bedrock:{region}::inference-profile/{model_id}"
+        else:
+            model_arn = f"arn:aws:bedrock:{region}::foundation-model/{model_id}"
 
         # Use retrieve_and_generate for RAG
         response = bedrock_agent_client.retrieve_and_generate(
@@ -98,7 +106,7 @@ def search_with_rag(query: str, limit: int = 10) -> dict:
                 "type": "KNOWLEDGE_BASE",
                 "knowledgeBaseConfiguration": {
                     "knowledgeBaseId": kb_id,
-                    "modelArn": f"arn:aws:bedrock:{os.environ.get('AWS_REGION', 'us-east-1')}::foundation-model/{model_id}",
+                    "modelArn": model_arn,
                     "retrievalConfiguration": {
                         "vectorSearchConfiguration": {
                             "numberOfResults": limit
