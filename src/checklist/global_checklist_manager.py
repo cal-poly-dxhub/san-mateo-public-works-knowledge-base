@@ -86,12 +86,12 @@ def update_global_checklist(body, checklist_type="design"):
             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
             ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": task_prefix}
         )
-        existing_task_ids = {item["taskData"]["task_id"] for item in response["Items"]}
-        new_task_ids = {task["task_id"] for task in tasks}
+        existing_item_ids = {item["item_id"] for item in response["Items"]}
+        new_item_ids = {f"{task_prefix}{task['task_id']}" for task in tasks}
         
         # Delete removed tasks
-        for task_id in existing_task_ids - new_task_ids:
-            table.delete_item(Key={"project_id": "__GLOBAL__", "item_id": f"{task_prefix}{task_id}"})
+        for item_id in existing_item_ids - new_item_ids:
+            table.delete_item(Key={"project_id": "__GLOBAL__", "item_id": item_id})
         
         # Update/create tasks
         for task in tasks:
@@ -115,12 +115,14 @@ def sync_to_all_projects():
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
         
-        # Get global tasks
+        # Get global tasks for both types
         global_response = table.query(
             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
             ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": "task#"}
         )
-        global_tasks = {item["taskData"]["task_id"]: item for item in global_response["Items"]}
+        
+        # Map by full item_id (task#type#number) for proper matching
+        global_tasks = {item["item_id"]: item for item in global_response["Items"]}
         global_version = global_response["Items"][0]["version"] if global_response["Items"] else datetime.utcnow().isoformat()
         
         # Get all projects
@@ -141,41 +143,47 @@ def sync_to_all_projects():
                 ExpressionAttributeValues={":pid": project_id, ":task": "task#"}
             )
             
-            project_task_ids = {item["taskData"]["task_id"]: item for item in project_tasks_response["Items"]}
+            project_tasks = {item["item_id"]: item for item in project_tasks_response["Items"]}
             
-            # Find highest completed task ID
-            completed_tasks = [
-                item["taskData"]["task_id"] 
-                for item in project_tasks_response["Items"] 
-                if item.get("status") == "completed"
-            ]
-            highest_completed = None
-            if completed_tasks:
-                # Sort task IDs numerically (e.g., "5.3" -> [5, 3])
-                def parse_task_id(task_id):
-                    return [int(x) for x in task_id.split(".")]
-                completed_tasks.sort(key=parse_task_id, reverse=True)
-                highest_completed = completed_tasks[0]
+            # Find highest completed task per type
+            def parse_task_id(task_id):
+                return [int(x) for x in task_id.split(".")]
+            
+            highest_completed = {"design": None, "construction": None}
+            for item_id, item in project_tasks.items():
+                if item.get("status") == "completed":
+                    parts = item_id.split("#")
+                    if len(parts) == 3:
+                        checklist_type = parts[1]
+                        task_num = parts[2]
+                        if checklist_type in highest_completed:
+                            if not highest_completed[checklist_type] or parse_task_id(task_num) > parse_task_id(highest_completed[checklist_type]):
+                                highest_completed[checklist_type] = task_num
             
             # Delete tasks not in global (if unchecked)
-            for task_id, task_item in project_task_ids.items():
-                if task_id not in global_tasks and task_item.get("status") != "completed":
-                    table.delete_item(Key={"project_id": project_id, "item_id": f"task#{task_id}"})
+            for item_id, task_item in project_tasks.items():
+                if item_id not in global_tasks and task_item.get("status") != "completed":
+                    table.delete_item(Key={"project_id": project_id, "item_id": item_id})
                     updated_count += 1
             
             # Add/update tasks from global
-            for task_id, global_task in global_tasks.items():
-                # Skip adding new tasks with IDs lower than highest completed
-                if task_id not in project_task_ids and highest_completed:
-                    if parse_task_id(task_id) < parse_task_id(highest_completed):
-                        continue  # Skip this task - it's before completed work
+            for item_id, global_task in global_tasks.items():
+                parts = item_id.split("#")
+                if len(parts) != 3:
+                    continue
+                checklist_type = parts[1]
+                task_num = parts[2]
                 
-                if task_id in project_task_ids:
+                # Skip adding new tasks with IDs lower than highest completed for this type
+                if item_id not in project_tasks and highest_completed.get(checklist_type):
+                    if parse_task_id(task_num) < parse_task_id(highest_completed[checklist_type]):
+                        continue
+                
+                if item_id in project_tasks:
                     # Update only if unchecked
-                    project_task = project_task_ids[task_id]
-                    if project_task.get("status") != "completed":
+                    if project_tasks[item_id].get("status") != "completed":
                         table.update_item(
-                            Key={"project_id": project_id, "item_id": f"task#{task_id}"},
+                            Key={"project_id": project_id, "item_id": item_id},
                             UpdateExpression="SET taskData = :data, global_version = :ver",
                             ExpressionAttributeValues={
                                 ":data": global_task["taskData"],
@@ -187,7 +195,7 @@ def sync_to_all_projects():
                     # Add new task
                     table.put_item(Item={
                         "project_id": project_id,
-                        "item_id": f"task#{task_id}",
+                        "item_id": item_id,
                         "taskData": global_task["taskData"],
                         "status": "not_started",
                         "global_version": global_version,
