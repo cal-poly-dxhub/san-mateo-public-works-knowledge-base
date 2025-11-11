@@ -19,7 +19,9 @@ def handler(event, context):
             return get_project_types(bucket_name)
 
         if path == "/projects" and method == "GET":
-            return get_projects_list(bucket_name)
+            query_params = event.get("queryStringParameters") or {}
+            checklist_type = query_params.get("type", "design")
+            return get_projects_list(bucket_name, checklist_type)
 
         elif path.startswith("/projects/") and method == "GET":
             project_name = event.get("pathParameters", {}).get("project_name")
@@ -64,7 +66,7 @@ def handler(event, context):
         }
 
 
-def get_projects_list(bucket_name):
+def get_projects_list(bucket_name, checklist_type="design"):
     """Get list of all projects with task progress"""
     try:
         table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
@@ -97,15 +99,16 @@ def get_projects_list(bucket_name):
                     project_data["description"] = "No description available"
                     project_data["status"] = "active"
                 
-                # Get task progress from DynamoDB
+                # Get task progress from DynamoDB filtered by checklist type
                 if table:
                     try:
-                        # Query for all tasks for this project
+                        # Query for tasks of the specified type for this project
+                        task_prefix = f"task#{checklist_type}#"
                         db_response = table.query(
                             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
                             ExpressionAttributeValues={
                                 ":pid": project_name,
-                                ":task": "task#"
+                                ":task": task_prefix
                             }
                         )
                         

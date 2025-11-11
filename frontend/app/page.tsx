@@ -60,10 +60,23 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<"alphabetical" | "progress" | "date">("alphabetical");
+  const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
+
+  useEffect(() => {
+    const handleChecklistTypeChange = (event: CustomEvent) => {
+      setChecklistType(event.detail);
+    };
+    
+    const stored = localStorage.getItem('checklistType') as "design" | "construction";
+    if (stored) setChecklistType(stored);
+    
+    window.addEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
+    return () => window.removeEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
+  }, []);
 
   useEffect(() => {
     loadProjects();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, checklistType]);
 
   useEffect(() => {
     if (apiKey) {
@@ -88,7 +101,7 @@ export default function Home() {
 
   const loadProjects = async () => {
     try {
-      const data = await apiRequest("/projects");
+      const data = await apiRequest(`/projects?type=${checklistType}`);
       setProjects(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading projects:", error);
