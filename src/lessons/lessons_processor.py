@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 import boto3
-from sync_lessons_vectors import sync_lessons_to_vectors
+from sync_lessons_vectors import sync_lessons_to_vectors, truncate_lesson_fields
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")
@@ -142,8 +142,10 @@ def merge_lessons_with_superseding(
 
     # Sync to vectors only if enabled
     if sync_to_vectors:
+        # Truncate lessons before syncing to prevent metadata size errors
+        truncated_lessons = truncate_lesson_fields(updated_lessons)
         sync_lessons_to_vectors(
-            bucket_name, existing_lessons_key, updated_lessons, project_name, project_type
+            bucket_name, existing_lessons_key, truncated_lessons, project_name, project_type
         )
 
     # Save conflicts for review

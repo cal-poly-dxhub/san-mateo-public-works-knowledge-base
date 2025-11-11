@@ -213,3 +213,18 @@ class ComputeResources(Construct):
                 "BEDROCK_MODEL_ID": config["models"]["primary_llm"],
             },
         )
+
+        # Lessons transformation lambda
+        self.transformation_lambda = _lambda.Function(
+            self,
+            "LessonsTransformationLambda",
+            function_name="lessons-transformation-lambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="lessons_transformation_lambda.lambda_handler",
+            code=_lambda.Code.from_asset("src/infrastructure"),
+            timeout=cdk.Duration.minutes(5),
+            memory_size=512,
+            environment={
+                "BUCKET_NAME": storage.bucket.bucket_name,
+            },
+        )

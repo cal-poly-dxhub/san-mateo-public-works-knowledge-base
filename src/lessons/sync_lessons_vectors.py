@@ -12,6 +12,28 @@ s3_client = boto3.client("s3")
 bedrock_agent_client = boto3.client("bedrock-agent")
 
 
+def truncate_lesson_fields(
+    lessons: List[dict], max_field_length: int = 200
+) -> List[dict]:
+    """Truncate lesson text fields to prevent S3 Vectors metadata size errors"""
+    truncated_lessons = []
+    text_fields = ["lesson", "recommendation", "impact", "title"]
+
+    for lesson in lessons:
+        truncated_lesson = lesson.copy()
+        for field in text_fields:
+            if field in truncated_lesson and isinstance(
+                truncated_lesson[field], str
+            ):
+                if len(truncated_lesson[field]) > max_field_length:
+                    truncated_lesson[field] = (
+                        truncated_lesson[field][:max_field_length] + "..."
+                    )
+        truncated_lessons.append(truncated_lesson)
+
+    return truncated_lessons
+
+
 def sync_lessons_to_vectors(
     bucket_name: str,
     lessons_key: str,
@@ -39,22 +61,22 @@ def sync_lessons_to_vectors(
         )
 
         # Upload lessons to docs bucket with metadata
-        lessons_s3_key = f"documents/projects/{project_name}/lessons-learned.json"
+        lessons_s3_key = (
+            f"documents/projects/{project_name}/lessons-learned.json"
+        )
 
         # Create lessons file content
         lessons_content = json.dumps(lessons, indent=2)
 
-        # Upload to S3 with metadata
+        # Upload to S3 with minimal metadata
         s3_client.put_object(
             Bucket=docs_bucket,
             Key=lessons_s3_key,
             Body=lessons_content,
             ContentType="application/json",
             Metadata={
-                "project_name": project_name,
-                "project_type": project_type or "unknown",
+                "project_type": (project_type or "unknown"),
                 "content_type": "lesson",
-                "lesson_count": str(len(lessons)),
             },
         )
 

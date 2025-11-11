@@ -106,3 +106,13 @@ class IAMPermissions(Construct):
                 resources=[f"arn:aws:bedrock:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:knowledge-base/{kb_id}"],
             )
         )
+
+        # Transformation Lambda permissions
+        storage.bucket.grant_read_write(compute.transformation_lambda)
+        
+        # Allow Bedrock to invoke transformation lambda
+        compute.transformation_lambda.add_permission(
+            "BedrockInvokePermission",
+            principal=iam.ServicePrincipal("bedrock.amazonaws.com"),
+            action="lambda:InvokeFunction"
+        )

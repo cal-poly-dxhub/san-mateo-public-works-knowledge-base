@@ -58,6 +58,10 @@ def on_event(event, context):
             
             kb_id = kb_response["knowledgeBase"]["knowledgeBaseId"]
             
+            # Get transformation lambda ARN
+            account_id = context.invoked_function_arn.split(":")[4]
+            transformation_lambda_arn = f"arn:aws:lambda:{region}:{account_id}:function:lessons-transformation-lambda"
+            
             bedrock.create_data_source(
                 knowledgeBaseId=kb_id,
                 name="project-documents",
@@ -69,12 +73,23 @@ def on_event(event, context):
                     }
                 },
                 vectorIngestionConfiguration={
+                    "customTransformationConfiguration": {
+                        "intermediateStorage": {
+                            "s3Location": {
+                                "uri": data_bucket_arn + "/transformations/"
+                            }
+                        },
+                        "transformations": [{
+                            "transformationFunction": {
+                                "transformationLambdaConfiguration": {
+                                    "lambdaArn": transformation_lambda_arn
+                                }
+                            },
+                            "stepToApply": "POST_CHUNKING"
+                        }]
+                    },
                     "chunkingConfiguration": {
-                        "chunkingStrategy": "FIXED_SIZE",
-                        "fixedSizeChunkingConfiguration": {
-                            "maxTokens": 300,
-                            "overlapPercentage": 10
-                        }
+                        "chunkingStrategy": "NONE"
                     },
                     "parsingConfiguration": {
                         "parsingStrategy": "BEDROCK_FOUNDATION_MODEL",
