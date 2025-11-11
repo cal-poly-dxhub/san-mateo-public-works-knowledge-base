@@ -52,6 +52,7 @@ def handler(event, context):
 def search_with_project_filter(query: str, project: str) -> List[Dict]:
     """Search with project filter"""
     knowledge_base_id = os.getenv("KNOWLEDGE_BASE_ID")
+    bucket_name = os.getenv("BUCKET_NAME")
 
     response = bedrock_agent.retrieve(
         knowledgeBaseId=knowledge_base_id,
@@ -64,12 +65,42 @@ def search_with_project_filter(query: str, project: str) -> List[Dict]:
         },
     )
 
-    return response.get("retrievalResults", [])
+    results = response.get("retrievalResults", [])
+    
+    # Enhance results with presigned URLs
+    s3_client = boto3.client("s3")
+    for result in results:
+        location = result.get("location", {})
+        s3_uri = location.get("s3Location", {}).get("uri", "")
+        
+        if s3_uri and bucket_name:
+            s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
+            
+            # Extract chunk info
+            if s3_key.startswith("documents/lessons-learned/"):
+                filename = s3_key.split("/")[-1]
+                if filename.endswith(".md"):
+                    parts = filename.replace("lesson-", "").replace(".md", "").split("-")
+                    if len(parts) >= 1:
+                        result["chunk_info"] = f"Lesson {parts[0]}"
+            
+            # Generate presigned URL
+            try:
+                result["presigned_url"] = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': bucket_name, 'Key': s3_key},
+                    ExpiresIn=3600
+                )
+            except Exception as e:
+                logger.error(f"Error generating presigned URL: {e}")
+    
+    return results
 
 
 def search_global(query: str) -> List[Dict]:
     """Global search without filters"""
     knowledge_base_id = os.getenv("KNOWLEDGE_BASE_ID")
+    bucket_name = os.getenv("BUCKET_NAME")
 
     response = bedrock_agent.retrieve(
         knowledgeBaseId=knowledge_base_id,
@@ -77,7 +108,37 @@ def search_global(query: str) -> List[Dict]:
         retrievalConfiguration={"vectorSearchConfiguration": {"numberOfResults": 10}},
     )
 
-    return response.get("retrievalResults", [])
+    results = response.get("retrievalResults", [])
+    
+    # Enhance results with presigned URLs
+    s3_client = boto3.client("s3")
+    for result in results:
+        location = result.get("location", {})
+        s3_uri = location.get("s3Location", {}).get("uri", "")
+        
+        if s3_uri and bucket_name:
+            s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
+            
+            # Extract project name and chunk info
+            if s3_key.startswith("documents/lessons-learned/"):
+                filename = s3_key.split("/")[-1]
+                if filename.endswith(".md"):
+                    parts = filename.replace("lesson-", "").replace(".md", "").split("-")
+                    if len(parts) >= 2:
+                        result["project_name"] = "-".join(parts[1:])
+                        result["chunk_info"] = f"Lesson {parts[0]}"
+            
+            # Generate presigned URL
+            try:
+                result["presigned_url"] = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': bucket_name, 'Key': s3_key},
+                    ExpiresIn=3600
+                )
+            except Exception as e:
+                logger.error(f"Error generating presigned URL: {e}")
+    
+    return results
 
 
 def generate_rag_response(query: str, search_results: List[Dict], selected_model: str = None) -> str:

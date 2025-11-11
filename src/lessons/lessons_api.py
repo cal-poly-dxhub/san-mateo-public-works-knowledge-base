@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 
 import boto3
-from vector_helper import trigger_project_lessons_ingestion
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")
@@ -60,8 +59,8 @@ def upload_and_extract(event):
         project_type_raw = response.get("Item", {}).get("projectType", "other")
         project_type = project_type_raw.lower().replace(" ", "-")
 
-        # Upload document to S3
-        doc_key = f"documents/projects/{project_name}/documents/{filename}"
+        # Upload document to S3 (under projects, not documents)
+        doc_key = f"projects/{project_name}/lessons_learned.txt"
         s3.put_object(
             Bucket=bucket_name, Key=doc_key, Body=content_text.encode("utf-8")
         )
@@ -178,9 +177,9 @@ Return only the JSON array, no other text."""
 
 
 def append_to_project_lessons(bucket_name, project_name, new_lessons):
-    """Merge lessons with project's lessons-learned.json file using LLM"""
+    """Merge lessons with project's lessons.json file using LLM"""
 
-    lessons_key = f"documents/projects/{project_name}/lessons-learned.json"
+    lessons_key = f"projects/{project_name}/lessons.json"
 
     try:
         # Get existing lessons
@@ -394,7 +393,7 @@ def get_lessons(event):
     try:
         project_name = event["pathParameters"]["project_name"]
         bucket_name = os.environ["BUCKET_NAME"]
-        lessons_key = f"documents/projects/{project_name}/lessons-learned.json"
+        lessons_key = f"projects/{project_name}/lessons.json"
 
         try:
             response = s3.get_object(Bucket=bucket_name, Key=lessons_key)
@@ -412,7 +411,7 @@ def get_lessons(event):
             source_doc = lesson.get("source_document")
             if source_doc:
                 try:
-                    doc_key = f"documents/projects/{project_name}/documents/{source_doc}"
+                    doc_key = f"projects/{project_name}/lessons_learned.txt"
                     doc_response = s3.get_object(Bucket=bucket_name, Key=doc_key)
                     doc_content = doc_response["Body"].read().decode("utf-8")
                     lesson["source_content"] = doc_content
@@ -444,7 +443,7 @@ def get_conflicts(event):
     try:
         project_name = event["pathParameters"]["project_name"]
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"documents/projects/{project_name}/lessons-learned-conflicts.json"
+        conflicts_key = f"projects/{project_name}/lessons-conflicts.json"
 
         try:
             response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
@@ -474,8 +473,8 @@ def resolve_conflict(event):
         decision = body.get("decision")  # "keep_new", "keep_existing", "keep_both", "delete_both"
 
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"documents/projects/{project_name}/lessons-learned-conflicts.json"
-        lessons_key = f"documents/projects/{project_name}/lessons-learned.json"
+        conflicts_key = f"projects/{project_name}/lessons-conflicts.json"
+        lessons_key = f"projects/{project_name}/lessons.json"
 
         # Load conflicts
         response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
@@ -524,8 +523,7 @@ def resolve_conflict(event):
             ContentType="application/json",
         )
 
-        # Trigger vector ingestion for updated lessons
-        trigger_project_lessons_ingestion(bucket_name, project_name)
+        # S3 event will automatically trigger sync Lambda to update markdown files
 
         return {
             "statusCode": 200,

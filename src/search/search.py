@@ -85,8 +85,10 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
     """
     try:
         bedrock_agent_client = boto3.client("bedrock-agent-runtime")
+        s3_client = boto3.client("s3")
         
         kb_id = os.environ.get("KB_ID")
+        bucket_name = os.environ.get("BUCKET_NAME")
         model_id = selected_model or os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
         
         if not kb_id:
@@ -126,10 +128,42 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
             for reference in citation.get("retrievedReferences", []):
                 content = reference.get("content", {}).get("text", "")
                 metadata = reference.get("metadata", {})
+                location = reference.get("location", {})
+                
+                # Extract S3 info and generate presigned URL
+                s3_uri = location.get("s3Location", {}).get("uri", "")
+                presigned_url = None
+                project_name = "unknown"
+                chunk_info = None
+                
+                if s3_uri and bucket_name:
+                    s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
+                    
+                    # Extract project name from path
+                    if s3_key.startswith("documents/lessons-learned/"):
+                        filename = s3_key.split("/")[-1]
+                        if filename.endswith(".md"):
+                            parts = filename.replace("lesson-", "").replace(".md", "").split("-")
+                            if len(parts) >= 2:
+                                project_name = "-".join(parts[1:])
+                                chunk_info = f"Lesson {parts[0]}"
+                    
+                    # Generate presigned URL
+                    try:
+                        presigned_url = s3_client.generate_presigned_url(
+                            'get_object',
+                            Params={'Bucket': bucket_name, 'Key': s3_key},
+                            ExpiresIn=3600
+                        )
+                    except Exception as e:
+                        print(f"Error generating presigned URL: {e}")
+                
                 sources.append({
                     "content": content,
-                    "source": metadata.get("file_name", "unknown"),
-                    "project": metadata.get("project_name", "unknown"),
+                    "source": metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
+                    "project": project_name,
+                    "presigned_url": presigned_url,
+                    "chunk": chunk_info,
                 })
 
         return {"answer": answer, "sources": sources}
@@ -151,8 +185,10 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
     try:
         # Initialize Bedrock Agent Runtime client
         bedrock_agent_client = boto3.client("bedrock-agent-runtime")
+        s3_client = boto3.client("s3")
         
         kb_id = os.environ.get("KB_ID")
+        bucket_name = os.environ.get("BUCKET_NAME")
         if not kb_id:
             raise ValueError("KB_ID environment variable not set")
 
@@ -173,13 +209,46 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
             content = item.get("content", {}).get("text", "")
             metadata = item.get("metadata", {})
             score = item.get("score", 0.0)
+            location = item.get("location", {})
+            
+            # Extract S3 info and generate presigned URL
+            s3_uri = location.get("s3Location", {}).get("uri", "")
+            presigned_url = None
+            project_name = "unknown"
+            chunk_info = None
+            
+            if s3_uri and bucket_name:
+                # Parse s3://bucket/key format
+                s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
+                
+                # Extract project name from path
+                if s3_key.startswith("documents/lessons-learned/"):
+                    # Format: documents/lessons-learned/lesson-{id}-{project}.md
+                    filename = s3_key.split("/")[-1]
+                    if filename.endswith(".md"):
+                        parts = filename.replace("lesson-", "").replace(".md", "").split("-")
+                        if len(parts) >= 2:
+                            project_name = "-".join(parts[1:])
+                            chunk_info = f"Lesson {parts[0]}"
+                
+                # Generate presigned URL (valid for 1 hour)
+                try:
+                    presigned_url = s3_client.generate_presigned_url(
+                        'get_object',
+                        Params={'Bucket': bucket_name, 'Key': s3_key},
+                        ExpiresIn=3600
+                    )
+                except Exception as e:
+                    print(f"Error generating presigned URL: {e}")
             
             results.append(
                 {
                     "content": content,
-                    "source": metadata.get("file_name", "unknown"),
-                    "project": metadata.get("project_name", "unknown"),
+                    "source": metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
+                    "project": project_name,
                     "relevance_score": round(score * 100),
+                    "presigned_url": presigned_url,
+                    "chunk": chunk_info,
                     "metadata": metadata,
                 }
             )

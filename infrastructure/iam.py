@@ -116,3 +116,7 @@ class IAMPermissions(Construct):
             principal=iam.ServicePrincipal("bedrock.amazonaws.com"),
             action="lambda:InvokeFunction"
         )
+
+        # Lessons sync Lambda permissions
+        storage.bucket.grant_read_write(compute.lessons_sync_lambda)
+        storage.project_data_table.grant_read_data(compute.lessons_sync_lambda)

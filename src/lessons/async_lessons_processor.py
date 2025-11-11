@@ -6,23 +6,6 @@ from lessons_processor import extract_and_merge_lessons
 def handler(event, context):
     """Process lessons extraction asynchronously with superseding logic"""
     try:
-        # Handle sync-only events (from conflict resolution)
-        if event.get("sync_only"):
-            from sync_lessons_vectors import sync_lessons_to_vectors
-
-            bucket_name = event["bucket_name"]
-            lessons_key = event["lessons_key"]
-            lessons = event["lessons"]
-            project_name = event["project_name"]
-            project_type = event.get("project_type")
-
-            print(f"Syncing vectors only for {project_name}")
-            sync_lessons_to_vectors(
-                bucket_name, lessons_key, lessons, project_name, project_type
-            )
-            print(f"Vector sync complete for {project_name}")
-            return
-
         # Handle normal lesson extraction events
         project_name = event["project_name"]
         project_type = event["project_type"]
@@ -32,8 +15,7 @@ def handler(event, context):
 
         print(f"Starting async lessons processing for {project_name}")
 
-        # Extract and merge lessons with superseding logic
-        # Note: This also syncs vectors directly via sync_lessons_to_vectors
+        # Extract and merge lessons
         stats = extract_and_merge_lessons(
             content=content_text,
             filename=filename,

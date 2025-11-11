@@ -228,3 +228,17 @@ class ComputeResources(Construct):
                 "BUCKET_NAME": storage.bucket.bucket_name,
             },
         )
+
+        # Lessons sync Lambda (JSON to Markdown)
+        self.lessons_sync_lambda = _lambda.Function(
+            self,
+            "LessonsSyncLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="lessons_sync_lambda.lambda_handler",
+            code=_lambda.Code.from_asset("./src/lessons"),
+            timeout=Duration.minutes(2),
+            environment={
+                "BUCKET_NAME": storage.bucket.bucket_name,
+                "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
+            },
+        )

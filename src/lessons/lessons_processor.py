@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime, timezone
 
 import boto3
-from sync_lessons_vectors import sync_lessons_to_vectors, truncate_lesson_fields
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")
@@ -28,10 +27,10 @@ def extract_and_merge_lessons(
             "type_deleted": 0,
         }
 
-    # Process project-level lessons (no vector sync)
+    # Process project-level lessons (saved to projects/ - triggers sync Lambda)
     project_stats = merge_lessons_with_superseding(
         new_lessons=new_lessons,
-        existing_lessons_key=f"documents/projects/{project_name}/lessons-learned.json",
+        existing_lessons_key=f"projects/{project_name}/lessons.json",
         bucket_name=bucket_name,
         context_type="project",
         project_name=project_name,
@@ -39,13 +38,13 @@ def extract_and_merge_lessons(
         sync_to_vectors=False,  # Don't sync project-specific lessons
     )
 
-    # Process project-type-level lessons (add project_name attribution)
+    # Process project-type-level lessons (saved to root lessons-learned/)
     type_lessons = [
         {"project_name": project_name, **lesson} for lesson in new_lessons
     ]
     type_stats = merge_lessons_with_superseding(
         new_lessons=type_lessons,
-        existing_lessons_key=f"documents/lessons-learned/{project_type}/master-lessons.json",
+        existing_lessons_key=f"lessons-learned/master-lessons.json",
         bucket_name=bucket_name,
         context_type="project_type",
         project_name=project_name,
@@ -120,10 +119,6 @@ def merge_lessons_with_superseding(
 
     if not existing_lessons:
         save_lessons_file(bucket_name, existing_lessons_key, new_lessons)
-        if sync_to_vectors:
-            sync_lessons_to_vectors(
-                bucket_name, existing_lessons_key, new_lessons, project_name, project_type
-            )
         return {"added": len(new_lessons), "conflicts": 0}
 
     chunks = chunk_lessons(existing_lessons, CHUNK_SIZE)
@@ -139,14 +134,6 @@ def merge_lessons_with_superseding(
     updated_lessons.sort(key=lambda x: x["id"], reverse=True)
 
     save_lessons_file(bucket_name, existing_lessons_key, updated_lessons)
-
-    # Sync to vectors only if enabled
-    if sync_to_vectors:
-        # Truncate lessons before syncing to prevent metadata size errors
-        truncated_lessons = truncate_lesson_fields(updated_lessons)
-        sync_lessons_to_vectors(
-            bucket_name, existing_lessons_key, truncated_lessons, project_name, project_type
-        )
 
     # Save conflicts for review
     if all_conflicts:

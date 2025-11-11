@@ -60,24 +60,26 @@ def sync_lessons_to_vectors(
             f"Starting KB sync for {project_name}: {len(lessons)} lessons"
         )
 
-        # Upload lessons to docs bucket with metadata
-        lessons_s3_key = (
-            f"documents/projects/{project_name}/lessons-learned.json"
-        )
+        # Convert lessons to plain text format
+        text_content = f"Project: {project_name}\nProject Type: {project_type or 'unknown'}\n\n"
+        
+        for i, lesson in enumerate(lessons, 1):
+            text_content += f"Lesson {i}: {lesson.get('title', 'Untitled')}\n"
+            text_content += f"Description: {lesson.get('lesson', '')}\n"
+            text_content += f"Impact: {lesson.get('impact', '')}\n"
+            text_content += f"Recommendation: {lesson.get('recommendation', '')}\n"
+            text_content += f"Severity: {lesson.get('severity', 'Unknown')}\n"
+            text_content += f"Source: {lesson.get('source_document', '')}\n\n"
 
-        # Create lessons file content
-        lessons_content = json.dumps(lessons, indent=2)
+        # Upload lessons as plain text
+        lessons_s3_key = f"documents/projects/{project_name}/lessons-learned.txt"
 
-        # Upload to S3 with minimal metadata
+        # Upload to S3 with no metadata
         s3_client.put_object(
             Bucket=docs_bucket,
             Key=lessons_s3_key,
-            Body=lessons_content,
-            ContentType="application/json",
-            Metadata={
-                "project_type": (project_type or "unknown"),
-                "content_type": "lesson",
-            },
+            Body=text_content,
+            ContentType="text/plain",
         )
 
         logger.info(f"Uploaded lessons to s3://{docs_bucket}/{lessons_s3_key}")

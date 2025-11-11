@@ -1,5 +1,5 @@
 import aws_cdk as cdk
-from aws_cdk import aws_dynamodb as dynamodb, aws_s3 as s3
+from aws_cdk import aws_dynamodb as dynamodb, aws_s3 as s3, aws_s3_notifications as s3n
 from constructs import Construct
 
 
@@ -45,4 +45,17 @@ class StorageResources(Construct):
             ),
             removal_policy=cdk.RemovalPolicy.DESTROY,
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+        )
+
+    def add_lessons_sync_trigger(self, lessons_sync_lambda):
+        """Add S3 event notification to trigger lessons sync Lambda"""
+        self.bucket.add_event_notification(
+            s3.EventType.OBJECT_CREATED,
+            s3n.LambdaDestination(lessons_sync_lambda),
+            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json")
+        )
+        self.bucket.add_event_notification(
+            s3.EventType.OBJECT_REMOVED,
+            s3n.LambdaDestination(lessons_sync_lambda),
+            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json")
         )

@@ -70,12 +70,12 @@ def get_projects_list(bucket_name, checklist_type="design"):
         table = dynamodb.Table(table_name) if table_name else None
         
         response = s3_client.list_objects_v2(
-            Bucket=bucket_name, Prefix="documents/projects/", Delimiter="/"
+            Bucket=bucket_name, Prefix="projects/", Delimiter="/"
         )
         projects = []
 
         for prefix in response.get("CommonPrefixes", []):
-            project_name = prefix["Prefix"].replace("documents/projects/", "").rstrip("/")
+            project_name = prefix["Prefix"].replace("projects/", "").rstrip("/")
             if project_name:
                 project_data = {"name": project_name}
                 
@@ -177,7 +177,7 @@ def get_project_detail(bucket_name, project_name):
         try:
             response = s3_client.list_objects_v2(
                 Bucket=bucket_name,
-                Prefix=f"documents/projects/{project_name}/meeting-summaries/",
+                Prefix=f"projects/{project_name}/meeting-summaries/",
             )
             for obj in response.get("Contents", []):
                 if obj["Key"].endswith(".json"):
@@ -260,7 +260,7 @@ def delete_project(project_name, bucket_name):
 
         # List all objects with the project prefix
         response = s3_client.list_objects_v2(
-            Bucket=bucket_name, Prefix=f"documents/projects/{project_name}/"
+            Bucket=bucket_name, Prefix=f"projects/{project_name}/"
         )
 
         # Delete all objects
