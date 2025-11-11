@@ -92,17 +92,17 @@ def generate_upload_url(event, bucket_name):
     try:
         body = json.loads(event.get("body", "{}"))
         file_name = body.get("fileName")
-        project_name = body.get("projectName")
+        project_id = body.get("projectId") or body.get("projectName")
 
-        if not file_name or not project_name:
+        if not file_name or not project_id:
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "fileName and projectName are required"}),
+                "body": json.dumps({"error": "fileName and projectId are required"}),
             }
 
-        # Generate S3 key
-        s3_key = f"projects/{project_name}/documents/{file_name}"
+        # Generate S3 key with new path structure
+        s3_key = f"documents/{project_id}/{file_name}"
 
         # Generate presigned URL
         presigned_url = s3_client.generate_presigned_url(
