@@ -53,7 +53,9 @@ def get_project_type(project_name):
         response = table.get_item(
             Key={'project_id': project_name, 'item_id': 'metadata'}
         )
-        return response.get('Item', {}).get('project_type', 'Unknown')
+        item = response.get('Item', {})
+        # Try both 'project_type' and 'projectType' keys
+        return item.get('project_type') or item.get('projectType', 'Unknown')
     except Exception as e:
         print(f"Error getting project type for {project_name}: {e}")
         return 'Unknown'
@@ -62,6 +64,9 @@ def sync_lessons_to_markdown(project_name, project_type, lessons):
     """Create/update markdown files for lessons"""
     # Get current lesson IDs
     current_ids = {lesson['id'] for lesson in lessons}
+    
+    # Source document path
+    source_doc_key = f"projects/{project_name}/lessons_learned.txt"
     
     # Create/update markdown for each lesson
     for lesson in lessons:
@@ -91,7 +96,13 @@ def sync_lessons_to_markdown(project_name, project_type, lessons):
             Bucket=BUCKET_NAME,
             Key=md_key,
             Body=content.encode('utf-8'),
-            ContentType='text/markdown'
+            ContentType='text/markdown',
+            Metadata={
+                'project-name': project_name,
+                'project-type': project_type,
+                'lesson-id': lesson_id,
+                'source-document': source_doc_key
+            }
         )
     
     # Delete markdown files for removed lessons

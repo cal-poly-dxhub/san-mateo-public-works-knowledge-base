@@ -26,6 +26,7 @@ interface Source {
   relevance_score: number;
   chunk_index: string;
   total_chunks: string;
+  source_document_url?: string;
 }
 
 interface SearchResult {
@@ -50,21 +51,10 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
   const [selectedModel, setSelectedModel] = useState<string>("");
 
   const openSourceFile = async (source: Source) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/file/documents/${encodeURIComponent(source.source)}`,
-        {
-          headers: {
-            'x-api-key': apiKey
-          }
-        }
-      );
-      if (!response.ok) throw new Error('File not found');
-      const data = await response.json();
-      window.open(data.url, '_blank');
-    } catch (error) {
-      console.error('Error opening file:', error);
-      alert('Failed to open file');
+    if (source.source_document_url) {
+      window.open(source.source_document_url, '_blank');
+    } else {
+      alert('Source document URL not available');
     }
   };
 
@@ -232,9 +222,6 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
                             {source.source}
                             <ExternalLink className="h-3 w-3" />
                           </button>
-                          <p className="text-sm text-muted-foreground">
-                            Project: {source.project} • Chunk {source.chunk_index}/{source.total_chunks}
-                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

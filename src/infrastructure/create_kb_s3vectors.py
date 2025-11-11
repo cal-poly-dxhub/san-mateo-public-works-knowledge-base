@@ -1,7 +1,14 @@
 import os
+import yaml
 
 import boto3
 import cfnresponse
+
+
+def load_config():
+    config_path = os.path.join(os.path.dirname(__file__), "../../config.yaml")
+    with open(config_path) as f:
+        return yaml.safe_load(f)
 
 
 def on_event(event, context):
@@ -13,6 +20,10 @@ def on_event(event, context):
     role_arn = props["RoleArn"]
     data_bucket_arn = props["DataBucketArn"]
     region = os.environ.get("AWS_REGION")
+    
+    config = load_config()
+    chunk_size = config["vector_search"]["chunk_size_tokens"]
+    overlap = config["vector_search"]["overlap_tokens"]
 
     try:
         bedrock = boto3.client("bedrock-agent", region_name=region)
@@ -76,11 +87,10 @@ def on_event(event, context):
                     "chunkingConfiguration": {
                         "chunkingStrategy": "FIXED_SIZE",
                         "fixedSizeChunkingConfiguration": {
-                            "maxTokens": 300,
-                            "overlapPercentage": 10,
+                            "maxTokens": chunk_size,
+                            "overlapPercentage": int((overlap / chunk_size) * 100),
                         },
                     }
-                    # No parsing configuration - use basic parsing only
                 },
             )
 

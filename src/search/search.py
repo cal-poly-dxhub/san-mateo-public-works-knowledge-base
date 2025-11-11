@@ -133,22 +133,34 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
                 # Extract S3 info and generate presigned URL
                 s3_uri = location.get("s3Location", {}).get("uri", "")
                 presigned_url = None
+                source_presigned_url = None
                 project_name = "unknown"
                 chunk_info = None
+                source_doc_key = None
                 
                 if s3_uri and bucket_name:
                     s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
                     
-                    # Extract project name from path
-                    if s3_key.startswith("documents/lessons-learned/"):
-                        filename = s3_key.split("/")[-1]
-                        if filename.endswith(".md"):
-                            parts = filename.replace("lesson-", "").replace(".md", "").split("-")
-                            if len(parts) >= 2:
-                                project_name = "-".join(parts[1:])
-                                chunk_info = f"Lesson {parts[0]}"
+                    # Get metadata from S3 object
+                    try:
+                        obj_metadata = s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+                        obj_meta = obj_metadata.get('Metadata', {})
+                        
+                        # Use project name from metadata
+                        project_name = obj_meta.get('project-name', 'unknown')
+                        
+                        # Extract lesson ID for chunk info
+                        lesson_id = obj_meta.get('lesson-id', '')
+                        if lesson_id:
+                            chunk_info = f"Lesson {lesson_id[:8]}"
+                        
+                        # Get source document key
+                        source_doc_key = obj_meta.get('source-document')
+                        
+                    except Exception as e:
+                        print(f"Error getting object metadata: {e}")
                     
-                    # Generate presigned URL
+                    # Generate presigned URL for markdown
                     try:
                         presigned_url = s3_client.generate_presigned_url(
                             'get_object',
@@ -157,12 +169,24 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
                         )
                     except Exception as e:
                         print(f"Error generating presigned URL: {e}")
+                    
+                    # Generate presigned URL for source document
+                    if source_doc_key:
+                        try:
+                            source_presigned_url = s3_client.generate_presigned_url(
+                                'get_object',
+                                Params={'Bucket': bucket_name, 'Key': source_doc_key},
+                                ExpiresIn=3600
+                            )
+                        except Exception as e:
+                            print(f"Error generating source presigned URL: {e}")
                 
                 sources.append({
                     "content": content,
-                    "source": metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
+                    "source": source_doc_key or metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
                     "project": project_name,
                     "presigned_url": presigned_url,
+                    "source_document_url": source_presigned_url,
                     "chunk": chunk_info,
                 })
 
@@ -214,40 +238,65 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
             # Extract S3 info and generate presigned URL
             s3_uri = location.get("s3Location", {}).get("uri", "")
             presigned_url = None
+            source_presigned_url = None
             project_name = "unknown"
             chunk_info = None
+            source_doc_key = None
             
             if s3_uri and bucket_name:
                 # Parse s3://bucket/key format
                 s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
                 
-                # Extract project name from path
-                if s3_key.startswith("documents/lessons-learned/"):
-                    # Format: documents/lessons-learned/lesson-{id}-{project}.md
-                    filename = s3_key.split("/")[-1]
-                    if filename.endswith(".md"):
-                        parts = filename.replace("lesson-", "").replace(".md", "").split("-")
-                        if len(parts) >= 2:
-                            project_name = "-".join(parts[1:])
-                            chunk_info = f"Lesson {parts[0]}"
+                # Get metadata from S3 object
+                try:
+                    obj_metadata = s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+                    obj_meta = obj_metadata.get('Metadata', {})
+                    
+                    # Use project name from metadata
+                    project_name = obj_meta.get('project-name', 'unknown')
+                    
+                    # Extract lesson ID for chunk info
+                    lesson_id = obj_meta.get('lesson-id', '')
+                    if lesson_id:
+                        chunk_info = f"Lesson {lesson_id[:8]}"
+                    
+                    # Get source document key
+                    source_doc_key = obj_meta.get('source-document')
+                    
+                except Exception as e:
+                    print(f"Error getting object metadata: {e}")
                 
-                # Generate presigned URL (valid for 1 hour)
+                # Generate presigned URL for markdown file
                 try:
                     presigned_url = s3_client.generate_presigned_url(
                         'get_object',
                         Params={'Bucket': bucket_name, 'Key': s3_key},
                         ExpiresIn=3600
                     )
+                    print(f"Generated markdown presigned URL for {s3_key}")
                 except Exception as e:
-                    print(f"Error generating presigned URL: {e}")
+                    print(f"Error generating presigned URL for {s3_key}: {str(e)}")
+                
+                # Generate presigned URL for source document
+                if source_doc_key:
+                    try:
+                        source_presigned_url = s3_client.generate_presigned_url(
+                            'get_object',
+                            Params={'Bucket': bucket_name, 'Key': source_doc_key},
+                            ExpiresIn=3600
+                        )
+                        print(f"Generated source presigned URL for {source_doc_key}")
+                    except Exception as e:
+                        print(f"Error generating source presigned URL for {source_doc_key}: {str(e)}")
             
             results.append(
                 {
                     "content": content,
-                    "source": metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
+                    "source": source_doc_key or metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
                     "project": project_name,
                     "relevance_score": round(score * 100),
                     "presigned_url": presigned_url,
+                    "source_document_url": source_presigned_url,
                     "chunk": chunk_info,
                     "metadata": metadata,
                 }

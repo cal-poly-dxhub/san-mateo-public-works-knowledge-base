@@ -16,6 +16,7 @@ interface Source {
   project_type: string;
   category: string;
   relevance_score: number;
+  source_document_url?: string;
 }
 
 interface SearchResult {
