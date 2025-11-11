@@ -121,7 +121,7 @@ def handler(event, context):
             table.put_item(
                 Item={
                     "project_id": project_id,
-                    "item_id": f"task#{task_data['task_id']}",
+                    "item_id": global_task["item_id"],  # Preserve full item_id with type prefix
                     "taskData": task_data,
                     "status": "not_started",
                     "global_version": global_version,
