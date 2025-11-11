@@ -31,7 +31,7 @@ def extract_and_merge_lessons(
     # Process project-level lessons (no vector sync)
     project_stats = merge_lessons_with_superseding(
         new_lessons=new_lessons,
-        existing_lessons_key=f"projects/{project_name}/lessons-learned.json",
+        existing_lessons_key=f"documents/projects/{project_name}/lessons-learned.json",
         bucket_name=bucket_name,
         context_type="project",
         project_name=project_name,
@@ -45,7 +45,7 @@ def extract_and_merge_lessons(
     ]
     type_stats = merge_lessons_with_superseding(
         new_lessons=type_lessons,
-        existing_lessons_key=f"lessons-learned/{project_type}/master-lessons.json",
+        existing_lessons_key=f"documents/lessons-learned/{project_type}/master-lessons.json",
         bucket_name=bucket_name,
         context_type="project_type",
         project_name=project_name,

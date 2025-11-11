@@ -62,7 +62,7 @@ def get_project_types():
         # List all master lesson files in lessons-learned/
         response = s3.list_objects_v2(
             Bucket=bucket_name,
-            Prefix="lessons-learned/",
+            Prefix="documents/lessons-learned/",
             Delimiter="/"
         )
         
@@ -70,11 +70,11 @@ def get_project_types():
         
         # Get each project type folder
         for prefix in response.get("CommonPrefixes", []):
-            project_type = prefix["Prefix"].replace("lessons-learned/", "").rstrip("/")
+            project_type = prefix["Prefix"].replace("documents/lessons-learned/", "").rstrip("/")
             
             # Try to get master lessons file
             try:
-                master_key = f"lessons-learned/{project_type}/master-lessons.json"
+                master_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
                 obj = s3.get_object(Bucket=bucket_name, Key=master_key)
                 data = json.loads(obj["Body"].read())
                 lesson_count = len(data.get("lessons", []))
@@ -107,7 +107,7 @@ def get_lessons_by_type(project_type):
     """Get aggregated lessons for a specific project type"""
     try:
         bucket_name = os.environ.get("BUCKET_NAME")
-        master_key = f"lessons-learned/{project_type}/master-lessons.json"
+        master_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
         
         try:
             response = s3.get_object(Bucket=bucket_name, Key=master_key)
@@ -139,7 +139,7 @@ def get_master_conflicts(project_type):
     """Get pending conflicts for a project type's master lessons"""
     try:
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"lessons-learned/{project_type}/master-lessons-conflicts.json"
+        conflicts_key = f"documents/lessons-learned/{project_type}/master-lessons-conflicts.json"
 
         try:
             response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
@@ -184,8 +184,8 @@ def resolve_master_conflict(event, conflict_id):
             }
 
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"lessons-learned/{project_type}/master-lessons-conflicts.json"
-        lessons_key = f"lessons-learned/{project_type}/master-lessons.json"
+        conflicts_key = f"documents/lessons-learned/{project_type}/master-lessons-conflicts.json"
+        lessons_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
 
         # Load conflicts
         response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)

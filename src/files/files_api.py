@@ -102,7 +102,7 @@ def generate_upload_url(event, bucket_name):
             }
 
         # Generate S3 key with new path structure
-        s3_key = f"documents/{project_id}/{file_name}"
+        s3_key = f"documents/projects/{project_id}/{file_name}"
 
         # Generate presigned URL
         presigned_url = s3_client.generate_presigned_url(

@@ -38,9 +38,6 @@ def handler(event, context):
         elif path.startswith("/create-project") and method == "POST":
             return create_project(event, bucket_name)
 
-        elif path.startswith("/update-progress") and method == "POST":
-            return update_project_progress(event, bucket_name)
-
         elif method == "OPTIONS":
             return {
                 "statusCode": 200,
@@ -73,31 +70,14 @@ def get_projects_list(bucket_name, checklist_type="design"):
         table = dynamodb.Table(table_name) if table_name else None
         
         response = s3_client.list_objects_v2(
-            Bucket=bucket_name, Prefix="projects/", Delimiter="/"
+            Bucket=bucket_name, Prefix="documents/projects/", Delimiter="/"
         )
         projects = []
 
         for prefix in response.get("CommonPrefixes", []):
-            project_name = prefix["Prefix"].replace("projects/", "").rstrip("/")
+            project_name = prefix["Prefix"].replace("documents/projects/", "").rstrip("/")
             if project_name:
                 project_data = {"name": project_name}
-                
-                # Get project overview if exists
-                try:
-                    overview_response = s3_client.get_object(
-                        Bucket=bucket_name,
-                        Key=f"projects/{project_name}/project_overview.json",
-                    )
-                    overview_data = json.loads(
-                        overview_response["Body"].read().decode("utf-8")
-                    )
-                    project_data["description"] = overview_data.get(
-                        "description", "No description available"
-                    )
-                    project_data["status"] = overview_data.get("status", "active")
-                except:
-                    project_data["description"] = "No description available"
-                    project_data["status"] = "active"
                 
                 # Get task progress from DynamoDB filtered by checklist type
                 if table:
@@ -188,41 +168,16 @@ def get_project_detail(bucket_name, project_name):
         project_detail = {
             "name": project_name,
             "project_id": project_id,
-            "description": "No description available",
             "meeting_summaries": [],
             "action_items_detail": [],
             "generated_assets": [],
         }
 
-        # Get project overview
-        try:
-            overview_response = s3_client.get_object(
-                Bucket=bucket_name,
-                Key=f"projects/{project_name}/project_overview.json",
-            )
-            overview_data = json.loads(overview_response["Body"].read().decode("utf-8"))
-            project_detail.update(overview_data)
-        except:
-            pass
-
-        # Get working backwards data
-        try:
-            wb_response = s3_client.get_object(
-                Bucket=bucket_name,
-                Key=f"projects/{project_name}/working_backwards.json",
-            )
-            wb_data = json.loads(wb_response["Body"].read().decode("utf-8"))
-            project_detail["working_backwards"] = wb_data.get(
-                "workingBackwards", wb_data
-            )
-        except:
-            pass
-
         # Get meeting summaries
         try:
             response = s3_client.list_objects_v2(
                 Bucket=bucket_name,
-                Prefix=f"projects/{project_name}/meeting-summaries/",
+                Prefix=f"documents/projects/{project_name}/meeting-summaries/",
             )
             for obj in response.get("Contents", []):
                 if obj["Key"].endswith(".json"):
@@ -305,7 +260,7 @@ def delete_project(project_name, bucket_name):
 
         # List all objects with the project prefix
         response = s3_client.list_objects_v2(
-            Bucket=bucket_name, Prefix=f"projects/{project_name}/"
+            Bucket=bucket_name, Prefix=f"documents/projects/{project_name}/"
         )
 
         # Delete all objects
@@ -371,55 +326,6 @@ def create_project(event, bucket_name):
             "body": json.dumps(
                 {"message": f"Project {project_name} created successfully"}
             ),
-        }
-    except Exception as e:
-        return {
-            "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"error": str(e)}),
-        }
-
-
-def update_project_progress(event, bucket_name):
-    """Update project progress"""
-    try:
-        body = json.loads(event.get("body", "{}"))
-        project_name = body.get("project_name")
-        progress_data = body.get("progress", {})
-
-        if not project_name:
-            return {
-                "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "project_name is required"}),
-            }
-
-        # Get existing project overview
-        try:
-            response = s3_client.get_object(
-                Bucket=bucket_name,
-                Key=f"projects/{project_name}/project_overview.json",
-            )
-            project_data = json.loads(response["Body"].read().decode("utf-8"))
-        except:
-            project_data = {"name": project_name}
-
-        # Update with progress data
-        project_data.update(progress_data)
-        project_data["updated_at"] = datetime.utcnow().isoformat()
-
-        # Save back to S3
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=f"projects/{project_name}/project_overview.json",
-            Body=json.dumps(project_data, indent=2),
-            ContentType="application/json",
-        )
-
-        return {
-            "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"message": "Progress updated successfully"}),
         }
     except Exception as e:
         return {

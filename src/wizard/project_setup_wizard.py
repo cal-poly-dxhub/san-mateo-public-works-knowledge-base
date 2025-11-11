@@ -97,23 +97,7 @@ def handler(event, context):
             }
         )
 
-        # Create S3 folder structure
-        bucket_name = os.environ.get("BUCKET_NAME")
-        if bucket_name:
-            folders = [
-                f"projects/{project_name}/",
-                f"projects/{project_name}/documents/",
-            ]
-            for folder in folders:
-                s3.put_object(Bucket=bucket_name, Key=folder)
 
-            lessons_content = f"# Lessons Learned - {project_name}\n\nNo lessons learned yet. Upload documents with 'Extract Lessons Learned' enabled to populate this file.\n"
-            s3.put_object(
-                Bucket=bucket_name,
-                Key=f"projects/{project_name}/lessons-learned.md",
-                Body=lessons_content.encode("utf-8"),
-                ContentType="text/markdown",
-            )
 
         # Copy tasks from global checklist
         for global_task in global_response["Items"]:

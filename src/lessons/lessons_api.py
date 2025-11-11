@@ -61,7 +61,7 @@ def upload_and_extract(event):
         project_type = project_type_raw.lower().replace(" ", "-")
 
         # Upload document to S3
-        doc_key = f"projects/{project_name}/documents/{filename}"
+        doc_key = f"documents/projects/{project_name}/documents/{filename}"
         s3.put_object(
             Bucket=bucket_name, Key=doc_key, Body=content_text.encode("utf-8")
         )
@@ -180,7 +180,7 @@ Return only the JSON array, no other text."""
 def append_to_project_lessons(bucket_name, project_name, new_lessons):
     """Merge lessons with project's lessons-learned.json file using LLM"""
 
-    lessons_key = f"projects/{project_name}/lessons-learned.json"
+    lessons_key = f"documents/projects/{project_name}/lessons-learned.json"
 
     try:
         # Get existing lessons
@@ -272,7 +272,7 @@ def update_master_lessons(bucket_name, project_type, project_name, new_lessons):
     """Update master lessons learned file with LLM merge"""
 
     # Get current master file
-    master_folder = f"lessons-learned/{project_type}"
+    master_folder = f"documents/lessons-learned/{project_type}"
 
     try:
         # List existing master files
@@ -394,7 +394,7 @@ def get_lessons(event):
     try:
         project_name = event["pathParameters"]["project_name"]
         bucket_name = os.environ["BUCKET_NAME"]
-        lessons_key = f"projects/{project_name}/lessons-learned.json"
+        lessons_key = f"documents/projects/{project_name}/lessons-learned.json"
 
         try:
             response = s3.get_object(Bucket=bucket_name, Key=lessons_key)
@@ -412,7 +412,7 @@ def get_lessons(event):
             source_doc = lesson.get("source_document")
             if source_doc:
                 try:
-                    doc_key = f"projects/{project_name}/documents/{source_doc}"
+                    doc_key = f"documents/projects/{project_name}/documents/{source_doc}"
                     doc_response = s3.get_object(Bucket=bucket_name, Key=doc_key)
                     doc_content = doc_response["Body"].read().decode("utf-8")
                     lesson["source_content"] = doc_content
@@ -444,7 +444,7 @@ def get_conflicts(event):
     try:
         project_name = event["pathParameters"]["project_name"]
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"projects/{project_name}/lessons-learned-conflicts.json"
+        conflicts_key = f"documents/projects/{project_name}/lessons-learned-conflicts.json"
 
         try:
             response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
@@ -474,8 +474,8 @@ def resolve_conflict(event):
         decision = body.get("decision")  # "keep_new", "keep_existing", "keep_both", "delete_both"
 
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"projects/{project_name}/lessons-learned-conflicts.json"
-        lessons_key = f"projects/{project_name}/lessons-learned.json"
+        conflicts_key = f"documents/projects/{project_name}/lessons-learned-conflicts.json"
+        lessons_key = f"documents/projects/{project_name}/lessons-learned.json"
 
         # Load conflicts
         response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)

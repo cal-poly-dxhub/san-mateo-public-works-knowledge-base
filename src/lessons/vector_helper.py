@@ -42,7 +42,7 @@ def trigger_vector_ingestion(bucket_name: str, s3_key: str):
 
 def trigger_project_lessons_ingestion(bucket_name: str, project_name: str):
     """Trigger KB sync for project lessons file by invoking async processor"""
-    s3_key = f"projects/{project_name}/lessons-learned.json"
+    s3_key = f"documents/projects/{project_name}/lessons-learned.json"
     try:
         s3_client = boto3.client("s3")
         
@@ -81,7 +81,7 @@ def trigger_project_lessons_ingestion(bucket_name: str, project_name: str):
 
 def trigger_type_lessons_ingestion(bucket_name: str, project_type: str):
     """Trigger KB sync for project type master lessons file"""
-    s3_key = f"lessons-learned/{project_type}/master-lessons.json"
+    s3_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
     trigger_vector_ingestion(bucket_name, s3_key)
 
 
