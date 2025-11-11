@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { Input } from "./ui/input";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,48 +22,40 @@ function ChecklistToggle() {
   
   React.useEffect(() => {
     setMounted(true);
-    // Get initial value from localStorage only on client
     const stored = localStorage.getItem('checklistType') as "design" | "construction";
     if (stored) {
       setChecklistType(stored);
     } else {
-      // Set default and store it
       localStorage.setItem('checklistType', 'design');
     }
   }, []);
 
   React.useEffect(() => {
     if (!mounted) return;
-    // Store in localStorage and dispatch event for other components
     localStorage.setItem('checklistType', checklistType);
     window.dispatchEvent(new CustomEvent('checklistTypeChange', { detail: checklistType }));
   }, [checklistType, mounted]);
 
   if (!mounted) {
     return (
-      <select className="h-8 px-2 rounded-md border border-input bg-background text-xs text-secondary-foreground">
-        <option>Design</option>
-      </select>
+      <div className="flex items-center gap-2">
+        <Label className="text-xs text-secondary-foreground">Design</Label>
+        <Switch disabled />
+      </div>
     );
   }
 
   return (
-    <select
-      value={checklistType}
-      onChange={(e) => setChecklistType(e.target.value as "design" | "construction")}
-      className="h-8 px-2 rounded-md border border-input bg-background text-xs text-secondary-foreground"
-    >
-      <option value="design">Design</option>
-      <option value="construction">Construction</option>
-    </select>
+    <div className="flex items-center gap-2">
+      <Label className="text-xs text-secondary-foreground">Design</Label>
+      <Switch
+        checked={checklistType === "construction"}
+        onCheckedChange={(checked) => setChecklistType(checked ? "construction" : "design")}
+        className="data-[state=checked]:bg-green-500"
+      />
+      <Label className="text-xs text-secondary-foreground">Construction</Label>
+    </div>
   );
-}
-
-enum ApiKeyState {
-  empty,
-  checking,
-  valid,
-  invalid,
 }
 
 export default function Header() {
