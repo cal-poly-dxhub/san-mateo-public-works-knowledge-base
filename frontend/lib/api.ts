@@ -1,5 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 
+if (!API_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL environment variable is required");
+}
+
 export async function apiRequest(
   endpoint: string,
   options: RequestInit = {}
@@ -12,11 +16,11 @@ export async function apiRequest(
     Object.assign(headers, options.headers);
   }
 
-  // Add API key from environment or localStorage
   const apiKey = process.env.NEXT_PUBLIC_API_KEY || localStorage?.getItem('apiKey');
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
+  if (!apiKey) {
+    throw new Error("NEXT_PUBLIC_API_KEY environment variable is required");
   }
+  headers["x-api-key"] = apiKey;
 
   const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
 

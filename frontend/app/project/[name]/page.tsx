@@ -24,6 +24,7 @@ import AddLessonDialog from "@/components/AddLessonDialog";
 import LessonsLearned from "@/components/LessonsLearned";
 import Checklist from "@/components/Checklist";
 import SearchComponent from "@/components/SearchComponent";
+import InitialDocumentUpload from "@/components/InitialDocumentUpload";
 
 interface Project {
   name: string;
@@ -60,6 +61,7 @@ export default function ProjectPage() {
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [addLessonDialogOpen, setAddLessonDialogOpen] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [searchType, setSearchType] = useState<
     "both" | "lessons" | "documents"
   >("both");
@@ -176,13 +178,10 @@ export default function ProjectPage() {
 
           try {
             const response = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL || "https://42redkfdhl.execute-api.us-west-2.amazonaws.com/prod"}/projects/${encodeURIComponent(project.name)}/assets/executive_summary.md`,
+              `${process.env.NEXT_PUBLIC_API_URL}/projects/${encodeURIComponent(project.name)}/assets/executive_summary.md`,
               {
                 headers: {
-                  "x-api-key":
-                    process.env.NEXT_PUBLIC_API_KEY ||
-                    localStorage?.getItem("apiKey") ||
-                    "",
+                  "x-api-key": process.env.NEXT_PUBLIC_API_KEY || localStorage?.getItem("apiKey") || "",
                 },
               },
             );
@@ -242,13 +241,10 @@ export default function ProjectPage() {
 
           try {
             const response = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL || "https://42redkfdhl.execute-api.us-west-2.amazonaws.com/prod"}/projects/${encodeURIComponent(project.name)}/assets/webstory.md`,
+              `${process.env.NEXT_PUBLIC_API_URL}/projects/${encodeURIComponent(project.name)}/assets/webstory.md`,
               {
                 headers: {
-                  "x-api-key":
-                    process.env.NEXT_PUBLIC_API_KEY ||
-                    localStorage?.getItem("apiKey") ||
-                    "",
+                  "x-api-key": process.env.NEXT_PUBLIC_API_KEY || localStorage?.getItem("apiKey") || "",
                 },
               },
             );
@@ -314,6 +310,13 @@ export default function ProjectPage() {
           </h1>
           <div className="flex gap-2">
             <Button
+              onClick={() => setBulkUploadOpen(true)}
+              variant="outline"
+              size="sm"
+            >
+              Bulk Upload
+            </Button>
+            <Button
               onClick={() => setAddLessonDialogOpen(true)}
               variant="default"
               size="sm"
@@ -373,6 +376,30 @@ export default function ProjectPage() {
           setAddLessonDialogOpen(false);
         }}
       />
+
+      {bulkUploadOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Bulk Document Upload</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setBulkUploadOpen(false)}
+              >
+                ✕
+              </Button>
+            </div>
+            <InitialDocumentUpload
+              projectId={project?.name || ""}
+              projectType={project?.projectType}
+              onUploadComplete={() => {
+                setBulkUploadOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
