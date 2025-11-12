@@ -2,13 +2,6 @@ import os
 
 import boto3
 import cfnresponse
-import yaml
-
-
-def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), "../../config.yaml")
-    with open(config_path) as f:
-        return yaml.safe_load(f)
 
 
 def on_event(event, context):
@@ -21,9 +14,8 @@ def on_event(event, context):
     data_bucket_arn = props["DataBucketArn"]
     region = os.environ.get("AWS_REGION")
 
-    config = load_config()
-    chunk_size = config["vector_search"]["chunk_size_tokens"]
-    overlap = config["vector_search"]["overlap_tokens"]
+    chunk_size = 512  # TODO
+    overlap = 64
 
     try:
         bedrock = boto3.client("bedrock-agent", region_name=region)
@@ -45,7 +37,7 @@ def on_event(event, context):
                     dataType="float32",
                     dimension=1024,
                     distanceMetric="cosine",
-                    MetadataConfiguration={
+                    metadataConfiguration={
                         "nonFilterableMetadataKeys": [
                             "AMAZON_BEDROCK_TEXT",
                             "AMAZON_BEDROCK_METADATA",
