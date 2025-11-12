@@ -1,8 +1,8 @@
 import os
-import yaml
 
 import boto3
 import cfnresponse
+import yaml
 
 
 def load_config():
@@ -20,7 +20,7 @@ def on_event(event, context):
     role_arn = props["RoleArn"]
     data_bucket_arn = props["DataBucketArn"]
     region = os.environ.get("AWS_REGION")
-    
+
     config = load_config()
     chunk_size = config["vector_search"]["chunk_size_tokens"]
     overlap = config["vector_search"]["overlap_tokens"]
@@ -45,10 +45,12 @@ def on_event(event, context):
                     dataType="float32",
                     dimension=1024,
                     distanceMetric="cosine",
-                    nonFilterableMetadataKeys=[
-                        "AMAZON_BEDROCK_TEXT",
-                        "AMAZON_BEDROCK_METADATA",
-                    ],
+                    MetadataConfiguration={
+                        "nonFilterableMetadataKeys": [
+                            "AMAZON_BEDROCK_TEXT",
+                            "AMAZON_BEDROCK_METADATA",
+                        ]
+                    },
                 )
             except s3v.exceptions.ConflictException:
                 pass
@@ -88,7 +90,9 @@ def on_event(event, context):
                         "chunkingStrategy": "FIXED_SIZE",
                         "fixedSizeChunkingConfiguration": {
                             "maxTokens": chunk_size,
-                            "overlapPercentage": int((overlap / chunk_size) * 100),
+                            "overlapPercentage": int(
+                                (overlap / chunk_size) * 100
+                            ),
                         },
                     }
                 },

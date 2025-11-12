@@ -81,7 +81,7 @@ def trigger_project_lessons_ingestion(bucket_name: str, project_name: str):
 
 def trigger_type_lessons_ingestion(bucket_name: str, project_type: str):
     """Trigger KB sync for project type master lessons file"""
-    s3_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
+    s3_key = f"lessons-learned/{project_type}/lessons.json"
     trigger_vector_ingestion(bucket_name, s3_key)
 
 

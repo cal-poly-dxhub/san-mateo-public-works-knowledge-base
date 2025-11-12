@@ -181,7 +181,7 @@ export default function Checklist({ projectName, projectType }: ChecklistProps) 
     try {
       await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist/task`, {
         method: "POST",
-        body: JSON.stringify(newTask),
+        body: JSON.stringify({ ...newTask, checklist_type: checklistType }),
       });
       setAddingTask(false);
       setNewTask({ checklist_task_id: "", description: "", projected_date: "", required: true, notes: "" });
@@ -209,7 +209,7 @@ export default function Checklist({ projectName, projectType }: ChecklistProps) 
     try {
       await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist/task`, {
         method: "PUT",
-        body: JSON.stringify(editedTask),
+        body: JSON.stringify({ ...editedTask, checklist_type: checklistType }),
       });
       setEditingTask(null);
       setEditedTask(null);

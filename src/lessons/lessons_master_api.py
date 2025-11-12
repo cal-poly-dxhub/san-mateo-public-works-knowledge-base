@@ -62,7 +62,7 @@ def get_project_types():
         # List all master lesson files in lessons-learned/
         response = s3.list_objects_v2(
             Bucket=bucket_name,
-            Prefix="documents/lessons-learned/",
+            Prefix="lessons-learned/",
             Delimiter="/"
         )
         
@@ -70,24 +70,29 @@ def get_project_types():
         
         # Get each project type folder
         for prefix in response.get("CommonPrefixes", []):
-            project_type = prefix["Prefix"].replace("documents/lessons-learned/", "").rstrip("/")
+            project_type = prefix["Prefix"].replace("lessons-learned/", "").rstrip("/")
             
-            # Try to get master lessons file
+            # Try to get lessons file
             try:
-                master_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
-                obj = s3.get_object(Bucket=bucket_name, Key=master_key)
+                lessons_key = f"lessons-learned/{project_type}/lessons.json"
+                obj = s3.get_object(Bucket=bucket_name, Key=lessons_key)
                 data = json.loads(obj["Body"].read())
                 lesson_count = len(data.get("lessons", []))
                 
+                # Extract unique project names from lessons
+                projects = list(set(lesson.get("projectName", "") for lesson in data.get("lessons", []) if lesson.get("projectName")))
+                
                 project_types.append({
                     "type": project_type,
-                    "count": lesson_count
+                    "count": lesson_count,
+                    "projects": projects
                 })
             except:
-                # No master file yet
+                # No lessons file yet
                 project_types.append({
                     "type": project_type,
-                    "count": 0
+                    "count": 0,
+                    "projects": []
                 })
         
         project_types.sort(key=lambda x: (-x["count"], x["type"]))
@@ -107,10 +112,10 @@ def get_lessons_by_type(project_type):
     """Get aggregated lessons for a specific project type"""
     try:
         bucket_name = os.environ.get("BUCKET_NAME")
-        master_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
+        lessons_key = f"lessons-learned/{project_type}/lessons.json"
         
         try:
-            response = s3.get_object(Bucket=bucket_name, Key=master_key)
+            response = s3.get_object(Bucket=bucket_name, Key=lessons_key)
             data = json.loads(response["Body"].read())
             
             return {
@@ -139,7 +144,7 @@ def get_master_conflicts(project_type):
     """Get pending conflicts for a project type's master lessons"""
     try:
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"documents/lessons-learned/{project_type}/master-lessons-conflicts.json"
+        conflicts_key = f"lessons-learned/{project_type}/master-lessons-conflicts.json"
 
         try:
             response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
@@ -184,8 +189,8 @@ def resolve_master_conflict(event, conflict_id):
             }
 
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"documents/lessons-learned/{project_type}/master-lessons-conflicts.json"
-        lessons_key = f"documents/lessons-learned/{project_type}/master-lessons.json"
+        conflicts_key = f"lessons-learned/{project_type}/master-lessons-conflicts.json"
+        lessons_key = f"lessons-learned/{project_type}/lessons.json"
 
         # Load conflicts
         response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)

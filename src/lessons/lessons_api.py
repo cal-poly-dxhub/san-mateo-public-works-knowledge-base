@@ -271,7 +271,7 @@ def update_master_lessons(bucket_name, project_type, project_name, new_lessons):
     """Update master lessons learned file with LLM merge"""
 
     # Get current master file
-    master_folder = f"documents/lessons-learned/{project_type}"
+    master_folder = f"lessons-learned/{project_type}"
 
     try:
         # List existing master files
@@ -320,6 +320,15 @@ def update_master_lessons(bucket_name, project_type, project_name, new_lessons):
     s3.put_object(
         Bucket=bucket_name,
         Key=new_master_key,
+        Body=json.dumps(merged_lessons, indent=2).encode("utf-8"),
+        ContentType="application/json",
+    )
+
+    # Update per-project-type lessons.json
+    type_lessons_key = f"{master_folder}/lessons.json"
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=type_lessons_key,
         Body=json.dumps(merged_lessons, indent=2).encode("utf-8"),
         ContentType="application/json",
     )

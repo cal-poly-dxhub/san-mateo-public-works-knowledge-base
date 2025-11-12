@@ -346,10 +346,9 @@ def add_task(project_name, task_data):
             }
         
         project_id = response["Items"][0]["project_id"]
-        # Accept either task_id or checklist_task_id from frontend
-        task_number = (task_data.get("task_id") or task_data.get("checklist_task_id", "")).strip()
+        task_number = task_data.get("checklist_task_id", "").strip()
+        checklist_type = task_data.get("checklist_type", "design")
         
-        # Validate task ID
         if not task_number:
             return {
                 "statusCode": 400,
@@ -357,17 +356,15 @@ def add_task(project_name, task_data):
                 "body": json.dumps({"error": "Task ID is required"}),
             }
         
-        # Validate task ID format (alphanumeric, dashes, underscores only)
         if not is_valid_task_id(task_number):
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, and underscores"}),
+                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"}),
             }
         
-        task_id = f"task#{task_number}"
+        task_id = f"task#{checklist_type}#{task_number}"
         
-        # Check if task ID already exists
         existing_task = table.get_item(
             Key={"project_id": project_id, "item_id": task_id}
         )
@@ -379,7 +376,6 @@ def add_task(project_name, task_data):
                 "body": json.dumps({"error": f"Task ID '{task_number}' already exists"}),
             }
         
-        # Validate dates if provided
         projected_date = task_data.get("projected_date", "")
         if projected_date and not is_valid_date(projected_date):
             return {
@@ -396,7 +392,6 @@ def add_task(project_name, task_data):
                     "task_id": task_number,
                     "description": task_data.get("description", "").strip(),
                     "projected_date": projected_date,
-                    "actual_date": "",
                     "required": task_data.get("required", True),
                     "notes": task_data.get("notes", "").strip()
                 },
@@ -434,6 +429,18 @@ def delete_task(project_name, task_id):
         
         project_id = response["Items"][0]["project_id"]
         
+        # Validate task exists
+        existing = table.get_item(
+            Key={"project_id": project_id, "item_id": task_id}
+        )
+        
+        if "Item" not in existing:
+            return {
+                "statusCode": 404,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "Task not found"}),
+            }
+        
         table.delete_item(
             Key={"project_id": project_id, "item_id": task_id}
         )
@@ -468,8 +475,8 @@ def edit_task(project_name, task_data):
         project_id = response["Items"][0]["project_id"]
         task_id = task_data.get("task_id")
         new_task_number = task_data.get("checklist_task_id", "").strip()
+        checklist_type = task_data.get("checklist_type", "design")
         
-        # Validate task exists
         if not task_id:
             return {
                 "statusCode": 400,
@@ -488,7 +495,6 @@ def edit_task(project_name, task_data):
                 "body": json.dumps({"error": "Task not found"}),
             }
         
-        # Validate new task number
         if not new_task_number:
             return {
                 "statusCode": 400,
@@ -496,16 +502,16 @@ def edit_task(project_name, task_data):
                 "body": json.dumps({"error": "Task ID is required"}),
             }
         
-        # Validate task ID format
         if not is_valid_task_id(new_task_number):
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, and underscores"}),
+                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"}),
             }
         
+        new_task_id = f"task#{checklist_type}#{new_task_number}"
+        
         # Check if changing to a different task ID that already exists
-        new_task_id = f"task#{new_task_number}"
         if new_task_id != task_id:
             duplicate_check = table.get_item(
                 Key={"project_id": project_id, "item_id": new_task_id}
@@ -537,15 +543,12 @@ def edit_task(project_name, task_data):
         
         # If task ID changed, delete old and create new
         if new_task_id != task_id:
-            # Get old task data to preserve status and dates
             old_task = existing_task["Item"]
             
-            # Delete old task
             table.delete_item(
                 Key={"project_id": project_id, "item_id": task_id}
             )
             
-            # Create new task with updated ID
             table.put_item(
                 Item={
                     "project_id": project_id,
@@ -554,7 +557,6 @@ def edit_task(project_name, task_data):
                         "task_id": new_task_number,
                         "description": task_data.get("description", "").strip(),
                         "projected_date": projected_date,
-                        "actual_date": actual_date,
                         "required": task_data.get("required", True),
                         "notes": task_data.get("notes", "").strip()
                     },
@@ -573,7 +575,6 @@ def edit_task(project_name, task_data):
                         "task_id": new_task_number,
                         "description": task_data.get("description", "").strip(),
                         "projected_date": projected_date,
-                        "actual_date": actual_date,
                         "required": task_data.get("required", True),
                         "notes": task_data.get("notes", "").strip()
                     }
