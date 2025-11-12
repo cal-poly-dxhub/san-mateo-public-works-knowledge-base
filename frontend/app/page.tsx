@@ -60,15 +60,18 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<"alphabetical" | "progress" | "date">("alphabetical");
-  const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
+  const [checklistType, setChecklistType] = useState<"design" | "construction">(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('checklist-type');
+      return (stored as "design" | "construction") || "design";
+    }
+    return "design";
+  });
 
   useEffect(() => {
     const handleChecklistTypeChange = (event: CustomEvent) => {
       setChecklistType(event.detail);
     };
-    
-    const stored = localStorage.getItem('checklistType') as "design" | "construction";
-    if (stored) setChecklistType(stored);
     
     window.addEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
     return () => window.removeEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);

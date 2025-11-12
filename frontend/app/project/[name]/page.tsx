@@ -20,11 +20,11 @@ import {
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import DocumentUploadDialog from "@/components/DocumentUploadDialog";
+import BulkDocumentUploadDialog from "@/components/BulkDocumentUploadDialog";
 import AddLessonDialog from "@/components/AddLessonDialog";
 import LessonsLearned from "@/components/LessonsLearned";
 import Checklist from "@/components/Checklist";
 import SearchComponent from "@/components/SearchComponent";
-import InitialDocumentUpload from "@/components/InitialDocumentUpload";
 
 interface Project {
   name: string;
@@ -348,7 +348,7 @@ export default function ProjectPage() {
           </TabsList>
 
           <TabsContent value="checklist" className="space-y-6">
-            <Checklist projectName={project.name} />
+            <Checklist projectName={project.name} projectType={project.projectType} />
           </TabsContent>
 
           <TabsContent value="lessons" className="space-y-6">
@@ -377,29 +377,15 @@ export default function ProjectPage() {
         }}
       />
 
-      {bulkUploadOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Bulk Document Upload</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setBulkUploadOpen(false)}
-              >
-                ✕
-              </Button>
-            </div>
-            <InitialDocumentUpload
-              projectId={project?.name || ""}
-              projectType={project?.projectType}
-              onUploadComplete={() => {
-                setBulkUploadOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <BulkDocumentUploadDialog
+        open={bulkUploadOpen}
+        onOpenChange={setBulkUploadOpen}
+        projectName={project?.name || ""}
+        projectType={project?.projectType || "other"}
+        onUploadComplete={() => {
+          setBulkUploadOpen(false);
+        }}
+      />
     </div>
   );
 }

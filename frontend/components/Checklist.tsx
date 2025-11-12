@@ -39,9 +39,10 @@ interface Metadata {
 
 interface ChecklistProps {
   projectName: string;
+  projectType?: string;
 }
 
-export default function Checklist({ projectName }: ChecklistProps) {
+export default function Checklist({ projectName, projectType }: ChecklistProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [metadata, setMetadata] = useState<Metadata | null>(null);
   const [editingMetadata, setEditingMetadata] = useState(false);
@@ -59,17 +60,19 @@ export default function Checklist({ projectName }: ChecklistProps) {
     required: true,
     notes: ""
   });
-  const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
+  const [checklistType, setChecklistType] = useState<"design" | "construction">(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('checklist-type');
+      return (stored as "design" | "construction") || "design";
+    }
+    return "design";
+  });
 
-  // Listen for changes from header toggle
+  // Listen for manual changes from header toggle
   useEffect(() => {
     const handleChecklistTypeChange = (event: CustomEvent) => {
       setChecklistType(event.detail);
     };
-    
-    // Get initial value from localStorage
-    const stored = localStorage.getItem('checklistType') as "design" | "construction";
-    if (stored) setChecklistType(stored);
     
     window.addEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
     return () => window.removeEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
@@ -81,7 +84,6 @@ export default function Checklist({ projectName }: ChecklistProps) {
 
   const loadChecklist = async () => {
     try {
-      // Load single checklist type
       const data = await apiRequest(`/projects/${encodeURIComponent(projectName)}/checklist?type=${checklistType}`);
       const allTasks = data.tasks || [];
       const combinedProgress = data.progress || { total: 0, completed: 0, percentage: 0 };

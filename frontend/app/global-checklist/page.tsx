@@ -33,17 +33,19 @@ export default function GlobalChecklistPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
+  const [checklistType, setChecklistType] = useState<"design" | "construction">(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('checklist-type');
+      return (stored as "design" | "construction") || "design";
+    }
+    return "design";
+  });
 
   // Listen for changes from header toggle
   useEffect(() => {
     const handleChecklistTypeChange = (event: CustomEvent) => {
       setChecklistType(event.detail);
     };
-    
-    // Get initial value from localStorage
-    const stored = localStorage.getItem('checklistType') as "design" | "construction";
-    if (stored) setChecklistType(stored);
     
     window.addEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
     return () => window.removeEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);

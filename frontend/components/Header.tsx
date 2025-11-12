@@ -21,20 +21,19 @@ function ChecklistToggle() {
   const [mounted, setMounted] = useState(false);
   
   React.useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem('checklistType') as "design" | "construction";
+    const stored = sessionStorage.getItem('checklist-type') as "design" | "construction";
     if (stored) {
       setChecklistType(stored);
-    } else {
-      localStorage.setItem('checklistType', 'design');
     }
+    setMounted(true);
   }, []);
 
-  React.useEffect(() => {
-    if (!mounted) return;
-    localStorage.setItem('checklistType', checklistType);
-    window.dispatchEvent(new CustomEvent('checklistTypeChange', { detail: checklistType }));
-  }, [checklistType, mounted]);
+  const handleToggle = (checked: boolean) => {
+    const newType = checked ? "construction" : "design";
+    setChecklistType(newType);
+    sessionStorage.setItem('checklist-type', newType);
+    window.dispatchEvent(new CustomEvent('checklistTypeChange', { detail: newType }));
+  };
 
   if (!mounted) {
     return (
@@ -50,7 +49,7 @@ function ChecklistToggle() {
       <Label className="text-xs text-secondary-foreground">Design</Label>
       <Switch
         checked={checklistType === "construction"}
-        onCheckedChange={(checked) => setChecklistType(checked ? "construction" : "design")}
+        onCheckedChange={handleToggle}
         className="data-[state=checked]:bg-green-500"
       />
       <Label className="text-xs text-secondary-foreground">Construction</Label>
