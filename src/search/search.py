@@ -126,7 +126,6 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
                 # Extract S3 info and generate presigned URL
                 s3_uri = location.get("s3Location", {}).get("uri", "")
                 presigned_url = None
-                source_presigned_url = None
                 project_name = "unknown"
                 chunk_info = None
                 source_doc_key = None
@@ -162,24 +161,12 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
                         )
                     except Exception as e:
                         print(f"Error generating presigned URL: {e}")
-                    
-                    # Generate presigned URL for source document
-                    if source_doc_key:
-                        try:
-                            source_presigned_url = s3_client.generate_presigned_url(
-                                'get_object',
-                                Params={'Bucket': bucket_name, 'Key': source_doc_key},
-                                ExpiresIn=3600
-                            )
-                        except Exception as e:
-                            print(f"Error generating source presigned URL: {e}")
                 
                 sources.append({
                     "content": content,
                     "source": source_doc_key or metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
                     "project": project_name,
                     "presigned_url": presigned_url,
-                    "source_document_url": source_presigned_url,
                     "chunk": chunk_info,
                 })
 
@@ -225,13 +212,11 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
         for item in response.get("retrievalResults", []):
             content = item.get("content", {}).get("text", "")
             metadata = item.get("metadata", {})
-            score = item.get("score", 0.0)
             location = item.get("location", {})
             
             # Extract S3 info and generate presigned URL
             s3_uri = location.get("s3Location", {}).get("uri", "")
             presigned_url = None
-            source_presigned_url = None
             project_name = "unknown"
             chunk_info = None
             source_doc_key = None
@@ -269,27 +254,13 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
                     print(f"Generated markdown presigned URL for {s3_key}")
                 except Exception as e:
                     print(f"Error generating presigned URL for {s3_key}: {str(e)}")
-                
-                # Generate presigned URL for source document
-                if source_doc_key:
-                    try:
-                        source_presigned_url = s3_client.generate_presigned_url(
-                            'get_object',
-                            Params={'Bucket': bucket_name, 'Key': source_doc_key},
-                            ExpiresIn=3600
-                        )
-                        print(f"Generated source presigned URL for {source_doc_key}")
-                    except Exception as e:
-                        print(f"Error generating source presigned URL for {source_doc_key}: {str(e)}")
             
             results.append(
                 {
                     "content": content,
                     "source": source_doc_key or metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
                     "project": project_name,
-                    "relevance_score": round(score * 100),
                     "presigned_url": presigned_url,
-                    "source_document_url": source_presigned_url,
                     "chunk": chunk_info,
                     "metadata": metadata,
                 }

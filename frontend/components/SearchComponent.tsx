@@ -23,10 +23,9 @@ interface Source {
   content: string;
   source: string;
   project: string;
-  relevance_score: number;
   chunk_index: string;
   total_chunks: string;
-  source_document_url?: string;
+  presigned_url?: string;
 }
 
 interface SearchResult {
@@ -51,11 +50,24 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
   const [selectedModel, setSelectedModel] = useState<string>("");
 
   const openSourceFile = async (source: Source) => {
-    if (source.source_document_url) {
-      window.open(source.source_document_url, '_blank');
+    if (source.presigned_url) {
+      window.open(source.presigned_url, '_blank');
     } else {
       alert('Source document URL not available');
     }
+  };
+
+  const getSourceFileName = (source: Source): string => {
+    if (source.presigned_url) {
+      try {
+        const url = new URL(source.presigned_url);
+        const key = url.searchParams.get('key') || url.pathname.split('/').pop() || source.source;
+        return decodeURIComponent(key);
+      } catch {
+        return source.source;
+      }
+    }
+    return source.source;
   };
 
   useEffect(() => {
@@ -219,15 +231,12 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
                             }}
                             className="font-medium text-primary hover:underline flex items-center gap-1"
                           >
-                            {source.source}
+                            {getSourceFileName(source)}
                             <ExternalLink className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary">
-                          {source.relevance_score}% match
-                        </Badge>
                         {expandedSources.has(index) ? (
                           <ChevronUp className="h-4 w-4" />
                         ) : (

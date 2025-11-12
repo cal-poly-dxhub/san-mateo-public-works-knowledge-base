@@ -103,17 +103,6 @@ def search_with_project_filter(query: str, project: str) -> List[Dict]:
                 )
             except Exception as e:
                 logger.error(f"Error generating presigned URL: {e}")
-            
-            # Generate presigned URL for source document
-            if source_doc_key:
-                try:
-                    result["source_document_url"] = s3_client.generate_presigned_url(
-                        'get_object',
-                        Params={'Bucket': bucket_name, 'Key': source_doc_key},
-                        ExpiresIn=3600
-                    )
-                except Exception as e:
-                    logger.error(f"Error generating source presigned URL: {e}")
     
     return results
 
@@ -170,17 +159,6 @@ def search_global(query: str) -> List[Dict]:
                 )
             except Exception as e:
                 logger.error(f"Error generating presigned URL: {e}")
-            
-            # Generate presigned URL for source document
-            if source_doc_key:
-                try:
-                    result["source_document_url"] = s3_client.generate_presigned_url(
-                        'get_object',
-                        Params={'Bucket': bucket_name, 'Key': source_doc_key},
-                        ExpiresIn=3600
-                    )
-                except Exception as e:
-                    logger.error(f"Error generating source presigned URL: {e}")
     
     return results
 
