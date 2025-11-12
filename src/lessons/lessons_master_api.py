@@ -32,11 +32,11 @@ def handler(event, context):
             return resolve_master_conflict(event, conflict_id)
 
         elif "/conflicts/by-type/" in path and method == "GET":
-            project_type = event["pathParameters"]["project_type"]
+            project_type = unquote(event["pathParameters"]["project_type"]).lower().replace(" ", "-")
             return get_master_conflicts(project_type)
 
         elif "/by-type/" in path and method == "GET":
-            project_type = event["pathParameters"]["project_type"]
+            project_type = unquote(event["pathParameters"]["project_type"]).lower().replace(" ", "-")
             return get_lessons_by_type(project_type)
 
         return {
@@ -144,7 +144,7 @@ def get_master_conflicts(project_type):
     """Get pending conflicts for a project type's master lessons"""
     try:
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"lessons-learned/{project_type}/master-lessons-conflicts.json"
+        conflicts_key = f"lessons-learned/{project_type}/lessons-conflicts.json"
 
         try:
             response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
@@ -189,7 +189,7 @@ def resolve_master_conflict(event, conflict_id):
             }
 
         bucket_name = os.environ["BUCKET_NAME"]
-        conflicts_key = f"lessons-learned/{project_type}/master-lessons-conflicts.json"
+        conflicts_key = f"lessons-learned/{project_type}/lessons-conflicts.json"
         lessons_key = f"lessons-learned/{project_type}/lessons.json"
 
         # Load conflicts

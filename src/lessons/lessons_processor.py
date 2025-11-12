@@ -297,11 +297,14 @@ Find conflicts where new lesson covers same topic, contradicts, or makes existin
 Use report_conflicts tool. If none, call with empty array."""
 
     try:
+        print(f"Checking {len(new_lessons)} new lessons against {len(existing_lessons_chunk)} existing lessons")
         response = bedrock.converse(
             modelId=os.environ["CONFLICT_DETECTOR_MODEL_ID"],
             messages=[{"role": "user", "content": [{"text": prompt}]}],
             toolConfig={"tools": tools},
         )
+
+        print(f"LLM Response: {json.dumps(response['output']['message'], indent=2)}")
 
         for content in response["output"]["message"]["content"]:
             if (
@@ -309,6 +312,7 @@ Use report_conflicts tool. If none, call with empty array."""
                 and content["toolUse"]["name"] == "report_conflicts"
             ):
                 conflicts = content["toolUse"]["input"].get("conflicts", [])
+                print(f"Found {len(conflicts)} conflicts")
                 enriched = []
                 for conflict in conflicts:
                     new_lesson = next(
@@ -339,10 +343,13 @@ Use report_conflicts tool. If none, call with empty array."""
                         )
                 return enriched
 
+        print("No tool use found in response")
         return []
 
     except Exception as e:
         print(f"Error finding conflicts: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 
@@ -355,6 +362,8 @@ def save_conflicts_file(bucket_name, conflicts_key, conflicts):
         existing_conflicts = []
 
     existing_conflicts.extend(conflicts)
+    
+    print(f"Saving {len(conflicts)} new conflicts to {conflicts_key} (total: {len(existing_conflicts)})")
 
     s3.put_object(
         Bucket=bucket_name,
