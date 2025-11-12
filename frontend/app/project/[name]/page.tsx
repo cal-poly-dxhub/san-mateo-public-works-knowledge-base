@@ -20,7 +20,6 @@ import {
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import DocumentUploadDialog from "@/components/DocumentUploadDialog";
-import BulkDocumentUploadDialog from "@/components/BulkDocumentUploadDialog";
 import AddLessonDialog from "@/components/AddLessonDialog";
 import LessonsLearned from "@/components/LessonsLearned";
 import Checklist from "@/components/Checklist";
@@ -61,7 +60,6 @@ export default function ProjectPage() {
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [addLessonDialogOpen, setAddLessonDialogOpen] = useState(false);
-  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [searchType, setSearchType] = useState<
     "both" | "lessons" | "documents"
   >("both");
@@ -310,13 +308,6 @@ export default function ProjectPage() {
           </h1>
           <div className="flex gap-2">
             <Button
-              onClick={() => setBulkUploadOpen(true)}
-              variant="outline"
-              size="sm"
-            >
-              Bulk Upload
-            </Button>
-            <Button
               onClick={() => setAddLessonDialogOpen(true)}
               variant="default"
               size="sm"
@@ -328,7 +319,7 @@ export default function ProjectPage() {
               variant="default"
               size="sm"
             >
-              Upload Document
+              Upload Documents
             </Button>
           </div>
         </div>
@@ -374,16 +365,6 @@ export default function ProjectPage() {
         projectType={project?.projectType || "other"}
         onComplete={() => {
           setAddLessonDialogOpen(false);
-        }}
-      />
-
-      <BulkDocumentUploadDialog
-        open={bulkUploadOpen}
-        onOpenChange={setBulkUploadOpen}
-        projectName={project?.name || ""}
-        projectType={project?.projectType || "other"}
-        onUploadComplete={() => {
-          setBulkUploadOpen(false);
         }}
       />
     </div>

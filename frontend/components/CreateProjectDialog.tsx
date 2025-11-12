@@ -11,9 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { useApiKey } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
+import { XIcon } from "lucide-react";
+
+interface FileWithToggle {
+  file: File;
+  extractLessons: boolean;
+}
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -33,6 +39,7 @@ export default function CreateProjectDialog({
   const [location, setLocation] = useState("");
   const [areaSize, setAreaSize] = useState("");
   const [specialConditions, setSpecialConditions] = useState<string[]>([]);
+  const [files, setFiles] = useState<FileWithToggle[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -50,12 +57,36 @@ export default function CreateProjectDialog({
     loadProjectTypes();
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files).map(file => ({
+        file,
+        extractLessons: false
+      }));
+      setFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleFile = (index: number) => {
+    setFiles(prev => prev.map((f, i) => 
+      i === index ? { ...f, extractLessons: !f.extractLessons } : f
+    ));
+  };
+
+  const toggleAll = (checked: boolean) => {
+    setFiles(prev => prev.map(f => ({ ...f, extractLessons: checked })));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Create project using wizard
+      // Create project
       await apiRequest("/create-project", {
         method: "POST",
         body: JSON.stringify({
@@ -66,6 +97,26 @@ export default function CreateProjectDialog({
           specialConditions: specialConditions,
         }),
       });
+
+      // Upload documents if any
+      if (files.length > 0) {
+        for (const { file, extractLessons } of files) {
+          const content = await file.text();
+          
+          await apiRequest(
+            `/projects/${encodeURIComponent(projectName)}/documents`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                filename: file.name,
+                content: content,
+                extract_lessons: extractLessons,
+                project_type: projectType,
+              }),
+            }
+          );
+        }
+      }
 
       onProjectCreated();
       onOpenChange(false);
@@ -78,40 +129,17 @@ export default function CreateProjectDialog({
     }
   };
 
-  const startBatchUpload = async (): Promise<string> => {
-    // Read file contents
-    const fileData = await Promise.all(files.map(async (f) => {
-      const content = await f.file.text(); // Read file content as text
-      return {
-        filename: f.file.name,
-        document_type: f.document_type || 'general',
-        date: f.date,
-        content: content, // Include file content
-      };
-    }));
-
-    // Create documents with content
-    const response = await apiRequest("/document-upload", {
-      method: "POST",
-      body: JSON.dumps({
-        project_id: projectName,
-        documents: fileData,
-      }),
-    });
-
-    // The document upload API creates document records and uploads files
-    return response.documents?.[0]?.uuid || 'batch-created';
-  };
-
   const resetForm = () => {
     setProjectName("");
     setProjectType(projectTypes[0] || "");
     setLocation("");
     setAreaSize("");
     setSpecialConditions([]);
+    setFiles([]);
   };
 
-
+  const allChecked = files.length > 0 && files.every(f => f.extractLessons);
+  const someChecked = files.some(f => f.extractLessons) && !allChecked;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -184,6 +212,77 @@ export default function CreateProjectDialog({
               rows={2}
             />
           </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="files">Upload Documents (Optional)</Label>
+            <Input
+              id="files"
+              type="file"
+              accept=".txt,.md,.pdf,.doc,.docx"
+              onChange={handleFileChange}
+              multiple
+            />
+          </div>
+
+          {files.length > 0 && (
+            <>
+              <div className="flex items-center justify-between p-3 bg-muted rounded">
+                <Label htmlFor="toggle-all" className="cursor-pointer font-semibold">
+                  Extract Lessons for All
+                </Label>
+                <Switch
+                  id="toggle-all"
+                  checked={allChecked}
+                  onCheckedChange={toggleAll}
+                  className={someChecked ? "opacity-50" : ""}
+                />
+              </div>
+
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                {files.map((fileItem, index) => (
+                  <div
+                    key={`${fileItem.file.name}-${index}`}
+                    className="flex items-center justify-between p-3 border rounded"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {fileItem.file.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(fileItem.file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 ml-4">
+                      <div className="flex items-center gap-2">
+                        <Label
+                          htmlFor={`extract-${index}`}
+                          className="text-xs cursor-pointer whitespace-nowrap"
+                        >
+                          Lessons
+                        </Label>
+                        <Switch
+                          id={`extract-${index}`}
+                          checked={fileItem.extractLessons}
+                          onCheckedChange={() => toggleFile(index)}
+                          disabled={loading}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        disabled={loading}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           
           <div className="flex justify-end gap-2 pt-4">
             <Button
