@@ -103,7 +103,13 @@ class IAMPermissions(Construct):
         compute.search_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:Retrieve", "bedrock:RetrieveAndGenerate"],
-                resources=[f"arn:aws:bedrock:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:knowledge-base/{kb_id}"],
+                resources=["arn:aws:bedrock:*:*:knowledge-base/*"],  # #TODO: Restrict to specific knowledge bases if needed
+            )
+        )
+        compute.search_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:GetInferenceProfile"],
+                resources=["*"],
             )
         )
 

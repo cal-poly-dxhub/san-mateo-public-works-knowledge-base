@@ -3,6 +3,7 @@ import os
 from urllib.parse import unquote
 
 import boto3
+from vector_helper import trigger_type_lessons_ingestion
 
 s3 = boto3.client("s3")
 
@@ -248,6 +249,13 @@ def resolve_master_conflict(event, conflict_id):
             ContentType="application/json",
         )
 
+        # Trigger vector sync for updated lessons
+        try:
+            trigger_type_lessons_ingestion(bucket_name, project_type)
+            print(f"Triggered sync for {project_type} lessons after conflict resolution")
+        except Exception as e:
+            print(f"Warning: Failed to trigger sync: {e}")
+
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
@@ -260,12 +268,6 @@ def resolve_master_conflict(event, conflict_id):
             "statusCode": 500,
             "headers": {"Access-Control-Allow-Origin": "*"},
             "body": json.dumps({"error": str(e)}),
-        }
-
-        return {
-            "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"message": "Conflict resolved"}),
         }
 
     except Exception as e:
