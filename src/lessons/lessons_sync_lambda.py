@@ -51,14 +51,40 @@ def get_project_type(project_name):
     try:
         table = dynamodb.Table(TABLE_NAME)
         response = table.get_item(
-            Key={'project_id': project_name, 'item_id': 'metadata'}
+            Key={'project_id': project_name, 'item_id': 'config'}
         )
         item = response.get('Item', {})
-        # Try both 'project_type' and 'projectType' keys
-        return item.get('project_type') or item.get('projectType', 'Unknown')
+        # Try nested config.metadata.project_type, top-level projectType, or project_type
+        project_type = (item.get('config', {}).get('metadata', {}).get('project_type') or 
+                       item.get('projectType') or 
+                       item.get('project_type'))
+        
+        if not project_type or project_type == 'Unknown':
+            # Try to extract from lessons-learned path in S3
+            try:
+                prefix = f"lessons-learned/"
+                paginator = s3.get_paginator('list_objects_v2')
+                for page in paginator.paginate(Bucket=BUCKET_NAME, Prefix=prefix, Delimiter='/'):
+                    for common_prefix in page.get('CommonPrefixes', []):
+                        folder = common_prefix['Prefix'].replace(prefix, '').rstrip('/')
+                        # Check if this folder contains lessons for this project
+                        lessons_key = f"{common_prefix['Prefix']}lessons.json"
+                        try:
+                            lessons_obj = s3.get_object(Bucket=BUCKET_NAME, Key=lessons_key)
+                            lessons_data = json.loads(lessons_obj['Body'].read())
+                            for lesson in lessons_data.get('lessons', []):
+                                if lesson.get('project_name') == project_name:
+                                    print(f"Found project type '{folder}' for {project_name} from lessons-learned folder")
+                                    return folder
+                        except:
+                            continue
+            except Exception as e:
+                print(f"Error searching for project type in lessons-learned: {e}")
+        
+        return project_type if project_type and project_type != 'Unknown' else 'General'
     except Exception as e:
         print(f"Error getting project type for {project_name}: {e}")
-        return 'Unknown'
+        return 'General'
 
 def sync_lessons_to_markdown(project_name, project_type, lessons):
     """Create/update markdown files for lessons"""
