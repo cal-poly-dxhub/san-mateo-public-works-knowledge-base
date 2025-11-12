@@ -134,7 +134,7 @@ class APIGateway(Construct):
         documents = project_detail.add_resource("documents")
         documents.add_method(
             "POST",
-            apigateway.LambdaIntegration(compute.lessons_lambda),
+            apigateway.LambdaIntegration(compute.projects_lambda),
             api_key_required=True,
         )
 

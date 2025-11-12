@@ -10,14 +10,12 @@ bedrock = boto3.client("bedrock-runtime")
 
 
 def handler(event, context):
-    """Handle lessons learned document upload and extraction"""
+    """Handle lessons learned queries"""
 
     path = event.get("path", "")
     method = event.get("httpMethod", "")
 
-    if method == "POST" and "/documents" in path:
-        return upload_and_extract(event)
-    elif method == "GET" and "/lessons-learned" in path:
+    if method == "GET" and "/lessons-learned" in path:
         return get_lessons(event)
     elif method == "GET" and "/conflicts" in path:
         return get_conflicts(event)
@@ -29,78 +27,6 @@ def handler(event, context):
         "headers": {"Access-Control-Allow-Origin": "*"},
         "body": json.dumps({"error": "Not found"}),
     }
-
-
-def upload_and_extract(event):
-    """Upload document and extract lessons learned"""
-    try:
-        body = json.loads(event.get("body", "{}"))
-        project_name = event["pathParameters"]["project_name"]
-
-        file_content = body.get("content")
-        filename = body.get("filename")
-        extract_lessons = body.get("extract_lessons", False)
-
-        if not file_content or not filename:
-            return error_response("Missing file content or filename")
-
-        # Decode base64 content if needed
-        try:
-            content_text = base64.b64decode(file_content).decode("utf-8")
-        except:
-            content_text = file_content
-
-        bucket_name = os.environ["BUCKET_NAME"]
-        
-        # Get project type from DynamoDB
-        dynamodb = boto3.resource("dynamodb")
-        table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
-        response = table.get_item(Key={"project_id": project_name, "item_id": "config"})
-        project_type_raw = response.get("Item", {}).get("projectType", "other")
-        project_type = project_type_raw.lower().replace(" ", "-")
-
-        # Upload document to S3 (under projects, not documents)
-        doc_key = f"projects/{project_name}/lessons_learned.txt"
-        s3.put_object(
-            Bucket=bucket_name, Key=doc_key, Body=content_text.encode("utf-8")
-        )
-
-        if extract_lessons:
-            # Trigger async processing
-            lambda_client = boto3.client("lambda")
-            lambda_client.invoke(
-                FunctionName=os.environ.get("ASYNC_LESSONS_PROCESSOR_NAME"),
-                InvocationType="Event",  # Async
-                Payload=json.dumps(
-                    {
-                        "project_name": project_name,
-                        "project_type": project_type,
-                        "content": content_text,
-                        "filename": filename,
-                    }
-                ),
-            )
-
-            return {
-                "statusCode": 202,  # Accepted
-                "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps(
-                    {
-                        "message": "Document uploaded successfully. Lessons extraction in progress.",
-                        "status": "processing",
-                    }
-                ),
-            }
-
-        return {
-            "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"message": "Document uploaded successfully"}),
-        }
-
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return error_response(str(e))
 
 
 def extract_lessons_from_document(

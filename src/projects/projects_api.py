@@ -23,6 +23,12 @@ def handler(event, context):
             checklist_type = query_params.get("type", "design")
             return get_projects_list(bucket_name, checklist_type)
 
+        elif method == "POST" and "/documents" in path:
+            parts = path.split("/")
+            if len(parts) >= 3 and parts[1] == "projects":
+                project_name = parts[2]
+                return upload_document(event, bucket_name, project_name)
+
         elif path.startswith("/projects/") and method == "GET":
             project_name = event.get("pathParameters", {}).get("project_name")
             if not project_name:
@@ -353,4 +359,58 @@ def get_project_types(bucket_name):
             "statusCode": 500,
             "headers": {"Access-Control-Allow-Origin": "*"},
             "body": json.dumps({"error": str(e)})
+        }
+
+
+def upload_document(event, bucket_name, project_name):
+    """Upload document to project and optionally extract lessons"""
+    try:
+        body = json.loads(event.get("body", "{}"))
+        filename = body.get("filename")
+        content = body.get("content")
+        extract_lessons = body.get("extract_lessons", False)
+        project_type = body.get("project_type", "")
+
+        if not filename or not content:
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "filename and content are required"}),
+            }
+
+        # Save document to S3
+        s3_key = f"documents/projects/{project_name}/{filename}"
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=content.encode("utf-8") if isinstance(content, str) else content,
+        )
+
+        # If extract_lessons is enabled, invoke lessons processor
+        if extract_lessons:
+            try:
+                lessons_lambda = os.environ.get("LESSONS_PROCESSOR_LAMBDA_NAME")
+                if lessons_lambda:
+                    lambda_client.invoke(
+                        FunctionName=lessons_lambda,
+                        InvocationType="Event",
+                        Payload=json.dumps({
+                            "s3_key": s3_key,
+                            "project_name": project_name,
+                            "project_type": project_type,
+                        }),
+                    )
+            except Exception as e:
+                print(f"Warning: Could not invoke lessons processor: {e}")
+
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"message": f"Document {filename} uploaded successfully", "s3_key": s3_key}),
+        }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"error": str(e)}),
         }

@@ -137,7 +137,7 @@ export default function BulkDocumentUploadDialog({
                 />
               </div>
 
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              <div className="space-y-2 max-h-[500px] overflow-y-auto">
                 {files.map((fileItem, index) => (
                   <div
                     key={`${fileItem.file.name}-${index}`}
