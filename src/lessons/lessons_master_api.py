@@ -33,11 +33,11 @@ def handler(event, context):
             return resolve_master_conflict(event, conflict_id)
 
         elif "/conflicts/by-type/" in path and method == "GET":
-            project_type = unquote(event["pathParameters"]["project_type"]).lower().replace(" ", "-")
+            project_type = unquote(event["pathParameters"]["project_type"])
             return get_master_conflicts(project_type)
 
         elif "/by-type/" in path and method == "GET":
-            project_type = unquote(event["pathParameters"]["project_type"]).lower().replace(" ", "-")
+            project_type = unquote(event["pathParameters"]["project_type"])
             return get_lessons_by_type(project_type)
 
         return {

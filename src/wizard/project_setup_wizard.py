@@ -22,12 +22,12 @@ def handler(event, context):
 
         # Load tasks from global checklist in DynamoDB
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
-        
+
         global_response = table.query(
             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
-            ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": "task#"}
+            ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": "task#"},
         )
-        
+
         if not global_response["Items"]:
             return {
                 "statusCode": 500,
@@ -36,11 +36,15 @@ def handler(event, context):
                     "Access-Control-Allow-Methods": "POST, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type",
                 },
-                "body": json.dumps({"error": "Global checklist not initialized"}),
+                "body": json.dumps(
+                    {"error": "Global checklist not initialized"}
+                ),
             }
-        
-        global_version = global_response["Items"][0].get("version", datetime.utcnow().isoformat())
-        
+
+        global_version = global_response["Items"][0].get(
+            "version", datetime.utcnow().isoformat()
+        )
+
         project_config = {
             "metadata": {
                 "date": "",
@@ -81,6 +85,12 @@ def handler(event, context):
         except:
             pass
 
+        # Create S3 folder structure
+        bucket_name = os.environ["BUCKET_NAME"]
+        s3.put_object(
+            Bucket=bucket_name, Key=f"projects/{project_id}/.keep", Body=b""
+        )
+
         table.put_item(
             Item={
                 "project_id": project_id,
@@ -97,15 +107,15 @@ def handler(event, context):
             }
         )
 
-
-
         # Copy tasks from global checklist
         for global_task in global_response["Items"]:
             task_data = global_task["taskData"]
             table.put_item(
                 Item={
                     "project_id": project_id,
-                    "item_id": global_task["item_id"],  # Preserve full item_id with type prefix
+                    "item_id": global_task[
+                        "item_id"
+                    ],  # Preserve full item_id with type prefix
                     "taskData": task_data,
                     "status": "not_started",
                     "global_version": global_version,
