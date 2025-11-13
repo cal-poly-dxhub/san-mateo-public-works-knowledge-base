@@ -12,10 +12,13 @@ def on_event(event, context):
     kb_name = props["KnowledgeBaseName"]
     role_arn = props["RoleArn"]
     data_bucket_arn = props["DataBucketArn"]
+    data_source_name = props["DataSourceName"]
+    chunk_size = int(props["ChunkSize"])
+    overlap = int(props["Overlap"])
+    embedding_model = props["EmbeddingModel"]
+    vector_dimension = int(props["VectorDimension"])
+    s3_prefix = props["S3Prefix"]
     region = os.environ.get("AWS_REGION")
-
-    chunk_size = 512  # TODO
-    overlap = 64
 
     try:
         bedrock = boto3.client("bedrock-agent", region_name=region)
@@ -35,7 +38,7 @@ def on_event(event, context):
                     vectorBucketName=vector_bucket_name,
                     indexName=index_name,
                     dataType="float32",
-                    dimension=1024,
+                    dimension=vector_dimension,
                     distanceMetric="cosine",
                     metadataConfiguration={
                         "nonFilterableMetadataKeys": [
@@ -56,7 +59,7 @@ def on_event(event, context):
                 knowledgeBaseConfiguration={
                     "type": "VECTOR",
                     "vectorKnowledgeBaseConfiguration": {
-                        "embeddingModelArn": f"arn:aws:bedrock:{region}::foundation-model/amazon.titan-embed-text-v2:0"
+                        "embeddingModelArn": f"arn:aws:bedrock:{region}::foundation-model/{embedding_model}"
                     },
                 },
                 storageConfiguration={
@@ -69,12 +72,12 @@ def on_event(event, context):
 
             bedrock.create_data_source(
                 knowledgeBaseId=kb_id,
-                name="project-documents",
+                name=data_source_name,
                 dataSourceConfiguration={
                     "type": "S3",
                     "s3Configuration": {
                         "bucketArn": data_bucket_arn,
-                        "inclusionPrefixes": ["documents/"],
+                        "inclusionPrefixes": [s3_prefix],
                     },
                 },
                 vectorIngestionConfiguration={

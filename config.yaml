@@ -59,6 +59,15 @@ knowledge_base:
   overlap_tokens: 64
   vector_dimension: 1024  # Must match embedding model (Titan v2 = 1024)
 
+# API Gateway configuration
+api_gateway:
+  throttle:
+    rate_limit: 100
+    burst_limit: 200
+  quota:
+    limit: 10000
+    period: "DAY"  # DAY, WEEK, MONTH
+
 # Project configuration
 project:
   max_document_length: 100000

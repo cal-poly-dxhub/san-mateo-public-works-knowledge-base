@@ -10,8 +10,7 @@ class StorageResources(Construct):
         # Main project management bucket (used for everything including Knowledge Base)
         self.bucket = s3.Bucket(
             self,
-            "ProjectManagementBucket",
-            bucket_name="dpw-project-management",
+            "project-management-data",
             removal_policy=cdk.RemovalPolicy.DESTROY,
             versioned=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
@@ -35,8 +34,7 @@ class StorageResources(Construct):
         # DynamoDB table for project data
         self.project_data_table = dynamodb.Table(
             self,
-            "ProjectManagementTable",
-            table_name="project-management-data",
+            "project-management-data",
             partition_key=dynamodb.Attribute(
                 name="project_id", type=dynamodb.AttributeType.STRING
             ),

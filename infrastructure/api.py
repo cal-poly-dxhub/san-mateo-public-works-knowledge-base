@@ -4,14 +4,18 @@ from constructs import Construct
 
 
 class APIGateway(Construct):
-    def __init__(self, scope: Construct, construct_id: str, compute, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config: dict, compute, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        api_config = config.get("api_gateway", {})
+        throttle_config = api_config.get("throttle", {})
+        quota_config = api_config.get("quota", {})
 
         # API Gateway
         self.api = apigateway.RestApi(
             self,
-            "DashboardApi",
-            rest_api_name="Project Management Dashboard API",
+            "project-management-data",
+            rest_api_name="project-management-data",
             default_cors_preflight_options=apigateway.CorsOptions(
                 allow_origins=["*"],
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -29,15 +33,20 @@ class APIGateway(Construct):
 
         # API Key
         api_key = self.api.add_api_key(
-            "ProjectKnowledgeApiKey", api_key_name="project-knowledge-key"
+            "project-management-data"
         )
 
         # Usage Plan
         usage_plan = self.api.add_usage_plan(
-            "ProjectKnowledgeUsagePlan",
-            name="project-knowledge-usage-plan",
-            throttle=apigateway.ThrottleSettings(rate_limit=100, burst_limit=200),
-            quota=apigateway.QuotaSettings(limit=10000, period=apigateway.Period.DAY),
+            "project-management-data",
+            throttle=apigateway.ThrottleSettings(
+                rate_limit=throttle_config.get("rate_limit", 100),
+                burst_limit=throttle_config.get("burst_limit", 200)
+            ),
+            quota=apigateway.QuotaSettings(
+                limit=quota_config.get("limit", 10000),
+                period=getattr(apigateway.Period, quota_config.get("period", "DAY"))
+            ),
         )
 
         usage_plan.add_api_stage(stage=self.api.deployment_stage)

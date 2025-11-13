@@ -22,6 +22,9 @@ def handler(event, context):
             checklist_type = query_params.get("type", "design")
             return get_projects_list(bucket_name, checklist_type)
 
+        elif path == "/documents/upload" and method == "POST":
+            return upload_general_document(event, bucket_name)
+
         elif method == "POST" and "/documents" in path:
             parts = path.split("/")
             if len(parts) >= 3 and parts[1] == "projects":
@@ -410,6 +413,45 @@ def upload_document(event, bucket_name, project_name):
                     )
             except Exception as e:
                 print(f"Warning: Could not invoke lessons processor: {e}")
+
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps(
+                {
+                    "message": f"Document {filename} uploaded successfully",
+                    "s3_key": s3_key,
+                }
+            ),
+        }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "headers": {"Access-Control-Allow-Origin": "*"},
+            "body": json.dumps({"error": str(e)}),
+        }
+
+
+def upload_general_document(event, bucket_name):
+    """Upload document directly to documents/ folder"""
+    try:
+        body = json.loads(event.get("body", "{}"))
+        filename = body.get("filename")
+        content = body.get("content")
+
+        if not filename or not content:
+            return {
+                "statusCode": 400,
+                "headers": {"Access-Control-Allow-Origin": "*"},
+                "body": json.dumps({"error": "filename and content are required"}),
+            }
+
+        s3_key = f"documents/{filename}"
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=content.encode("utf-8") if isinstance(content, str) else content,
+        )
 
         return {
             "statusCode": 200,
