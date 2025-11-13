@@ -90,6 +90,9 @@ export default function Header() {
           <Link href="/global-checklist" className="text-sm hover:underline hover:text-accent transition-colors text-secondary-foreground">
             Global Checklist
           </Link>
+          <Link href="/upload" className="text-sm hover:underline hover:text-accent transition-colors text-secondary-foreground">
+            Upload
+          </Link>
           <ChecklistToggle />
         </div>
       </div>

@@ -34,7 +34,7 @@ class StorageResources(Construct):
         # DynamoDB table for project data
         self.project_data_table = dynamodb.Table(
             self,
-            "project-management-data",
+            "project-management-checklist-data",
             partition_key=dynamodb.Attribute(
                 name="project_id", type=dynamodb.AttributeType.STRING
             ),
