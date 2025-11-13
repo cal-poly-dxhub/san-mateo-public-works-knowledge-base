@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 
 import boto3
 
@@ -74,7 +73,7 @@ def get_projects_list(bucket_name, checklist_type="design"):
     try:
         table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
         table = dynamodb.Table(table_name) if table_name else None
-        
+
         response = s3_client.list_objects_v2(
             Bucket=bucket_name, Prefix="projects/", Delimiter="/"
         )
@@ -84,7 +83,7 @@ def get_projects_list(bucket_name, checklist_type="design"):
             project_name = prefix["Prefix"].replace("projects/", "").rstrip("/")
             if project_name:
                 project_data = {"name": project_name}
-                
+
                 # Get task progress from DynamoDB filtered by checklist type
                 if table:
                     try:
@@ -94,39 +93,48 @@ def get_projects_list(bucket_name, checklist_type="design"):
                             KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
                             ExpressionAttributeValues={
                                 ":pid": project_name,
-                                ":task": task_prefix
-                            }
+                                ":task": task_prefix,
+                            },
                         )
-                        
+
                         tasks = db_response.get("Items", [])
                         total_tasks = len(tasks)
-                        completed_tasks = sum(1 for t in tasks if t.get("status") == "completed")
-                        
+                        completed_tasks = sum(
+                            1 for t in tasks if t.get("status") == "completed"
+                        )
+
                         project_data["task_count"] = total_tasks
                         project_data["task_progress"] = {
                             "completed": completed_tasks,
-                            "total": total_tasks
+                            "total": total_tasks,
                         }
-                        
+
                         # Get next incomplete task
-                        incomplete_tasks = [t for t in tasks if t.get("status") != "completed"]
+                        incomplete_tasks = [
+                            t for t in tasks if t.get("status") != "completed"
+                        ]
                         if incomplete_tasks:
                             # Sort by task_id numerically (e.g., 3.2, 7.1, 10.1)
                             def parse_task_id(task):
-                                task_id = task.get("taskData", {}).get("task_id", "999.999")
+                                task_id = task.get("taskData", {}).get(
+                                    "task_id", "999.999"
+                                )
                                 try:
                                     parts = task_id.split(".")
-                                    return (int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+                                    return (
+                                        int(parts[0]),
+                                        int(parts[1]) if len(parts) > 1 else 0,
+                                    )
                                 except:
                                     return (999, 999)
-                            
+
                             incomplete_tasks.sort(key=parse_task_id)
                             next_task = incomplete_tasks[0]
                             task_data = next_task.get("taskData", {})
                             project_data["next_task"] = {
                                 "number": task_data.get("task_id", ""),
                                 "text": task_data.get("description", ""),
-                                "projected_date": task_data.get("projected_date", "")
+                                "projected_date": task_data.get("projected_date", ""),
                             }
                     except Exception as e:
                         print(f"Error fetching tasks for {project_name}: {e}")
@@ -157,20 +165,17 @@ def get_project_detail(bucket_name, project_name):
         # First try to find project by name in DynamoDB
         table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
         project_id = project_name
-        
+
         if table_name:
             table = dynamodb.Table(table_name)
             # Scan for project with matching name
             response = table.scan(
                 FilterExpression="item_id = :config AND projectName = :name",
-                ExpressionAttributeValues={
-                    ":config": "config",
-                    ":name": project_name
-                }
+                ExpressionAttributeValues={":config": "config", ":name": project_name},
             )
-            if response.get('Items'):
-                project_id = response['Items'][0]['project_id']
-        
+            if response.get("Items"):
+                project_id = response["Items"][0]["project_id"]
+
         project_detail = {
             "name": project_name,
             "project_id": project_id,
@@ -234,33 +239,35 @@ def delete_project(project_name, bucket_name):
             table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
             if table_name:
                 table = dynamodb.Table(table_name)
-                
+
                 # Get project_id from project name
                 response = table.scan(
-                    FilterExpression='projectName = :pname',
-                    ExpressionAttributeValues={':pname': project_name}
+                    FilterExpression="projectName = :pname",
+                    ExpressionAttributeValues={":pname": project_name},
                 )
-                
-                if response['Items']:
-                    project_id = response['Items'][0]['project_id']
-                    
+
+                if response["Items"]:
+                    project_id = response["Items"][0]["project_id"]
+
                     # Query all items for this project_id
                     items_response = table.query(
-                        KeyConditionExpression='project_id = :pid',
-                        ExpressionAttributeValues={':pid': project_id}
+                        KeyConditionExpression="project_id = :pid",
+                        ExpressionAttributeValues={":pid": project_id},
                     )
-                    
+
                     # Delete all items
                     with table.batch_writer() as batch:
-                        for item in items_response['Items']:
+                        for item in items_response["Items"]:
                             batch.delete_item(
                                 Key={
-                                    'project_id': item['project_id'],
-                                    'item_id': item['item_id']
+                                    "project_id": item["project_id"],
+                                    "item_id": item["item_id"],
                                 }
                             )
-                    
-                    print(f"Deleted {len(items_response['Items'])} DynamoDB items for project: {project_name}")
+
+                    print(
+                        f"Deleted {len(items_response['Items'])} DynamoDB items for project: {project_name}"
+                    )
         except Exception as e:
             print(f"Warning: Could not delete DynamoDB items: {e}")
 
@@ -311,13 +318,15 @@ def create_project(event, bucket_name):
         # Call project setup wizard Lambda to create folder structure
         lambda_client = boto3.client("lambda")
         setup_payload = {
-            "body": json.dumps({
-                "projectName": project_name,
-                "projectType": "Other",
-                "location": "TBD",
-                "areaSize": "0",
-                "specialConditions": []
-            })
+            "body": json.dumps(
+                {
+                    "projectName": project_name,
+                    "projectType": "Other",
+                    "location": "TBD",
+                    "areaSize": "0",
+                    "specialConditions": [],
+                }
+            )
         }
 
         lambda_client.invoke(
@@ -344,21 +353,18 @@ def create_project(event, bucket_name):
 def get_project_types(bucket_name):
     """Get project types from S3"""
     try:
-        response = s3_client.get_object(
-            Bucket=bucket_name,
-            Key="project-types.json"
-        )
+        response = s3_client.get_object(Bucket=bucket_name, Key="project-types.json")
         data = json.loads(response["Body"].read().decode("utf-8"))
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps(data)
+            "body": json.dumps(data),
         }
     except Exception as e:
         return {
             "statusCode": 500,
             "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"error": str(e)})
+            "body": json.dumps({"error": str(e)}),
         }
 
 
@@ -394,11 +400,13 @@ def upload_document(event, bucket_name, project_name):
                     lambda_client.invoke(
                         FunctionName=lessons_lambda,
                         InvocationType="Event",
-                        Payload=json.dumps({
-                            "s3_key": s3_key,
-                            "project_name": project_name,
-                            "project_type": project_type,
-                        }),
+                        Payload=json.dumps(
+                            {
+                                "s3_key": s3_key,
+                                "project_name": project_name,
+                                "project_type": project_type,
+                            }
+                        ),
                     )
             except Exception as e:
                 print(f"Warning: Could not invoke lessons processor: {e}")
@@ -406,7 +414,12 @@ def upload_document(event, bucket_name, project_name):
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"message": f"Document {filename} uploaded successfully", "s3_key": s3_key}),
+            "body": json.dumps(
+                {
+                    "message": f"Document {filename} uploaded successfully",
+                    "s3_key": s3_key,
+                }
+            ),
         }
     except Exception as e:
         return {

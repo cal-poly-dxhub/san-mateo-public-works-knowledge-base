@@ -3,7 +3,7 @@ import os
 from urllib.parse import unquote
 
 import boto3
-from vector_helper import trigger_type_lessons_ingestion
+from kb_helper import trigger_type_lessons_ingestion
 
 s3 = boto3.client("s3")
 
@@ -59,45 +59,43 @@ def get_project_types():
     """Get all project types with lesson counts from master files"""
     try:
         bucket_name = os.environ.get("BUCKET_NAME")
-        
+
         # List all master lesson files in lessons-learned/
         response = s3.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix="lessons-learned/",
-            Delimiter="/"
+            Bucket=bucket_name, Prefix="lessons-learned/", Delimiter="/"
         )
-        
+
         project_types = []
-        
+
         # Get each project type folder
         for prefix in response.get("CommonPrefixes", []):
             project_type = prefix["Prefix"].replace("lessons-learned/", "").rstrip("/")
-            
+
             # Try to get lessons file
             try:
                 lessons_key = f"lessons-learned/{project_type}/lessons.json"
                 obj = s3.get_object(Bucket=bucket_name, Key=lessons_key)
                 data = json.loads(obj["Body"].read())
                 lesson_count = len(data.get("lessons", []))
-                
+
                 # Extract unique project names from lessons
-                projects = list(set(lesson.get("projectName", "") for lesson in data.get("lessons", []) if lesson.get("projectName")))
-                
-                project_types.append({
-                    "type": project_type,
-                    "count": lesson_count,
-                    "projects": projects
-                })
+                projects = list(
+                    set(
+                        lesson.get("projectName", "")
+                        for lesson in data.get("lessons", [])
+                        if lesson.get("projectName")
+                    )
+                )
+
+                project_types.append(
+                    {"type": project_type, "count": lesson_count, "projects": projects}
+                )
             except:
                 # No lessons file yet
-                project_types.append({
-                    "type": project_type,
-                    "count": 0,
-                    "projects": []
-                })
-        
+                project_types.append({"type": project_type, "count": 0, "projects": []})
+
         project_types.sort(key=lambda x: (-x["count"], x["type"]))
-        
+
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
@@ -114,11 +112,11 @@ def get_lessons_by_type(project_type):
     try:
         bucket_name = os.environ.get("BUCKET_NAME")
         lessons_key = f"lessons-learned/{project_type}/lessons.json"
-        
+
         try:
             response = s3.get_object(Bucket=bucket_name, Key=lessons_key)
             data = json.loads(response["Body"].read())
-            
+
             return {
                 "statusCode": 200,
                 "headers": {"Access-Control-Allow-Origin": "*"},
@@ -128,17 +126,14 @@ def get_lessons_by_type(project_type):
             return {
                 "statusCode": 200,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({
-                    "projectType": project_type,
-                    "lastUpdated": "",
-                    "lessons": []
-                }),
+                "body": json.dumps(
+                    {"projectType": project_type, "lastUpdated": "", "lessons": []}
+                ),
             }
 
     except Exception as e:
         print(f"Error getting lessons by type: {str(e)}")
         raise
-
 
 
 def get_master_conflicts(project_type):
@@ -175,11 +170,13 @@ def resolve_master_conflict(event, conflict_id):
     try:
         print(f"Received conflict_id: {conflict_id}")
         print(f"Event pathParameters: {event.get('pathParameters')}")
-        
+
         body = json.loads(event.get("body", "{}"))
-        decision = body.get("decision")  # "keep_new", "keep_existing", "keep_both", "delete_both"
+        decision = body.get(
+            "decision"
+        )  # "keep_new", "keep_existing", "keep_both", "delete_both"
         project_type = body.get("project_type")
-        
+
         print(f"Decision: {decision}, Project Type: {project_type}")
 
         if not project_type:
@@ -196,7 +193,7 @@ def resolve_master_conflict(event, conflict_id):
         # Load conflicts
         response = s3.get_object(Bucket=bucket_name, Key=conflicts_key)
         conflicts = json.loads(response["Body"].read().decode("utf-8"))
-        
+
         print(f"Loaded {len(conflicts)} conflicts")
         print(f"Conflict IDs: {[c.get('id') for c in conflicts[:3]]}")
 
@@ -252,7 +249,9 @@ def resolve_master_conflict(event, conflict_id):
         # Trigger vector sync for updated lessons
         try:
             trigger_type_lessons_ingestion(bucket_name, project_type)
-            print(f"Triggered sync for {project_type} lessons after conflict resolution")
+            print(
+                f"Triggered sync for {project_type} lessons after conflict resolution"
+            )
         except Exception as e:
             print(f"Warning: Failed to trigger sync: {e}")
 

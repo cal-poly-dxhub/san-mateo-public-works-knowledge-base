@@ -14,7 +14,9 @@ def handler(event, context):
 
         # Check API key for file access
         if path.startswith("/file/"):
-            api_key = event.get("headers", {}).get("x-api-key") or event.get("headers", {}).get("X-Api-Key")
+            api_key = event.get("headers", {}).get("x-api-key") or event.get(
+                "headers", {}
+            ).get("X-Api-Key")
             if not api_key:
                 return {
                     "statusCode": 401,
@@ -60,9 +62,9 @@ def get_file_content(bucket_name, file_path):
 
         # Generate presigned URL (valid for 1 hour)
         presigned_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': bucket_name, 'Key': file_path},
-            ExpiresIn=3600
+            "get_object",
+            Params={"Bucket": bucket_name, "Key": file_path},
+            ExpiresIn=3600,
         )
 
         return {

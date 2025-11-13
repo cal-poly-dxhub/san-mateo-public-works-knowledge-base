@@ -144,9 +144,7 @@ def get_checklist(project_name, checklist_type="design"):
 
         for item in response["Items"]:
             task_data = item.get("taskData", {})
-            completed_date = item.get("completed_date") or task_data.get(
-                "actual_date"
-            )
+            completed_date = item.get("completed_date") or task_data.get("actual_date")
 
             task = {
                 "task_id": item["item_id"],
@@ -287,7 +285,8 @@ def is_valid_task_id(task_id):
         return False
     # Allow alphanumeric, dashes, underscores, and periods
     import re
-    return bool(re.match(r'^[a-zA-Z0-9._-]+$', task_id))
+
+    return bool(re.match(r"^[a-zA-Z0-9._-]+$", task_id))
 
 
 def update_metadata(project_name, metadata):
@@ -332,58 +331,66 @@ def add_task(project_name, task_data):
     """Add a new task to the checklist"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
-        
+
         response = table.scan(
             FilterExpression="projectName = :pname",
             ExpressionAttributeValues={":pname": project_name},
         )
-        
+
         if not response["Items"]:
             return {
                 "statusCode": 404,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Project not found"}),
             }
-        
+
         project_id = response["Items"][0]["project_id"]
         task_number = task_data.get("checklist_task_id", "").strip()
         checklist_type = task_data.get("checklist_type", "design")
-        
+
         if not task_number:
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Task ID is required"}),
             }
-        
+
         if not is_valid_task_id(task_number):
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"}),
+                "body": json.dumps(
+                    {
+                        "error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"
+                    }
+                ),
             }
-        
+
         task_id = f"task#{checklist_type}#{task_number}"
-        
+
         existing_task = table.get_item(
             Key={"project_id": project_id, "item_id": task_id}
         )
-        
+
         if "Item" in existing_task:
             return {
                 "statusCode": 409,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": f"Task ID '{task_number}' already exists"}),
+                "body": json.dumps(
+                    {"error": f"Task ID '{task_number}' already exists"}
+                ),
             }
-        
+
         projected_date = task_data.get("projected_date", "")
         if projected_date and not is_valid_date(projected_date):
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "Projected date must be in YYYY-MM-DD format"}),
+                "body": json.dumps(
+                    {"error": "Projected date must be in YYYY-MM-DD format"}
+                ),
             }
-        
+
         table.put_item(
             Item={
                 "project_id": project_id,
@@ -393,13 +400,13 @@ def add_task(project_name, task_data):
                     "description": task_data.get("description", "").strip(),
                     "projected_date": projected_date,
                     "required": task_data.get("required", True),
-                    "notes": task_data.get("notes", "").strip()
+                    "notes": task_data.get("notes", "").strip(),
                 },
                 "status": "not_started",
-                "createdDate": datetime.utcnow().isoformat()
+                "createdDate": datetime.utcnow().isoformat(),
             }
         )
-        
+
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
@@ -414,37 +421,33 @@ def delete_task(project_name, task_id):
     """Delete a task from the checklist"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
-        
+
         response = table.scan(
             FilterExpression="projectName = :pname",
             ExpressionAttributeValues={":pname": project_name},
         )
-        
+
         if not response["Items"]:
             return {
                 "statusCode": 404,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Project not found"}),
             }
-        
+
         project_id = response["Items"][0]["project_id"]
-        
+
         # Validate task exists
-        existing = table.get_item(
-            Key={"project_id": project_id, "item_id": task_id}
-        )
-        
+        existing = table.get_item(Key={"project_id": project_id, "item_id": task_id})
+
         if "Item" not in existing:
             return {
                 "statusCode": 404,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Task not found"}),
             }
-        
-        table.delete_item(
-            Key={"project_id": project_id, "item_id": task_id}
-        )
-        
+
+        table.delete_item(Key={"project_id": project_id, "item_id": task_id})
+
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
@@ -459,58 +462,62 @@ def edit_task(project_name, task_data):
     """Edit task details"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
-        
+
         response = table.scan(
             FilterExpression="projectName = :pname",
             ExpressionAttributeValues={":pname": project_name},
         )
-        
+
         if not response["Items"]:
             return {
                 "statusCode": 404,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Project not found"}),
             }
-        
+
         project_id = response["Items"][0]["project_id"]
         task_id = task_data.get("task_id")
         new_task_number = task_data.get("checklist_task_id", "").strip()
         checklist_type = task_data.get("checklist_type", "design")
-        
+
         if not task_id:
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Task ID is required"}),
             }
-        
+
         existing_task = table.get_item(
             Key={"project_id": project_id, "item_id": task_id}
         )
-        
+
         if "Item" not in existing_task:
             return {
                 "statusCode": 404,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Task not found"}),
             }
-        
+
         if not new_task_number:
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
                 "body": json.dumps({"error": "Task ID is required"}),
             }
-        
+
         if not is_valid_task_id(new_task_number):
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"}),
+                "body": json.dumps(
+                    {
+                        "error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"
+                    }
+                ),
             }
-        
+
         new_task_id = f"task#{checklist_type}#{new_task_number}"
-        
+
         # Check if changing to a different task ID that already exists
         if new_task_id != task_id:
             duplicate_check = table.get_item(
@@ -520,35 +527,39 @@ def edit_task(project_name, task_data):
                 return {
                     "statusCode": 409,
                     "headers": {"Access-Control-Allow-Origin": "*"},
-                    "body": json.dumps({"error": f"Task ID '{new_task_number}' already exists"}),
+                    "body": json.dumps(
+                        {"error": f"Task ID '{new_task_number}' already exists"}
+                    ),
                 }
-        
+
         # Validate dates
         projected_date = task_data.get("projected_date", "")
         actual_date = task_data.get("actual_date", "")
-        
+
         if projected_date and not is_valid_date(projected_date):
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "Projected date must be in YYYY-MM-DD format"}),
+                "body": json.dumps(
+                    {"error": "Projected date must be in YYYY-MM-DD format"}
+                ),
             }
-        
+
         if actual_date and not is_valid_date(actual_date):
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": "*"},
-                "body": json.dumps({"error": "Actual date must be in YYYY-MM-DD format"}),
+                "body": json.dumps(
+                    {"error": "Actual date must be in YYYY-MM-DD format"}
+                ),
             }
-        
+
         # If task ID changed, delete old and create new
         if new_task_id != task_id:
             old_task = existing_task["Item"]
-            
-            table.delete_item(
-                Key={"project_id": project_id, "item_id": task_id}
-            )
-            
+
+            table.delete_item(Key={"project_id": project_id, "item_id": task_id})
+
             table.put_item(
                 Item={
                     "project_id": project_id,
@@ -558,11 +569,13 @@ def edit_task(project_name, task_data):
                         "description": task_data.get("description", "").strip(),
                         "projected_date": projected_date,
                         "required": task_data.get("required", True),
-                        "notes": task_data.get("notes", "").strip()
+                        "notes": task_data.get("notes", "").strip(),
                     },
                     "status": old_task.get("status", "not_started"),
                     "completed_date": old_task.get("completed_date", ""),
-                    "createdDate": old_task.get("createdDate", datetime.utcnow().isoformat())
+                    "createdDate": old_task.get(
+                        "createdDate", datetime.utcnow().isoformat()
+                    ),
                 }
             )
         else:
@@ -576,11 +589,11 @@ def edit_task(project_name, task_data):
                         "description": task_data.get("description", "").strip(),
                         "projected_date": projected_date,
                         "required": task_data.get("required", True),
-                        "notes": task_data.get("notes", "").strip()
+                        "notes": task_data.get("notes", "").strip(),
                     }
-                }
+                },
             )
-        
+
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},

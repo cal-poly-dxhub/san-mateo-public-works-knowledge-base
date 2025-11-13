@@ -5,9 +5,17 @@ from constructs import Construct
 
 class KnowledgeBaseResources(Construct):
     def __init__(
-        self, scope: Construct, construct_id: str, data_bucket: s3.IBucket, **kwargs
+        self,
+        scope: Construct,
+        construct_id: str,
+        config: dict,
+        data_bucket: s3.IBucket,
+        **kwargs,
     ):
         super().__init__(scope, construct_id, **kwargs)
+
+        kb_config = config["knowledge_base"]
+        s3_paths = config["s3_paths"]
 
         # IAM Role for Knowledge Base
         self.kb_role = iam.Role(
@@ -21,7 +29,9 @@ class KnowledgeBaseResources(Construct):
         self.kb_role.add_to_policy(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel", "bedrock:GetInferenceProfile"],
-                resources=[f"arn:aws:bedrock:{cdk.Stack.of(self).region}::foundation-model/*"],
+                resources=[
+                    f"arn:aws:bedrock:{cdk.Stack.of(self).region}::foundation-model/*"
+                ],
             )
         )
 
@@ -62,9 +72,15 @@ class KnowledgeBaseResources(Construct):
             "KnowledgeBase",
             service_token=kb_lambda.function_arn,
             properties={
-                "KnowledgeBaseName": "dpw-project-management-kb",
+                "KnowledgeBaseName": kb_config["name"],
                 "RoleArn": self.kb_role.role_arn,
                 "DataBucketArn": data_bucket.bucket_arn,
+                "DataSourceName": kb_config["data_source_name"],
+                "ChunkSize": str(kb_config["chunk_size_tokens"]),
+                "Overlap": str(kb_config["overlap_tokens"]),
+                "EmbeddingModel": config["models"]["embeddings"],
+                "VectorDimension": str(kb_config["vector_dimension"]),
+                "S3Prefix": s3_paths["documents_prefix"] + "/",
             },
         )
 

@@ -1,4 +1,3 @@
-import base64
 import json
 import os
 from datetime import datetime
@@ -29,9 +28,7 @@ def handler(event, context):
     }
 
 
-def extract_lessons_from_document(
-    content, project_name, date, filename="Unknown"
-):
+def extract_lessons_from_document(content, project_name, date, filename="Unknown"):
     """Extract lessons learned from document using LLM"""
 
     prompt = f"""Extract lessons learned from this document for project "{project_name}".
@@ -119,9 +116,7 @@ def append_to_project_lessons(bucket_name, project_name, new_lessons):
         }
 
     # Merge using LLM
-    merged_data = merge_project_lessons_json(
-        existing_data, new_lessons, project_name
-    )
+    merged_data = merge_project_lessons_json(existing_data, new_lessons, project_name)
 
     s3.put_object(
         Bucket=bucket_name,
@@ -205,15 +200,9 @@ def update_master_lessons(bucket_name, project_type, project_name, new_lessons):
 
         if "Contents" in response and response["Contents"]:
             # Get most recent master file
-            latest_file = sorted(response["Contents"], key=lambda x: x["Key"])[
-                -1
-            ]
-            master_response = s3.get_object(
-                Bucket=bucket_name, Key=latest_file["Key"]
-            )
-            existing_master = json.loads(
-                master_response["Body"].read().decode("utf-8")
-            )
+            latest_file = sorted(response["Contents"], key=lambda x: x["Key"])[-1]
+            master_response = s3.get_object(Bucket=bucket_name, Key=latest_file["Key"])
+            existing_master = json.loads(master_response["Body"].read().decode("utf-8"))
         else:
             existing_master = {
                 "projectType": project_type.title(),
@@ -405,7 +394,9 @@ def resolve_conflict(event):
         project_name = event["pathParameters"]["project_name"]
         body = json.loads(event.get("body", "{}"))
         conflict_id = body.get("conflict_id")
-        decision = body.get("decision")  # "keep_new", "keep_existing", "keep_both", "delete_both"
+        decision = body.get(
+            "decision"
+        )  # "keep_new", "keep_existing", "keep_both", "delete_both"
 
         bucket_name = os.environ["BUCKET_NAME"]
         conflicts_key = f"projects/{project_name}/lessons-conflicts.json"
@@ -469,4 +460,3 @@ def resolve_conflict(event):
     except Exception as e:
         print(f"Error: {str(e)}")
         return error_response(str(e))
-

@@ -36,9 +36,7 @@ def handler(event, context):
                     "Access-Control-Allow-Methods": "POST, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type",
                 },
-                "body": json.dumps(
-                    {"error": "Global checklist not initialized"}
-                ),
+                "body": json.dumps({"error": "Global checklist not initialized"}),
             }
 
         global_version = global_response["Items"][0].get(
@@ -87,9 +85,7 @@ def handler(event, context):
 
         # Create S3 folder structure
         bucket_name = os.environ["BUCKET_NAME"]
-        s3.put_object(
-            Bucket=bucket_name, Key=f"projects/{project_id}/.keep", Body=b""
-        )
+        s3.put_object(Bucket=bucket_name, Key=f"projects/{project_id}/.keep", Body=b"")
 
         table.put_item(
             Item={
@@ -131,9 +127,7 @@ def handler(event, context):
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
                 "Access-Control-Allow-Headers": "Content-Type",
             },
-            "body": json.dumps(
-                {"projectId": project_id, "config": project_config}
-            ),
+            "body": json.dumps({"projectId": project_id, "config": project_config}),
         }
 
     except Exception as e:
@@ -149,9 +143,7 @@ def handler(event, context):
         }
 
 
-def generate_project_config(
-    project_type, location, area_size, special_conditions
-):
+def generate_project_config(project_type, location, area_size, special_conditions):
     """Generate project configuration using AI"""
 
     prompt = f"""Based on the following project information, generate a complete project configuration.

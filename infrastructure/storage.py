@@ -52,10 +52,10 @@ class StorageResources(Construct):
         self.bucket.add_event_notification(
             s3.EventType.OBJECT_CREATED,
             s3n.LambdaDestination(lessons_sync_lambda),
-            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json")
+            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json"),
         )
         self.bucket.add_event_notification(
             s3.EventType.OBJECT_REMOVED,
             s3n.LambdaDestination(lessons_sync_lambda),
-            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json")
+            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json"),
         )

@@ -39,9 +39,7 @@ def extract_and_merge_lessons(
     )
 
     # Process project-type-level lessons (saved to root lessons-learned/)
-    type_lessons = [
-        {"project_name": project_name, **lesson} for lesson in new_lessons
-    ]
+    type_lessons = [{"project_name": project_name, **lesson} for lesson in new_lessons]
     type_stats = merge_lessons_with_superseding(
         new_lessons=type_lessons,
         existing_lessons_key=f"lessons-learned/{project_type}/lessons.json",
@@ -111,7 +109,13 @@ Return only the JSON array."""
 
 
 def merge_lessons_with_superseding(
-    new_lessons, existing_lessons_key, bucket_name, context_type, project_name, project_type=None, sync_to_vectors=True
+    new_lessons,
+    existing_lessons_key,
+    bucket_name,
+    context_type,
+    project_name,
+    project_type=None,
+    sync_to_vectors=True,
 ):
     """Merge new lessons and create conflicts for review"""
 
@@ -217,9 +221,7 @@ Use the delete_lessons tool to specify which lesson IDs to delete. If no lessons
 
 def chunk_lessons(lessons, chunk_size):
     """Split lessons into chunks for processing"""
-    return [
-        lessons[i : i + chunk_size] for i in range(0, len(lessons), chunk_size)
-    ]
+    return [lessons[i : i + chunk_size] for i in range(0, len(lessons), chunk_size)]
 
 
 def load_lessons_file(bucket_name, key):
@@ -269,9 +271,7 @@ def find_conflicts_with_llm(new_lessons, existing_lessons_chunk, context_type):
                                     "type": "object",
                                     "properties": {
                                         "new_lesson_id": {"type": "string"},
-                                        "existing_lesson_id": {
-                                            "type": "string"
-                                        },
+                                        "existing_lesson_id": {"type": "string"},
                                         "reason": {"type": "string"},
                                     },
                                 },
@@ -297,7 +297,9 @@ Find conflicts where new lesson covers same topic, contradicts, or makes existin
 Use report_conflicts tool. If none, call with empty array."""
 
     try:
-        print(f"Checking {len(new_lessons)} new lessons against {len(existing_lessons_chunk)} existing lessons")
+        print(
+            f"Checking {len(new_lessons)} new lessons against {len(existing_lessons_chunk)} existing lessons"
+        )
         response = bedrock.converse(
             modelId=os.environ["CONFLICT_DETECTOR_MODEL_ID"],
             messages=[{"role": "user", "content": [{"text": prompt}]}],
@@ -349,6 +351,7 @@ Use report_conflicts tool. If none, call with empty array."""
     except Exception as e:
         print(f"Error finding conflicts: {e}")
         import traceback
+
         traceback.print_exc()
         return []
 
@@ -362,8 +365,10 @@ def save_conflicts_file(bucket_name, conflicts_key, conflicts):
         existing_conflicts = []
 
     existing_conflicts.extend(conflicts)
-    
-    print(f"Saving {len(conflicts)} new conflicts to {conflicts_key} (total: {len(existing_conflicts)})")
+
+    print(
+        f"Saving {len(conflicts)} new conflicts to {conflicts_key} (total: {len(existing_conflicts)})"
+    )
 
     s3.put_object(
         Bucket=bucket_name,

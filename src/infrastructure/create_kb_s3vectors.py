@@ -82,9 +82,7 @@ def on_event(event, context):
                         "chunkingStrategy": "FIXED_SIZE",
                         "fixedSizeChunkingConfiguration": {
                             "maxTokens": chunk_size,
-                            "overlapPercentage": int(
-                                (overlap / chunk_size) * 100
-                            ),
+                            "overlapPercentage": int((overlap / chunk_size) * 100),
                         },
                     }
                 },

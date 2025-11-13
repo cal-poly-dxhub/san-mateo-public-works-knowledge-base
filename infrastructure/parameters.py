@@ -5,7 +5,9 @@ from constructs import Construct
 
 
 class SSMParameters(Construct):
-    def __init__(self, scope: Construct, construct_id: str, config: dict, kb_id: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, config: dict, kb_id: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Knowledge Base ID

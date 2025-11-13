@@ -30,12 +30,34 @@ models:
       name: "Amazon Nova Pro"
       description: "Amazon's latest model"
 
-# Vector search configuration
-vector_search:
+# S3 path patterns
+# IMPORTANT: documents/projects/ and projects/ are different paths
+# - documents/projects/{name}/ = Document storage for Knowledge Base
+# - projects/{name}/ = Project metadata and configuration
+s3_paths:
+  # Document storage (for Knowledge Base ingestion)
+  documents_prefix: "documents/projects"
+  project_documents: "documents/projects/{project_name}"
+  project_lessons_json: "documents/projects/{project_name}/lessons-learned.json"
+  project_lessons_txt: "documents/projects/{project_name}/lessons-learned.txt"
+  
+  # Project metadata and configuration
+  projects_prefix: "projects"
+  project_metadata: "projects/{project_name}/metadata.json"
+  project_checklist: "projects/{project_name}/checklist.json"
+  
+  # Master lessons by type
+  master_lessons_prefix: "lessons-learned"
+  master_lessons_by_type: "lessons-learned/{project_type}/lessons.json"
+  master_conflicts_by_type: "lessons-learned/{project_type}/lessons-conflicts.json"
+
+# Knowledge Base configuration
+knowledge_base:
+  name: "dpw-project-management-kb"
+  data_source_name: "project-documents"
   chunk_size_tokens: 512
   overlap_tokens: 64
-  vector_bucket_name: "dpw-project-mgmt-vectors"
-  index_name: "project-mgmt-index"
+  vector_dimension: 1024  # Must match embedding model (Titan v2 = 1024)
 
 # Project configuration
 project:

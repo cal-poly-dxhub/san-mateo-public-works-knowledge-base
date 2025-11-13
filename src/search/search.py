@@ -86,11 +86,13 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
     try:
         bedrock_agent_client = boto3.client("bedrock-agent-runtime")
         s3_client = boto3.client("s3")
-        
+
         kb_id = os.environ.get("KB_ID")
         bucket_name = os.environ.get("BUCKET_NAME")
-        model_id = selected_model or os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0")
-        
+        model_id = selected_model or os.environ.get(
+            "BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0"
+        )
+
         if not kb_id:
             raise ValueError("KB_ID environment variable not set")
 
@@ -103,18 +105,16 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
                     "knowledgeBaseId": kb_id,
                     "modelArn": model_id,
                     "retrievalConfiguration": {
-                        "vectorSearchConfiguration": {
-                            "numberOfResults": limit
-                        }
-                    }
-                }
-            }
+                        "vectorSearchConfiguration": {"numberOfResults": limit}
+                    },
+                },
+            },
         )
 
         # Extract answer and sources
         answer = response.get("output", {}).get("text", "No answer generated")
         citations = response.get("citations", [])
-        
+
         # Format sources from citations
         sources = []
         for citation in citations:
@@ -122,53 +122,60 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
                 content = reference.get("content", {}).get("text", "")
                 metadata = reference.get("metadata", {})
                 location = reference.get("location", {})
-                
+
                 # Extract S3 info and generate presigned URL
                 s3_uri = location.get("s3Location", {}).get("uri", "")
                 presigned_url = None
                 project_name = "unknown"
                 chunk_info = None
                 source_doc_key = None
-                
+
                 if s3_uri and bucket_name:
                     s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
-                    
+
                     # Get metadata from S3 object
                     try:
-                        obj_metadata = s3_client.head_object(Bucket=bucket_name, Key=s3_key)
-                        obj_meta = obj_metadata.get('Metadata', {})
-                        
+                        obj_metadata = s3_client.head_object(
+                            Bucket=bucket_name, Key=s3_key
+                        )
+                        obj_meta = obj_metadata.get("Metadata", {})
+
                         # Use project name from metadata
-                        project_name = obj_meta.get('project-name', 'unknown')
-                        
+                        project_name = obj_meta.get("project-name", "unknown")
+
                         # Extract lesson ID for chunk info
-                        lesson_id = obj_meta.get('lesson-id', '')
+                        lesson_id = obj_meta.get("lesson-id", "")
                         if lesson_id:
                             chunk_info = f"Lesson {lesson_id[:8]}"
-                        
+
                         # Get source document key
-                        source_doc_key = obj_meta.get('source-document')
-                        
+                        source_doc_key = obj_meta.get("source-document")
+
                     except Exception as e:
                         print(f"Error getting object metadata: {e}")
-                    
+
                     # Generate presigned URL for markdown
                     try:
                         presigned_url = s3_client.generate_presigned_url(
-                            'get_object',
-                            Params={'Bucket': bucket_name, 'Key': s3_key},
-                            ExpiresIn=3600
+                            "get_object",
+                            Params={"Bucket": bucket_name, "Key": s3_key},
+                            ExpiresIn=3600,
                         )
                     except Exception as e:
                         print(f"Error generating presigned URL: {e}")
-                
-                sources.append({
-                    "content": content,
-                    "source": source_doc_key or metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
-                    "project": project_name,
-                    "presigned_url": presigned_url,
-                    "chunk": chunk_info,
-                })
+
+                sources.append(
+                    {
+                        "content": content,
+                        "source": source_doc_key
+                        or metadata.get(
+                            "file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"
+                        ),
+                        "project": project_name,
+                        "presigned_url": presigned_url,
+                        "chunk": chunk_info,
+                    }
+                )
 
         return {"answer": answer, "sources": sources}
 
@@ -180,8 +187,6 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
         }
 
 
-
-
 def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
     """
     Search the Knowledge Base using retrieve API
@@ -190,7 +195,7 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
         # Initialize Bedrock Agent Runtime client
         bedrock_agent_client = boto3.client("bedrock-agent-runtime")
         s3_client = boto3.client("s3")
-        
+
         kb_id = os.environ.get("KB_ID")
         bucket_name = os.environ.get("BUCKET_NAME")
         if not kb_id:
@@ -201,10 +206,8 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
             knowledgeBaseId=kb_id,
             retrievalQuery={"text": query},
             retrievalConfiguration={
-                "vectorSearchConfiguration": {
-                    "numberOfResults": limit
-                }
-            }
+                "vectorSearchConfiguration": {"numberOfResults": limit}
+            },
         )
 
         # Format results
@@ -213,52 +216,55 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
             content = item.get("content", {}).get("text", "")
             metadata = item.get("metadata", {})
             location = item.get("location", {})
-            
+
             # Extract S3 info and generate presigned URL
             s3_uri = location.get("s3Location", {}).get("uri", "")
             presigned_url = None
             project_name = "unknown"
             chunk_info = None
             source_doc_key = None
-            
+
             if s3_uri and bucket_name:
                 # Parse s3://bucket/key format
                 s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
-                
+
                 # Get metadata from S3 object
                 try:
                     obj_metadata = s3_client.head_object(Bucket=bucket_name, Key=s3_key)
-                    obj_meta = obj_metadata.get('Metadata', {})
-                    
+                    obj_meta = obj_metadata.get("Metadata", {})
+
                     # Use project name from metadata
-                    project_name = obj_meta.get('project-name', 'unknown')
-                    
+                    project_name = obj_meta.get("project-name", "unknown")
+
                     # Extract lesson ID for chunk info
-                    lesson_id = obj_meta.get('lesson-id', '')
+                    lesson_id = obj_meta.get("lesson-id", "")
                     if lesson_id:
                         chunk_info = f"Lesson {lesson_id[:8]}"
-                    
+
                     # Get source document key
-                    source_doc_key = obj_meta.get('source-document')
-                    
+                    source_doc_key = obj_meta.get("source-document")
+
                 except Exception as e:
                     print(f"Error getting object metadata: {e}")
-                
+
                 # Generate presigned URL for markdown file
                 try:
                     presigned_url = s3_client.generate_presigned_url(
-                        'get_object',
-                        Params={'Bucket': bucket_name, 'Key': s3_key},
-                        ExpiresIn=3600
+                        "get_object",
+                        Params={"Bucket": bucket_name, "Key": s3_key},
+                        ExpiresIn=3600,
                     )
                     print(f"Generated markdown presigned URL for {s3_key}")
                 except Exception as e:
                     print(f"Error generating presigned URL for {s3_key}: {str(e)}")
-            
+
             results.append(
                 {
                     "content": content,
-                    "source": source_doc_key or metadata.get("file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"),
+                    "source": source_doc_key
+                    or metadata.get(
+                        "file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"
+                    ),
                     "project": project_name,
                     "presigned_url": presigned_url,
                     "chunk": chunk_info,
@@ -273,9 +279,7 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
         return []
 
 
-def chunk_text(
-    text: str, chunk_size_tokens: int, overlap_tokens: int
-) -> List[str]:
+def chunk_text(text: str, chunk_size_tokens: int, overlap_tokens: int) -> List[str]:
     """Chunk text with fixed size and overlap (same as ingestion script)"""
     chunk_size_chars = chunk_size_tokens * 4
     overlap_chars = overlap_tokens * 4

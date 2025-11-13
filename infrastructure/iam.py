@@ -33,7 +33,9 @@ class IAMPermissions(Construct):
         compute.async_lessons_processor.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:StartIngestionJob", "bedrock:GetIngestionJob"],
-                resources=[f"arn:aws:bedrock:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:knowledge-base/{kb_id}"],
+                resources=[
+                    f"arn:aws:bedrock:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:knowledge-base/{kb_id}"
+                ],
             )
         )
 
@@ -46,7 +48,9 @@ class IAMPermissions(Construct):
         compute.lessons_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:Retrieve"],
-                resources=[f"arn:aws:bedrock:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:knowledge-base/{kb_id}"],
+                resources=[
+                    f"arn:aws:bedrock:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:knowledge-base/{kb_id}"
+                ],
             )
         )
         compute.lessons_lambda.add_to_role_policy(
@@ -58,9 +62,7 @@ class IAMPermissions(Construct):
 
         # Lessons master Lambda permissions
         storage.bucket.grant_read_write(compute.lessons_master_lambda)
-        storage.project_data_table.grant_read_write_data(
-            compute.lessons_master_lambda
-        )
+        storage.project_data_table.grant_read_write_data(compute.lessons_master_lambda)
 
         # Checklist Lambda permissions
         storage.project_data_table.grant_read_write_data(compute.checklist_lambda)
@@ -103,7 +105,9 @@ class IAMPermissions(Construct):
         compute.search_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:Retrieve", "bedrock:RetrieveAndGenerate"],
-                resources=["arn:aws:bedrock:*:*:knowledge-base/*"],  # #TODO: Restrict to specific knowledge bases if needed
+                resources=[
+                    "arn:aws:bedrock:*:*:knowledge-base/*"
+                ],  # #TODO: Restrict to specific knowledge bases if needed
             )
         )
         compute.search_lambda.add_to_role_policy(
@@ -115,12 +119,12 @@ class IAMPermissions(Construct):
 
         # Transformation Lambda permissions
         storage.bucket.grant_read_write(compute.transformation_lambda)
-        
+
         # Allow Bedrock to invoke transformation lambda
         compute.transformation_lambda.add_permission(
             "BedrockInvokePermission",
             principal=iam.ServicePrincipal("bedrock.amazonaws.com"),
-            action="lambda:InvokeFunction"
+            action="lambda:InvokeFunction",
         )
 
         # Lessons sync Lambda permissions

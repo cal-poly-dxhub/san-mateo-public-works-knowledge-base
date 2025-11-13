@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useApiKey } from "@/lib/api-context";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest } from "@/lib/api";
 
 interface BatchStatusDialogProps {
   open: boolean;
@@ -38,7 +37,6 @@ export default function BatchStatusDialog({
   onOpenChange,
   batchId,
 }: BatchStatusDialogProps) {
-  const { apiKey } = useApiKey();
   const [batchStatus, setBatchStatus] = useState<BatchStatus | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -55,11 +53,8 @@ export default function BatchStatusDialog({
     
     setLoading(true);
     try {
-      const response = await apiRequest(`/batch-status/${batchId}`, {}, apiKey);
-      if (response.ok) {
-        const data = await response.json();
-        setBatchStatus(data);
-      }
+      const data = await apiRequest(`/batch-status/${batchId}`);
+      setBatchStatus(data);
     } catch (error) {
       console.error("Error fetching batch status:", error);
     } finally {
