@@ -16,11 +16,10 @@ export async function apiRequest(
     Object.assign(headers, options.headers);
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || localStorage?.getItem('apiKey');
-  if (!apiKey) {
-    throw new Error("NEXT_PUBLIC_API_KEY environment variable is required");
+  const apiKey = localStorage?.getItem('apiKey');
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
   }
-  headers["x-api-key"] = apiKey;
 
   const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
 

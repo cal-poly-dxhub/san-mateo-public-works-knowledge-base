@@ -14,7 +14,7 @@ class APIGateway(Construct):
         # API Gateway
         self.api = apigateway.RestApi(
             self,
-            "project-management-data",
+            "api",
             rest_api_name="project-management-data",
             default_cors_preflight_options=apigateway.CorsOptions(
                 allow_origins=["*"],
@@ -33,12 +33,12 @@ class APIGateway(Construct):
 
         # API Key
         api_key = self.api.add_api_key(
-            "project-management-data"
+            "api-key"
         )
 
         # Usage Plan
         usage_plan = self.api.add_usage_plan(
-            "project-management-data",
+            "usage-plan",
             throttle=apigateway.ThrottleSettings(
                 rate_limit=throttle_config.get("rate_limit", 100),
                 burst_limit=throttle_config.get("burst_limit", 200)
