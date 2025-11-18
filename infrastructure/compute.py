@@ -51,6 +51,7 @@ class ComputeResources(Construct):
             handler="project_setup_wizard.handler",
             code=_lambda.Code.from_asset("./src/wizard"),
             timeout=Duration.minutes(5),
+            memory_size=1024,
             layers=[self.meeting_data_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
@@ -68,6 +69,7 @@ class ComputeResources(Construct):
             handler="async_lessons_processor.handler",
             code=_lambda.Code.from_asset("./src/lessons"),
             timeout=Duration.minutes(5),
+            memory_size=1024,
             layers=[self.common_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
@@ -85,6 +87,7 @@ class ComputeResources(Construct):
             handler="lessons_api.handler",
             code=_lambda.Code.from_asset("./src/lessons"),
             timeout=Duration.seconds(300),
+            memory_size=1024,
             layers=[self.common_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
@@ -207,6 +210,7 @@ class ComputeResources(Construct):
                 ),
             ),
             timeout=Duration.minutes(1),
+            memory_size=1024,
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "KB_ID": kb_id,

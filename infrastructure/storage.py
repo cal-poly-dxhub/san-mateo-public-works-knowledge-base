@@ -42,7 +42,26 @@ class StorageResources(Construct):
                 name="item_id", type=dynamodb.AttributeType.STRING
             ),
             removal_policy=cdk.RemovalPolicy.DESTROY,
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            billing_mode=dynamodb.BillingMode.PROVISIONED,
+            read_capacity=5,
+            write_capacity=5,
+        )
+
+        # Enable auto-scaling
+        read_scaling = self.project_data_table.auto_scale_read_capacity(
+            min_capacity=5,
+            max_capacity=100
+        )
+        read_scaling.scale_on_utilization(
+            target_utilization_percent=70
+        )
+
+        write_scaling = self.project_data_table.auto_scale_write_capacity(
+            min_capacity=5,
+            max_capacity=100
+        )
+        write_scaling.scale_on_utilization(
+            target_utilization_percent=70
         )
 
     def add_lessons_sync_trigger(self, lessons_sync_lambda):
