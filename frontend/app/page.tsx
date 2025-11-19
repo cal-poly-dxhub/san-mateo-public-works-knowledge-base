@@ -69,6 +69,7 @@ export default function Home() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const projectsPerPage = 12;
+  const [totalProjects, setTotalProjects] = useState(0);
 
   useEffect(() => {
     const handleChecklistTypeChange = (event: CustomEvent) => {
@@ -81,7 +82,7 @@ export default function Home() {
 
   useEffect(() => {
     loadProjects();
-  }, [refreshTrigger, checklistType]);
+  }, [refreshTrigger, checklistType, currentPage]);
 
   useEffect(() => {
     if (apiKey) {
@@ -106,8 +107,10 @@ export default function Home() {
 
   const loadProjects = async () => {
     try {
-      const data = await apiRequest(`/projects?type=${checklistType}`);
-      setProjects(Array.isArray(data) ? data : []);
+      const offset = (currentPage - 1) * projectsPerPage;
+      const data = await apiRequest(`/projects?type=${checklistType}&limit=${projectsPerPage}&offset=${offset}`);
+      setProjects(Array.isArray(data.projects) ? data.projects : Array.isArray(data) ? data : []);
+      setTotalProjects(data.total || (Array.isArray(data) ? data.length : 0));
     } catch (error) {
       console.error("Error loading projects:", error);
     } finally {
@@ -183,13 +186,10 @@ export default function Home() {
       });
     }
     
-    // Paginate
-    const startIndex = (currentPage - 1) * projectsPerPage;
-    const endIndex = startIndex + projectsPerPage;
-    return sorted.slice(startIndex, endIndex);
+    return sorted;
   };
 
-  const totalPages = Math.ceil(projects.length / projectsPerPage);
+  const totalPages = Math.ceil(totalProjects / projectsPerPage);
 
   if (loading) {
     return (

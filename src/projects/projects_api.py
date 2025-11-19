@@ -23,7 +23,9 @@ def handler(event, context):
         if path == "/projects" and method == "GET":
             query_params = event.get("queryStringParameters") or {}
             checklist_type = query_params.get("type", "design")
-            return get_projects_list(bucket_name, checklist_type)
+            limit = int(query_params.get("limit", "50"))
+            offset = int(query_params.get("offset", "0"))
+            return get_projects_list(bucket_name, checklist_type, limit, offset)
 
         elif path == "/documents/upload" and method == "POST":
             return upload_general_document(event, bucket_name)
@@ -74,7 +76,7 @@ def handler(event, context):
         }
 
 
-def get_projects_list(bucket_name, checklist_type="design"):
+def get_projects_list(bucket_name, checklist_type="design", limit=50, offset=0):
     """Get list of all projects with task progress"""
     try:
         table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
@@ -149,13 +151,22 @@ def get_projects_list(bucket_name, checklist_type="design"):
 
                 projects.append(project_data)
 
+        # Apply pagination
+        total = len(projects)
+        paginated_projects = projects[offset : offset + limit]
+
         return {
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
             },
-            "body": json.dumps(projects),
+            "body": json.dumps({
+                "projects": paginated_projects,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+            }),
         }
     except Exception as e:
         return {
