@@ -10,16 +10,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_USER_POOL_ID
-ARG NEXT_PUBLIC_USER_POOL_CLIENT_ID
-ARG NEXT_PUBLIC_AWS_REGION
-
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_USER_POOL_ID=$NEXT_PUBLIC_USER_POOL_ID
-ENV NEXT_PUBLIC_USER_POOL_CLIENT_ID=$NEXT_PUBLIC_USER_POOL_CLIENT_ID
-ENV NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION
-
 RUN npm run build
 
 FROM base AS runner
@@ -32,10 +22,13 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["npm", "start"]
