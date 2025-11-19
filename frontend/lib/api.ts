@@ -1,3 +1,5 @@
+import { fetchAuthSession } from 'aws-amplify/auth';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 
 if (!API_URL) {
@@ -16,9 +18,17 @@ export async function apiRequest(
     Object.assign(headers, options.headers);
   }
 
-  const apiKey = localStorage?.getItem('apiKey');
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
+  // Get Cognito JWT token
+  try {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.idToken?.toString();
+    
+    if (token) {
+      headers["Authorization"] = token;
+    }
+  } catch (error) {
+    console.error("Failed to get auth session:", error);
+    throw new Error("Not authenticated");
   }
 
   const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
@@ -27,9 +37,17 @@ export async function apiRequest(
     ...options,
     headers,
     mode: "cors",
+    credentials: "include",
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      // Redirect to login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      throw new Error("Session expired");
+    }
     const errorData = await response.json().catch(() => ({ error: response.statusText }));
     throw new Error(errorData.error || `API request failed: ${response.statusText}`);
   }

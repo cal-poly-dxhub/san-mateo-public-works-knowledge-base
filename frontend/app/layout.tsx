@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import { ApiProvider } from "@/lib/api-context";
+import { AuthProvider } from "@/components/AuthProvider";
+import "@/lib/auth"; // Initialize Amplify
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,12 +31,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ApiProvider>
-          <header className="sticky top-0">
-            <Header />
-          </header>
-          {children}
-        </ApiProvider>
+        <AuthProvider>
+          <ApiProvider>
+            <header className="sticky top-0">
+              <Header />
+            </header>
+            {children}
+          </ApiProvider>
+        </AuthProvider>
       </body>
     </html>
   );
