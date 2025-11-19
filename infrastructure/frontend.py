@@ -29,6 +29,12 @@ class FrontendHosting(Construct):
                 image=ecs.ContainerImage.from_asset(
                     "./frontend",
                     platform=ecr_assets.Platform.LINUX_AMD64,
+                    build_args={
+                        "NEXT_PUBLIC_API_URL": api_url,
+                        "NEXT_PUBLIC_USER_POOL_ID": user_pool_id,
+                        "NEXT_PUBLIC_USER_POOL_CLIENT_ID": user_pool_client_id,
+                        "NEXT_PUBLIC_AWS_REGION": region,
+                    },
                 ),
                 container_port=3000,
                 environment={
