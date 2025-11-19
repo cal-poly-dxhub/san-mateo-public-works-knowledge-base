@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 from datetime import datetime
 
 import boto3
+
+from db_utils import query_all_items
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -139,9 +142,10 @@ def sync_to_all_projects():
             else datetime.utcnow().isoformat()
         )
 
-        # Get all projects
-        projects_response = table.scan(
-            FilterExpression="item_id = :config",
+        # Get all projects using GSI
+        projects_response = table.query(
+            IndexName="item_id-index",
+            KeyConditionExpression="item_id = :config",
             ExpressionAttributeValues={":config": "config"},
         )
 
@@ -151,22 +155,21 @@ def sync_to_all_projects():
             if project_id == "__GLOBAL__":
                 continue
 
-            # Get project tasks
-            project_tasks_response = table.query(
+            # Get project tasks with pagination
+            project_tasks = query_all_items(
+                table,
                 KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
                 ExpressionAttributeValues={":pid": project_id, ":task": "task#"},
             )
 
-            project_tasks = {
-                item["item_id"]: item for item in project_tasks_response["Items"]
-            }
+            project_tasks_map = {item["item_id"]: item for item in project_tasks}
 
             # Find highest completed task per type
             def parse_task_id(task_id):
                 return [int(x) for x in task_id.split(".")]
 
             highest_completed = {"design": None, "construction": None}
-            for item_id, item in project_tasks.items():
+            for item_id, item in project_tasks_map.items():
                 if item.get("status") == "completed":
                     parts = item_id.split("#")
                     if len(parts) == 3:
@@ -206,9 +209,9 @@ def sync_to_all_projects():
                     ):
                         continue
 
-                if item_id in project_tasks:
+                if item_id in project_tasks_map:
                     # Update only if unchecked
-                    if project_tasks[item_id].get("status") != "completed":
+                    if project_tasks_map[item_id].get("status") != "completed":
                         table.update_item(
                             Key={"project_id": project_id, "item_id": item_id},
                             UpdateExpression="SET taskData = :data, global_version = :ver",

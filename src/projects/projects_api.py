@@ -1,7 +1,10 @@
 import json
 import os
+import sys
 
 import boto3
+
+from db_utils import list_all_s3_objects, query_all_items
 
 s3_client = boto3.client("s3")
 lambda_client = boto3.client("lambda")
@@ -171,10 +174,11 @@ def get_project_detail(bucket_name, project_name):
 
         if table_name:
             table = dynamodb.Table(table_name)
-            # Scan for project with matching name
-            response = table.scan(
-                FilterExpression="item_id = :config AND projectName = :name",
-                ExpressionAttributeValues={":config": "config", ":name": project_name},
+            # Use GSI instead of scan
+            response = table.query(
+                IndexName="projectName-index",
+                KeyConditionExpression="projectName = :name AND item_id = :config",
+                ExpressionAttributeValues={":name": project_name, ":config": "config"},
             )
             if response.get("Items"):
                 project_id = response["Items"][0]["project_id"]
@@ -243,24 +247,29 @@ def delete_project(project_name, bucket_name):
             if table_name:
                 table = dynamodb.Table(table_name)
 
-                # Get project_id from project name
-                response = table.scan(
-                    FilterExpression="projectName = :pname",
-                    ExpressionAttributeValues={":pname": project_name},
+                # Get project_id from project name using GSI
+                response = table.query(
+                    IndexName="projectName-index",
+                    KeyConditionExpression="projectName = :pname AND item_id = :config",
+                    ExpressionAttributeValues={
+                        ":pname": project_name,
+                        ":config": "config",
+                    },
                 )
 
                 if response["Items"]:
                     project_id = response["Items"][0]["project_id"]
 
-                    # Query all items for this project_id
-                    items_response = table.query(
+                    # Query all items for this project_id with pagination
+                    items = query_all_items(
+                        table,
                         KeyConditionExpression="project_id = :pid",
                         ExpressionAttributeValues={":pid": project_id},
                     )
 
                     # Delete all items
                     with table.batch_writer() as batch:
-                        for item in items_response["Items"]:
+                        for item in items:
                             batch.delete_item(
                                 Key={
                                     "project_id": item["project_id"],
@@ -269,7 +278,7 @@ def delete_project(project_name, bucket_name):
                             )
 
                     print(
-                        f"Deleted {len(items_response['Items'])} DynamoDB items for project: {project_name}"
+                        f"Deleted {len(items)} DynamoDB items for project: {project_name}"
                     )
         except Exception as e:
             print(f"Warning: Could not delete DynamoDB items: {e}")

@@ -1,9 +1,12 @@
 import json
 import os
+import sys
 from datetime import datetime
 from decimal import Decimal
 
 import boto3
+
+from db_utils import query_all_items
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -196,10 +199,11 @@ def update_task(
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
 
-        # Get project_id
-        response = table.scan(
-            FilterExpression="projectName = :pname",
-            ExpressionAttributeValues={":pname": project_name},
+        # Get project_id using GSI
+        response = table.query(
+            IndexName="projectName-index",
+            KeyConditionExpression="projectName = :pname AND item_id = :config",
+            ExpressionAttributeValues={":pname": project_name, ":config": "config"},
         )
 
         if not response["Items"]:
@@ -294,9 +298,10 @@ def update_metadata(project_name, metadata):
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
 
-        response = table.scan(
-            FilterExpression="projectName = :pname",
-            ExpressionAttributeValues={":pname": project_name},
+        response = table.query(
+            IndexName="projectName-index",
+            KeyConditionExpression="projectName = :pname AND item_id = :config",
+            ExpressionAttributeValues={":pname": project_name, ":config": "config"},
         )
 
         if not response["Items"]:
@@ -332,9 +337,10 @@ def add_task(project_name, task_data):
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
 
-        response = table.scan(
-            FilterExpression="projectName = :pname",
-            ExpressionAttributeValues={":pname": project_name},
+        response = table.query(
+            IndexName="projectName-index",
+            KeyConditionExpression="projectName = :pname AND item_id = :config",
+            ExpressionAttributeValues={":pname": project_name, ":config": "config"},
         )
 
         if not response["Items"]:
@@ -422,9 +428,10 @@ def delete_task(project_name, task_id):
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
 
-        response = table.scan(
-            FilterExpression="projectName = :pname",
-            ExpressionAttributeValues={":pname": project_name},
+        response = table.query(
+            IndexName="projectName-index",
+            KeyConditionExpression="projectName = :pname AND item_id = :config",
+            ExpressionAttributeValues={":pname": project_name, ":config": "config"},
         )
 
         if not response["Items"]:
@@ -463,9 +470,10 @@ def edit_task(project_name, task_data):
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
 
-        response = table.scan(
-            FilterExpression="projectName = :pname",
-            ExpressionAttributeValues={":pname": project_name},
+        response = table.query(
+            IndexName="projectName-index",
+            KeyConditionExpression="projectName = :pname AND item_id = :config",
+            ExpressionAttributeValues={":pname": project_name, ":config": "config"},
         )
 
         if not response["Items"]:
