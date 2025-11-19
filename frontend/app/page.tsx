@@ -67,6 +67,8 @@ export default function Home() {
     }
     return "design";
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 12;
 
   useEffect(() => {
     const handleChecklistTypeChange = (event: CustomEvent) => {
@@ -180,8 +182,14 @@ export default function Home() {
         return dateA - dateB;
       });
     }
-    return sorted;
+    
+    // Paginate
+    const startIndex = (currentPage - 1) * projectsPerPage;
+    const endIndex = startIndex + projectsPerPage;
+    return sorted.slice(startIndex, endIndex);
   };
+
+  const totalPages = Math.ceil(projects.length / projectsPerPage);
 
   if (loading) {
     return (
@@ -321,6 +329,28 @@ export default function Home() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-8">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="flex items-center px-4">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
         </div>
       )}
 
