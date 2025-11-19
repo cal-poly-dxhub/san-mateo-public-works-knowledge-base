@@ -1,9 +1,12 @@
 import json
 import logging
 import os
+import sys
 from typing import Dict, List
 
 import boto3
+
+from bedrock_utils import invoke_bedrock_model
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -201,7 +204,7 @@ Answer:"""
         }
     )
 
-    response = bedrock_runtime.invoke_model(modelId=model_id, body=body)
+    response = invoke_bedrock_model(bedrock_runtime, modelId=model_id, body=body)
 
     response_body = json.loads(response["body"].read())
     return response_body["content"][0]["text"]

@@ -1,9 +1,12 @@
 import json
 import os
+import sys
 import uuid
 from datetime import datetime, timezone
 
 import boto3
+
+from bedrock_utils import bedrock_converse
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")
@@ -82,7 +85,8 @@ Document:
 Return only the JSON array."""
 
     try:
-        response = bedrock.converse(
+        response = bedrock_converse(
+            bedrock,
             modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
             messages=[{"role": "user", "content": [{"text": prompt}]}],
         )
@@ -196,7 +200,8 @@ Only delete if:
 Use the delete_lessons tool to specify which lesson IDs to delete. If no lessons should be deleted, don't call the tool."""
 
     try:
-        response = bedrock.converse(
+        response = bedrock_converse(
+            bedrock,
             modelId=os.environ["LESSONS_EXTRACTOR_MODEL_ID"],
             messages=[{"role": "user", "content": [{"text": prompt}]}],
             toolConfig={"tools": tools},
@@ -300,7 +305,8 @@ Use report_conflicts tool. If none, call with empty array."""
         print(
             f"Checking {len(new_lessons)} new lessons against {len(existing_lessons_chunk)} existing lessons"
         )
-        response = bedrock.converse(
+        response = bedrock_converse(
+            bedrock,
             modelId=os.environ["CONFLICT_DETECTOR_MODEL_ID"],
             messages=[{"role": "user", "content": [{"text": prompt}]}],
             toolConfig={"tools": tools},

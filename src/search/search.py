@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 from typing import Any, Dict, List
 
 import boto3
+
+from bedrock_utils import invoke_bedrock_model
 
 
 def handler(event, context):

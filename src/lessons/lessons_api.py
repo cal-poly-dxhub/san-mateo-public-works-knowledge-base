@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 from datetime import datetime
 
 import boto3
+
+from bedrock_utils import invoke_bedrock_model
 
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime")
@@ -55,7 +58,8 @@ Document Content:
 Return only the JSON array, no other text."""
 
     try:
-        response = bedrock.invoke_model(
+        response = invoke_bedrock_model(
+            bedrock,
             modelId=os.environ.get(
                 "LESSONS_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0"
             ),
@@ -148,7 +152,8 @@ Existing Lessons:
 Return ONLY a JSON array of the merged lessons, no other text."""
 
     try:
-        response = bedrock.invoke_model(
+        response = invoke_bedrock_model(
+            bedrock,
             modelId=os.environ.get(
                 "LESSONS_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0"
             ),
@@ -272,7 +277,8 @@ Existing Master Lessons:
 Return ONLY a JSON array of the merged lessons, no other text."""
 
     try:
-        response = bedrock.invoke_model(
+        response = invoke_bedrock_model(
+            bedrock,
             modelId=os.environ.get(
                 "LESSONS_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0"
             ),
