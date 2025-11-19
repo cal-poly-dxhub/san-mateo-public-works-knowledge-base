@@ -6,7 +6,9 @@ from aws_cdk import Stack, aws_iam as iam, custom_resources as cr
 from constructs import Construct
 
 from infrastructure.api import APIGateway
+from infrastructure.auth import CognitoAuth
 from infrastructure.compute import ComputeResources
+from infrastructure.frontend import FrontendHosting
 from infrastructure.iam import IAMPermissions
 from infrastructure.knowledge_base import KnowledgeBaseResources
 from infrastructure.parameters import SSMParameters
@@ -25,14 +27,30 @@ class ProjectManagementStack(Stack):
 
         # Create modular resources
         storage = StorageResources(self, "Storage")
-        kb = KnowledgeBaseResources(self, "KnowledgeBase", storage.bucket)
+        kb = KnowledgeBaseResources(self, "KnowledgeBase", config, storage.bucket)
         compute = ComputeResources(self, "Compute", config, storage, kb.kb_id)
         IAMPermissions(self, "IAM", compute, storage, kb.kb_id)
         SSMParameters(self, "Parameters", config, kb.kb_id)
-        APIGateway(self, "API", compute)
+        auth = CognitoAuth(self, "Auth")
+        api = APIGateway(self, "API", config, compute, auth)
+        frontend = FrontendHosting(
+            self,
+            "Frontend",
+            api_url=api.api.url,
+            user_pool_id=auth.user_pool.user_pool_id,
+            user_pool_client_id=auth.user_pool_client.user_pool_client_id,
+            region=self.region,
+        )
+
+        # Configure S3 event trigger for lessons sync
+        storage.add_lessons_sync_trigger(compute.lessons_sync_lambda)
 
         # Output Knowledge Base ID
         cdk.CfnOutput(self, "KnowledgeBaseId", value=kb.kb_id)
+        cdk.CfnOutput(self, "FrontendURL", value=f"https://{frontend.url}")
+        cdk.CfnOutput(self, "ApiURL", value=api.api.url)
+        cdk.CfnOutput(self, "UserPoolId", value=auth.user_pool.user_pool_id)
+        cdk.CfnOutput(self, "UserPoolClientId", value=auth.user_pool_client.user_pool_client_id)
 
         # Custom resource for bucket setup
         cr.AwsCustomResource(
@@ -46,7 +64,9 @@ class ProjectManagementStack(Stack):
                     "Payload": json.dumps(
                         {
                             "RequestType": "Create",
-                            "ResourceProperties": {"BucketName": storage.bucket.bucket_name},
+                            "ResourceProperties": {
+                                "BucketName": storage.bucket.bucket_name
+                            },
                         }
                     ),
                 },

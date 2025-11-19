@@ -3,7 +3,15 @@ from constructs import Construct
 
 
 class FrontendHosting(Construct):
-    def __init__(self, scope: Construct, construct_id: str, api_url: str) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        api_url: str,
+        user_pool_id: str,
+        user_pool_client_id: str,
+        region: str,
+    ) -> None:
         super().__init__(scope, construct_id)
 
         vpc = ec2.Vpc(self, "VPC", max_azs=2, nat_gateways=0)
@@ -25,6 +33,9 @@ class FrontendHosting(Construct):
                 container_port=3000,
                 environment={
                     "NEXT_PUBLIC_API_URL": api_url,
+                    "NEXT_PUBLIC_USER_POOL_ID": user_pool_id,
+                    "NEXT_PUBLIC_USER_POOL_CLIENT_ID": user_pool_client_id,
+                    "NEXT_PUBLIC_AWS_REGION": region,
                 },
             ),
             public_load_balancer=True,

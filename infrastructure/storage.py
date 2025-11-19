@@ -42,26 +42,28 @@ class StorageResources(Construct):
                 name="item_id", type=dynamodb.AttributeType.STRING
             ),
             removal_policy=cdk.RemovalPolicy.DESTROY,
-            billing_mode=dynamodb.BillingMode.PROVISIONED,
-            read_capacity=5,
-            write_capacity=5,
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
         )
 
-        # Enable auto-scaling
-        read_scaling = self.project_data_table.auto_scale_read_capacity(
-            min_capacity=5,
-            max_capacity=100
-        )
-        read_scaling.scale_on_utilization(
-            target_utilization_percent=70
+        # GSI for projectName lookups (eliminates scans)
+        self.project_data_table.add_global_secondary_index(
+            index_name="projectName-index",
+            partition_key=dynamodb.Attribute(
+                name="projectName", type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="item_id", type=dynamodb.AttributeType.STRING
+            ),
+            projection_type=dynamodb.ProjectionType.ALL,
         )
 
-        write_scaling = self.project_data_table.auto_scale_write_capacity(
-            min_capacity=5,
-            max_capacity=100
-        )
-        write_scaling.scale_on_utilization(
-            target_utilization_percent=70
+        # GSI for item_id lookups (finding all projects)
+        self.project_data_table.add_global_secondary_index(
+            index_name="item_id-index",
+            partition_key=dynamodb.Attribute(
+                name="item_id", type=dynamodb.AttributeType.STRING
+            ),
+            projection_type=dynamodb.ProjectionType.ALL,
         )
 
     def add_lessons_sync_trigger(self, lessons_sync_lambda):
