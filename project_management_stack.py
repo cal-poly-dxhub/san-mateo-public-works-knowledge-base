@@ -2,9 +2,10 @@ import json
 
 import aws_cdk as cdk
 import yaml
-from aws_cdk import Stack, aws_iam as iam, custom_resources as cr
+from aws_cdk import Stack
+from aws_cdk import aws_iam as iam
+from aws_cdk import custom_resources as cr
 from constructs import Construct
-
 from infrastructure.api import APIGateway
 from infrastructure.auth import CognitoAuth
 from infrastructure.compute import ComputeResources
@@ -27,7 +28,9 @@ class ProjectManagementStack(Stack):
 
         # Create modular resources
         storage = StorageResources(self, "Storage")
-        kb = KnowledgeBaseResources(self, "KnowledgeBase", config, storage.bucket)
+        kb = KnowledgeBaseResources(
+            self, "KnowledgeBase", config, storage.bucket
+        )
         compute = ComputeResources(self, "Compute", config, storage, kb.kb_id)
         IAMPermissions(self, "IAM", compute, storage, kb.kb_id)
         SSMParameters(self, "Parameters", config, kb.kb_id)
@@ -40,10 +43,33 @@ class ProjectManagementStack(Stack):
             user_pool_client_id=auth.user_pool_client.user_pool_client_id,
             region=self.region,
         )
-        api = APIGateway(self, "API", config, compute, auth, frontend_url=f"http://{frontend.url}".lower())
-        
+        api = APIGateway(
+            self,
+            "API",
+            config,
+            compute,
+            auth,
+            frontend_url=f"https://{frontend.url}",
+        )
+
         # Update frontend with API URL
-        frontend.service.task_definition.default_container.add_environment("NEXT_PUBLIC_API_URL", api.api.url)
+        frontend.service.task_definition.default_container.add_environment(
+            "NEXT_PUBLIC_API_URL", api.api.url
+        )
+
+        # Add CORS origin to all Lambda functions
+        frontend_origin = f"https://{frontend.url}"
+        for lambda_func in [
+            compute.projects_lambda,
+            compute.dashboard_lambda,
+            compute.lessons_lambda,
+            compute.lessons_master_lambda,
+            compute.checklist_lambda,
+            compute.task_lambda,
+            compute.files_lambda,
+            compute.search_lambda,
+        ]:
+            lambda_func.add_environment("ALLOWED_ORIGIN", frontend_origin)
 
         # Configure S3 event trigger for lessons sync
         storage.add_lessons_sync_trigger(compute.lessons_sync_lambda)
@@ -53,7 +79,11 @@ class ProjectManagementStack(Stack):
         cdk.CfnOutput(self, "FrontendURL", value=f"https://{frontend.url}")
         cdk.CfnOutput(self, "ApiURL", value=api.api.url)
         cdk.CfnOutput(self, "UserPoolId", value=auth.user_pool.user_pool_id)
-        cdk.CfnOutput(self, "UserPoolClientId", value=auth.user_pool_client.user_pool_client_id)
+        cdk.CfnOutput(
+            self,
+            "UserPoolClientId",
+            value=auth.user_pool_client.user_pool_client_id,
+        )
 
         # Custom resource for bucket setup
         cr.AwsCustomResource(
