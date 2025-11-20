@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, LayoutGrid, List } from "lucide-react";
+import { Search, LayoutGrid, List, LogOut } from "lucide-react";
+import { signOut } from "aws-amplify/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -18,7 +19,7 @@ import ProjectCard from "@/components/ProjectCard";
 import CreateProjectDialog from "@/components/CreateProjectDialog";
 import BatchStatusDialog from "@/components/BatchStatusDialog";
 
-import { useApiKey } from "@/lib/api-context";
+import { useApi } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import SearchComponent from "@/components/SearchComponent";
 
@@ -42,7 +43,7 @@ interface Project {
 
 export default function Home() {
   const router = useRouter();
-  const { apiKey, refreshTrigger } = useApiKey();
+  const { refreshTrigger } = useApi();
 
   const [hasSearched, setHasSearched] = useState(false);
   const [ragEnabled, setRagEnabled] = useState(true);
@@ -85,9 +86,6 @@ export default function Home() {
   }, [refreshTrigger, checklistType, currentPage]);
 
   useEffect(() => {
-    if (apiKey) {
-      loadAvailableModels();
-    }
   }, [apiKey]);
 
   const loadAvailableModels = async () => {
@@ -115,6 +113,15 @@ export default function Home() {
       console.error("Error loading projects:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 
@@ -202,12 +209,27 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card shadow-sm mb-8">
+        <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
+          <h1 className="text-2xl font-semibold">Projects</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="text-red-600 hover:text-red-700"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </header>
+
+      <div className="p-4">
       <div className="mb-8">
         <SearchComponent placeholder="Ask the AI Assistant: regulations, templates, timelines..." />
       </div>
 
-      <div className="flex gap-4 mb-8">
       <div className="flex gap-4 mb-8 justify-between items-center">
         <div className="flex gap-4">
         <Button
@@ -249,7 +271,6 @@ export default function Home() {
           >
             <List className="h-4 w-4" />
           </Button>
-        </div>
         </div>
       </div>
 
@@ -365,6 +386,7 @@ export default function Home() {
         onOpenChange={setBatchStatusOpen}
         batchId={currentBatchId}
       />
+      </div>
     </div>
   );
 }

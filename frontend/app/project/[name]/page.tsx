@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search } from "lucide-react";
+import { Search, LogOut } from "lucide-react";
+import { signOut } from "aws-amplify/auth";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useApiKey } from "@/lib/api-context";
+import { useApi } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import DocumentUploadDialog from "@/components/DocumentUploadDialog";
 import AddLessonDialog from "@/components/AddLessonDialog";
@@ -50,7 +51,6 @@ interface Project {
 export default function ProjectPage() {
   const params = useParams();
   const router = useRouter();
-  const { apiKey } = useApiKey();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [projectSearch, setProjectSearch] = useState("");
@@ -74,9 +74,6 @@ export default function ProjectPage() {
   }, [params.name]);
 
   useEffect(() => {
-    if (apiKey) {
-      loadAvailableModels();
-    }
   }, [apiKey]);
 
   const loadAvailableModels = async () => {
@@ -91,6 +88,15 @@ export default function ProjectPage() {
       }
     } catch (error) {
       console.error("Error loading models:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 
@@ -200,6 +206,15 @@ export default function ProjectPage() {
               size="sm"
             >
               Upload Documents
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              size="sm"
+              className="text-red-600 hover:text-red-700"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
             </Button>
           </div>
         </div>
