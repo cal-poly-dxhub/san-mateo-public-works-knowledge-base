@@ -4,19 +4,23 @@ from constructs import Construct
 
 
 class APIGateway(Construct):
-    def __init__(self, scope: Construct, construct_id: str, config: dict, compute, auth, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config: dict, compute, auth, frontend_url: str = None, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         api_config = config.get("api_gateway", {})
         throttle_config = api_config.get("throttle", {})
 
         # API Gateway
+        cors_origins = ["http://localhost:3000"]
+        if frontend_url:
+            cors_origins.append(frontend_url)
+        
         self.api = apigateway.RestApi(
             self,
             "api",
             rest_api_name="project-management-data",
             default_cors_preflight_options=apigateway.CorsOptions(
-                allow_origins=["*"],
+                allow_origins=cors_origins,
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=[
                     "Content-Type",

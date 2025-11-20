@@ -27,7 +27,7 @@ class ComputeResources(Construct):
         self.common_layer = _lambda.LayerVersion(
             self,
             "CommonUtilitiesLayer",
-            code=_lambda.Code.from_asset("./src/common"),
+            code=_lambda.Code.from_asset("./layers/common"),
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_11],
             description="Common utilities including vector_helper",
         )
@@ -172,7 +172,7 @@ class ComputeResources(Construct):
             runtime=_lambda.Runtime.PYTHON_3_11,
             handler="projects_api.handler",
             code=_lambda.Code.from_asset("./src/projects"),
-            layers=[self.meeting_data_layer],
+            layers=[self.meeting_data_layer, self.common_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "PROJECT_WIZARD_LAMBDA_NAME": self.wizard_lambda.function_name,
