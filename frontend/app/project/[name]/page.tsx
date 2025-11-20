@@ -26,6 +26,7 @@ import AddLessonDialog from "@/components/AddLessonDialog";
 import LessonsLearned from "@/components/LessonsLearned";
 import Checklist from "@/components/Checklist";
 import SearchComponent from "@/components/SearchComponent";
+import KBSyncButton from "@/components/KBSyncButton";
 
 interface Project {
   name: string;
@@ -185,6 +186,7 @@ export default function ProjectPage() {
             {project?.name || "Loading..."}
           </h1>
           <div className="flex gap-2">
+            <KBSyncButton />
             <Button
               onClick={() => setAddLessonDialogOpen(true)}
               variant="default"

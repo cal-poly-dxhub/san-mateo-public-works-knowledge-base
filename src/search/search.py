@@ -1,11 +1,8 @@
 import json
 import os
-import sys
 from typing import Any, Dict, List
 
 import boto3
-
-from bedrock_utils import invoke_bedrock_model
 
 
 def handler(event, context):
@@ -19,7 +16,9 @@ def handler(event, context):
         limit = body.get("limit", 10)
         model_id = body.get("model_id")
 
-        print(f"Search request - Query: {query}, Limit: {limit}, Model: {model_id}")
+        print(
+            f"Search request - Query: {query}, Limit: {limit}, Model: {model_id}"
+        )
 
         # Check if this is a RAG search request
         path = event.get("path", "")
@@ -82,7 +81,9 @@ def handler(event, context):
         }
 
 
-def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> dict:
+def search_with_rag(
+    query: str, limit: int = 10, selected_model: str = None
+) -> dict:
     """
     Perform RAG search using Knowledge Base retrieve_and_generate
     """
@@ -92,26 +93,34 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
 
         kb_id = os.environ.get("KB_ID")
         bucket_name = os.environ.get("BUCKET_NAME")
-        model_id = selected_model or os.environ.get(
-            "BEDROCK_MODEL_ID", "anthropic.claude-3-sonnet-20240229-v1:0"
-        )
+        model_id = selected_model or os.environ.get("BEDROCK_MODEL_ID")
+        rag_prompt = os.environ.get("RAG_PROMPT")
 
         if not kb_id:
             raise ValueError("KB_ID environment variable not set")
 
+        # Build retrieve_and_generate config
+        rag_config = {
+            "type": "KNOWLEDGE_BASE",
+            "knowledgeBaseConfiguration": {
+                "knowledgeBaseId": kb_id,
+                "modelArn": model_id,
+                "retrievalConfiguration": {
+                    "vectorSearchConfiguration": {"numberOfResults": limit}
+                },
+            },
+        }
+
+        # Add custom prompt if provided
+        if rag_prompt:
+            rag_config["knowledgeBaseConfiguration"]["generationConfiguration"] = {
+                "promptTemplate": {"textPromptTemplate": rag_prompt}
+            }
+
         # Use retrieve_and_generate for RAG
         response = bedrock_agent_client.retrieve_and_generate(
             input={"text": query},
-            retrieveAndGenerateConfiguration={
-                "type": "KNOWLEDGE_BASE",
-                "knowledgeBaseConfiguration": {
-                    "knowledgeBaseId": kb_id,
-                    "modelArn": model_id,
-                    "retrievalConfiguration": {
-                        "vectorSearchConfiguration": {"numberOfResults": limit}
-                    },
-                },
-            },
+            retrieveAndGenerateConfiguration=rag_config,
         )
 
         # Extract answer and sources
@@ -172,7 +181,8 @@ def search_with_rag(query: str, limit: int = 10, selected_model: str = None) -> 
                         "content": content,
                         "source": source_doc_key
                         or metadata.get(
-                            "file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"
+                            "file_name",
+                            s3_uri.split("/")[-1] if s3_uri else "unknown",
                         ),
                         "project": project_name,
                         "presigned_url": presigned_url,
@@ -233,7 +243,9 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
 
                 # Get metadata from S3 object
                 try:
-                    obj_metadata = s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+                    obj_metadata = s3_client.head_object(
+                        Bucket=bucket_name, Key=s3_key
+                    )
                     obj_meta = obj_metadata.get("Metadata", {})
 
                     # Use project name from metadata
@@ -259,14 +271,17 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
                     )
                     print(f"Generated markdown presigned URL for {s3_key}")
                 except Exception as e:
-                    print(f"Error generating presigned URL for {s3_key}: {str(e)}")
+                    print(
+                        f"Error generating presigned URL for {s3_key}: {str(e)}"
+                    )
 
             results.append(
                 {
                     "content": content,
                     "source": source_doc_key
                     or metadata.get(
-                        "file_name", s3_uri.split("/")[-1] if s3_uri else "unknown"
+                        "file_name",
+                        s3_uri.split("/")[-1] if s3_uri else "unknown",
                     ),
                     "project": project_name,
                     "presigned_url": presigned_url,
@@ -282,7 +297,9 @@ def search_vector_index(query: str, limit: int = 10) -> List[Dict[str, Any]]:
         return []
 
 
-def chunk_text(text: str, chunk_size_tokens: int, overlap_tokens: int) -> List[str]:
+def chunk_text(
+    text: str, chunk_size_tokens: int, overlap_tokens: int
+) -> List[str]:
     """Chunk text with fixed size and overlap (same as ingestion script)"""
     chunk_size_chars = chunk_size_tokens * 4
     overlap_chars = overlap_tokens * 4

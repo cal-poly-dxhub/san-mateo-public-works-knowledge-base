@@ -215,6 +215,7 @@ class ComputeResources(Construct):
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "KB_ID": kb_id,
                 "BEDROCK_MODEL_ID": config["models"]["primary_llm"],
+                "RAG_PROMPT": config["prompts"]["retrieve_and_generate"],
             },
         )
 
@@ -244,5 +245,18 @@ class ComputeResources(Construct):
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
+            },
+        )
+
+        # Manual KB sync Lambda
+        self.manual_sync_lambda = _lambda.Function(
+            self,
+            "ManualSyncLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="manual_sync_lambda.handler",
+            code=_lambda.Code.from_asset("./src/sync"),
+            timeout=Duration.seconds(30),
+            environment={
+                "KB_ID": kb_id,
             },
         )

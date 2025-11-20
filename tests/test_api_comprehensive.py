@@ -7,9 +7,12 @@ import pytest
 import requests
 from botocore.exceptions import ClientError
 
-pytestmark = pytest.mark.filterwarnings(
-    r"ignore:datetime.datetime.utcnow\(\) is deprecated:DeprecationWarning"
-)
+pytestmark = [
+    pytest.mark.filterwarnings(
+        r"ignore:datetime.datetime.utcnow\(\) is deprecated:DeprecationWarning"
+    ),
+    pytest.mark.integration,
+]
 
 from test_config import (
     API_KEY,
@@ -36,27 +39,36 @@ test_lesson_doc = None
 # 1. PROJECT MANAGEMENT TESTS
 # ============================================================================
 
-def test_01_get_project_types():
+def test_01_get_project_types(api_timer):
     """Test getting available project types"""
-    response = requests.get(f"{API_URL}/config/project-types", headers={"x-api-key": API_KEY})
-    assert response.status_code == 200
+    with api_timer:
+        response = requests.get(f"{API_URL}/config/project-types", headers={"x-api-key": API_KEY})
+    
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+    assert api_timer.duration < 2.0, f"API took {api_timer.duration:.2f}s (SLA: <2s)"
+    
     result = response.json()
     assert isinstance(result, (list, dict))
 
 
-def test_02_create_project():
+def test_02_create_project(api_timer):
     """Test project creation"""
     project_data = {
         "project_name": test_project_name,
         "project_description": "Test road reconstruction project"
     }
-    response = requests.post(f"{API_URL}/create-project", headers=headers, json=project_data)
+    
+    with api_timer:
+        response = requests.post(f"{API_URL}/create-project", headers=headers, json=project_data)
+    
     assert response.status_code == 200
+    assert api_timer.duration < 3.0, f"Project creation took {api_timer.duration:.2f}s (SLA: <3s)"
+    
     result = response.json()
     assert "message" in result
 
 
-def test_03_setup_project_wizard():
+def test_03_setup_project_wizard(api_timer):
     """Test project setup wizard with AI configuration"""
     wizard_data = {
         "projectName": test_project_name,
@@ -71,7 +83,7 @@ def test_03_setup_project_wizard():
     assert "projectId" in result or "message" in result
 
 
-def test_04_get_projects_list():
+def test_04_get_projects_list(api_timer):
     """Test getting all projects"""
     response = requests.get(f"{API_URL}/projects", headers={"x-api-key": API_KEY})
     assert response.status_code == 200
@@ -81,7 +93,7 @@ def test_04_get_projects_list():
     assert test_project_name in project_names
 
 
-def test_05_get_project_details():
+def test_05_get_project_details(api_timer):
     """Test getting specific project details"""
     response = requests.get(f"{API_URL}/projects/{test_project_name}", headers={"x-api-key": API_KEY})
     assert response.status_code == 200
@@ -89,7 +101,7 @@ def test_05_get_project_details():
     assert result["name"] == test_project_name
 
 
-def test_06_update_project_progress():
+def test_06_update_project_progress(api_timer):
     """Test updating project progress"""
     progress_data = {
         "project_name": test_project_name,
@@ -107,7 +119,7 @@ def test_06_update_project_progress():
 # 2. TASK MANAGEMENT TESTS
 # ============================================================================
 
-def test_07_get_tasks():
+def test_07_get_tasks(api_timer):
     """Test getting all tasks for a project"""
     response = requests.get(f"{API_URL}/projects/{test_project_name}/tasks", headers={"x-api-key": API_KEY})
     assert response.status_code == 200
@@ -116,7 +128,7 @@ def test_07_get_tasks():
     assert "progress" in result
 
 
-def test_08_create_task():
+def test_08_create_task(api_timer):
     """Test creating a new task"""
     global test_task_id
     task_data = {
@@ -135,7 +147,7 @@ def test_08_create_task():
     test_task_id = result["taskId"]
 
 
-def test_09_update_task():
+def test_09_update_task(api_timer):
     """Test updating task status"""
     if not test_task_id:
         pytest.skip("No task ID available")
@@ -156,7 +168,7 @@ def test_09_update_task():
 # 3. CHECKLIST API TESTS
 # ============================================================================
 
-def test_10_get_checklist():
+def test_10_get_checklist(api_timer):
     """Test getting project checklist"""
     response = requests.get(f"{API_URL}/{test_project_name}/checklist", headers={"x-api-key": API_KEY})
     assert response.status_code == 200
@@ -166,7 +178,7 @@ def test_10_get_checklist():
     assert "progress" in result
 
 
-def test_11_update_checklist_metadata():
+def test_11_update_checklist_metadata(api_timer):
     """Test updating checklist metadata"""
     metadata = {
         "date": "2025-01-15",
@@ -182,7 +194,7 @@ def test_11_update_checklist_metadata():
     assert response.status_code == 200
 
 
-def test_12_update_checklist_task():
+def test_12_update_checklist_task(api_timer):
     """Test updating a checklist task"""
     task_update = {
         "task_id": "task#001",
@@ -202,7 +214,7 @@ def test_12_update_checklist_task():
 # 4. FILES API TESTS
 # ============================================================================
 
-def test_13_get_upload_url():
+def test_13_get_upload_url(api_timer):
     """Test getting presigned upload URL"""
     upload_request = {
         "fileName": "test-document.pdf",
@@ -215,7 +227,7 @@ def test_13_get_upload_url():
     assert "s3Key" in result
 
 
-def test_14_get_file():
+def test_14_get_file(api_timer):
     """Test retrieving a file"""
     # First create a test file in S3
     test_key = f"projects/{test_project_name}/test-file.txt"
@@ -230,7 +242,7 @@ def test_14_get_file():
 # 5. LESSONS LEARNED TESTS
 # ============================================================================
 
-def test_15_upload_document_with_lessons():
+def test_15_upload_document_with_lessons(api_timer):
     """Test uploading document and extracting lessons"""
     global test_lesson_doc
     doc_content = """
@@ -263,7 +275,7 @@ def test_15_upload_document_with_lessons():
     test_lesson_doc = "retrospective-2025.txt"
 
 
-def test_16_wait_for_lesson_extraction():
+def test_16_wait_for_lesson_extraction(api_timer):
     """Wait for async lesson extraction to complete"""
     if not test_lesson_doc:
         pytest.skip("No lesson document uploaded")
@@ -286,7 +298,7 @@ def test_16_wait_for_lesson_extraction():
     pytest.fail("Lesson extraction not completed in time")
 
 
-def test_17_get_lessons_learned():
+def test_17_get_lessons_learned(api_timer):
     """Test retrieving lessons learned"""
     response = requests.get(
         f"{API_URL}/lessons-learned/{test_project_name}",
@@ -299,7 +311,7 @@ def test_17_get_lessons_learned():
     assert isinstance(result["lessons"], list)
 
 
-def test_18_get_master_project_types():
+def test_18_get_master_project_types(api_timer):
     """Test getting project types with lesson counts"""
     response = requests.get(f"{API_URL}/project-types", headers={"x-api-key": API_KEY})
     assert response.status_code == 200
@@ -307,7 +319,7 @@ def test_18_get_master_project_types():
     assert "projectTypes" in result
 
 
-def test_19_get_lessons_by_type():
+def test_19_get_lessons_by_type(api_timer):
     """Test getting aggregated lessons by project type"""
     response = requests.get(
         f"{API_URL}/by-type/Road Rehabilitation",
@@ -323,7 +335,7 @@ def test_19_get_lessons_by_type():
 # 6. SEARCH TESTS
 # ============================================================================
 
-def test_20_vector_search():
+def test_20_vector_search(api_timer):
     """Test semantic vector search"""
     search_data = {
         "query": "utility coordination timeline",
@@ -337,7 +349,7 @@ def test_20_vector_search():
     assert isinstance(result["results"], list)
 
 
-def test_21_rag_search():
+def test_21_rag_search(api_timer):
     """Test RAG search with AI-generated answer"""
     search_data = {
         "query": "What are the key lessons about utility coordination?",
@@ -357,7 +369,7 @@ def test_21_rag_search():
 # 7. AI ASSISTANT TESTS
 # ============================================================================
 
-def test_22_ai_assistant_question():
+def test_22_ai_assistant_question(api_timer):
     """Test AI assistant Q&A"""
     question_data = {
         "question": "What permits are typically needed for road reconstruction?",
@@ -370,7 +382,7 @@ def test_22_ai_assistant_question():
     assert "answer" in result
 
 
-def test_23_ai_assistant_template():
+def test_23_ai_assistant_template(api_timer):
     """Test AI template generation"""
     template_data = {
         "type": "template",
@@ -387,7 +399,7 @@ def test_23_ai_assistant_template():
     assert "template" in result
 
 
-def test_24_ai_assistant_alerts():
+def test_24_ai_assistant_alerts(api_timer):
     """Test proactive alert checking"""
     alert_data = {
         "type": "alert",
@@ -404,7 +416,7 @@ def test_24_ai_assistant_alerts():
 # 8. DASHBOARD TESTS
 # ============================================================================
 
-def test_25_get_available_models():
+def test_25_get_available_models(api_timer):
     """Test getting available AI models"""
     response = requests.get(f"{API_URL}/models", headers={"x-api-key": API_KEY})
     assert response.status_code == 200
@@ -412,7 +424,7 @@ def test_25_get_available_models():
     assert "models" in result or "available_search_models" in result
 
 
-def test_26_get_project_asset():
+def test_26_get_project_asset(api_timer):
     """Test retrieving project assets"""
     # Create a test asset
     asset_key = f"projects/{test_project_name}/assets/test-asset.txt"
@@ -429,7 +441,7 @@ def test_26_get_project_asset():
 # 9. VECTOR STORAGE VALIDATION
 # ============================================================================
 
-def test_27_validate_vectors_created():
+def test_27_validate_vectors_created(api_timer):
     """Test that vectors were created in S3 vector store"""
     try:
         s3vectors_client = boto3.client("s3vectors")
@@ -453,7 +465,7 @@ def test_27_validate_vectors_created():
 # 10. RACE CONDITION TEST
 # ============================================================================
 
-def test_28_concurrent_lesson_processing():
+def test_28_concurrent_lesson_processing(api_timer):
     """Test that multiple lesson documents are processed without race conditions"""
     race_project = f"race-test-{int(time.time())}"
     
@@ -511,7 +523,7 @@ def test_28_concurrent_lesson_processing():
 # 11. CLEANUP TEST
 # ============================================================================
 
-def test_29_delete_project():
+def test_29_delete_project(api_timer):
     """Test project deletion and verify complete cleanup"""
     response = requests.delete(
         f"{API_URL}/projects/{test_project_name}",

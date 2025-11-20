@@ -329,3 +329,13 @@ class APIGateway(Construct):
             authorizer=self.authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
+
+        # Manual KB sync
+        sync = self.api.root.add_resource("sync")
+        sync_kb = sync.add_resource("knowledge-base")
+        sync_kb.add_method(
+            "POST",
+            apigateway.LambdaIntegration(compute.manual_sync_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigateway.AuthorizationType.COGNITO,
+        )

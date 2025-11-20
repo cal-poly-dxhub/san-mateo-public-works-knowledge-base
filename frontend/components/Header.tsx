@@ -1,20 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useApiKey } from "@/lib/api-context";
-
-enum ApiKeyState {
-  empty,
-  checking,
-  valid,
-  invalid,
-}
 
 function ChecklistToggle() {
   const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
@@ -58,21 +49,6 @@ function ChecklistToggle() {
 }
 
 export default function Header() {
-  const { apiKey, setApiKey, triggerRefresh } = useApiKey();
-  const [apiKeyValid, setApiKeyValid] = useState<ApiKeyState>(
-    ApiKeyState.empty
-  );
-
-  function handleSetApiKey(s: string) {
-    setApiKey(s);
-    if (s === "") {
-      setApiKeyValid(ApiKeyState.empty);
-      return;
-    }
-    setApiKeyValid(ApiKeyState.checking);
-    triggerRefresh();
-  }
-
   return (
     <nav className="bg-secondary w-full p-3 flex justify-between items-center">
       <div className="flex items-center gap-8">
@@ -96,20 +72,6 @@ export default function Header() {
           <ChecklistToggle />
         </div>
       </div>
-      <Input
-        placeholder="api key"
-        value={apiKey}
-        onChange={(e) => handleSetApiKey(e.target.value)}
-        className={`w-48 ${
-          apiKeyValid === ApiKeyState.valid
-            ? "border-green-500"
-            : apiKeyValid === ApiKeyState.invalid
-            ? "border-red-500"
-            : apiKeyValid === ApiKeyState.checking
-            ? "border-yellow-500"
-            : ""
-        }`}
-      />
     </nav>
   );
 }

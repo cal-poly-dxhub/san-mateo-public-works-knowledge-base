@@ -302,3 +302,34 @@ Track these KPIs to measure impact:
 - Project completion time
 - User satisfaction scores
 - Error/rework reduction
+
+
+## Search Results with Presigned URLs (2025-11-11)
+
+### Feature
+Enhanced search results to include presigned URLs to source documents in S3, along with project name and chunk information.
+
+### Implementation
+- Modified `search.py` to extract S3 URIs from Bedrock KB retrieval results
+- Added presigned URL generation (1-hour expiration) for all search results
+- Parse project name and lesson ID from S3 key path structure
+- Enhanced both vector search (`/search`) and RAG search (`/search-rag`) endpoints
+- Updated `search_handler.py` for consistency
+
+### Response Enhancements
+- `presigned_url`: Direct link to source markdown file in S3
+- `project`: Extracted project name from file path
+- `chunk`: Lesson ID or chunk identifier
+- Existing fields: `content`, `source`, `relevance_score`, `metadata`
+
+### Files Modified
+- `src/search/search.py` - Added presigned URL generation to both search functions
+- `src/search/search_handler.py` - Enhanced global and project-filtered search
+- `docs/SEARCH_PRESIGNED_URLS.md` - Complete documentation
+- `test_search_presigned_urls.py` - Test script for verification
+
+### Benefits
+- Users can access original source documents directly
+- Better citation and audit trail
+- Enables document preview and download features
+- No additional infrastructure changes needed (S3 permissions already in place)

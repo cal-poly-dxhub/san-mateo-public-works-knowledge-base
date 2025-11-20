@@ -130,3 +130,18 @@ class IAMPermissions(Construct):
         # Lessons sync Lambda permissions
         storage.bucket.grant_read_write(compute.lessons_sync_lambda)
         storage.project_data_table.grant_read_data(compute.lessons_sync_lambda)
+
+        # Manual sync Lambda permissions
+        compute.manual_sync_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "bedrock:StartIngestionJob",
+                    "bedrock:GetDataSource",
+                    "bedrock:ListDataSources",
+                    "bedrock:ListIngestionJobs",
+                ],
+                resources=[
+                    f"arn:aws:bedrock:{cdk.Aws.REGION}:{cdk.Aws.ACCOUNT_ID}:knowledge-base/{kb_id}"
+                ],
+            )
+        )

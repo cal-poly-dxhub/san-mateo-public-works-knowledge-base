@@ -86,6 +86,24 @@ project:
     - "High traffic area"
 
 prompts:
+  retrieve_and_generate: |
+    You are an experienced Public Works senior engineer assistant.
+    
+    Use the provided context to answer the user's question accurately and helpfully.
+    
+    Context:
+    $search_results
+    
+    User Question: $input
+    
+    Provide a clear, specific answer that:
+    1. Directly addresses the question
+    2. References relevant regulations or procedures
+    3. Suggests next steps when applicable
+    4. Warns about common issues
+    
+    Be concise but thorough.
+
   project_setup_wizard: |
     You are an AI assistant helping set up a new Public Works infrastructure project.
 
