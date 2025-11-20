@@ -32,15 +32,18 @@ class ProjectManagementStack(Stack):
         IAMPermissions(self, "IAM", compute, storage, kb.kb_id)
         SSMParameters(self, "Parameters", config, kb.kb_id)
         auth = CognitoAuth(self, "Auth")
-        api = APIGateway(self, "API", config, compute, auth)
         frontend = FrontendHosting(
             self,
             "Frontend",
-            api_url=api.api.url,
+            api_url="",
             user_pool_id=auth.user_pool.user_pool_id,
             user_pool_client_id=auth.user_pool_client.user_pool_client_id,
             region=self.region,
         )
+        api = APIGateway(self, "API", config, compute, auth, frontend_url=f"http://{frontend.url}".lower())
+        
+        # Update frontend with API URL
+        frontend.service.task_definition.default_container.add_environment("NEXT_PUBLIC_API_URL", api.api.url)
 
         # Configure S3 event trigger for lessons sync
         storage.add_lessons_sync_trigger(compute.lessons_sync_lambda)
