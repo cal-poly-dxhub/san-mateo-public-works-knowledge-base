@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/api";
-import { useApiKey } from "@/lib/api-context";
+import { useApi } from "@/lib/api-context";
 import ConflictsSection from "./ConflictsSection";
 
 interface Lesson {
@@ -32,7 +32,6 @@ interface LessonsLearnedProps {
 export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
   const [lessonsData, setLessonsData] = useState<LessonsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { apiKey } = useApiKey();
 
   useEffect(() => {
     loadLessons();

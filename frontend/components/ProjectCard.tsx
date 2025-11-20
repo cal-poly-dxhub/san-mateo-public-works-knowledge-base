@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useApiKey } from "@/lib/api-context";
+import { useApi } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 
 interface Project {
@@ -33,7 +33,6 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, onClick, onDelete }: ProjectCardProps) {
-  const { apiKey } = useApiKey();
   const [deleting, setDeleting] = useState(false);
   const [expanded, setExpanded] = useState(false);
 

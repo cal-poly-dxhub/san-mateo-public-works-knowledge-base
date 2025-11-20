@@ -320,7 +320,7 @@ def cors_response(status_code, body):
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, PUT, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, X-Api-Key",
+            "Access-Control-Allow-Headers": "Content-Type",
         },
         "body": json.dumps(body),
     }

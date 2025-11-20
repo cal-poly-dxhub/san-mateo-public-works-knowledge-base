@@ -12,19 +12,9 @@ def handler(event, context):
         method = event.get("httpMethod", "GET")
         bucket_name = os.environ["BUCKET_NAME"]
 
-        # Check API key for file access
+        # Cognito authorization is handled by API Gateway
         if path.startswith("/file/"):
-            api_key = event.get("headers", {}).get("x-api-key") or event.get(
-                "headers", {}
-            ).get("X-Api-Key")
-            if not api_key:
-                return {
-                    "statusCode": 401,
-                    "headers": {"Access-Control-Allow-Origin": "*"},
-                    "body": json.dumps({"error": "API key required"}),
-                }
-            file_path = path.replace("/file/", "")
-            return get_file_content(bucket_name, file_path)
+            file_path = path.replace            return get_file_content(bucket_name, file_path)
 
         elif path.startswith("/upload-url") and method == "POST":
             return generate_upload_url(event, bucket_name)
@@ -35,7 +25,7 @@ def handler(event, context):
                 "headers": {
                     "Access-Control-Allow-Origin": "*",
                     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key",
+                    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
                 },
                 "body": "",
             }

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useApiKey } from "@/lib/api-context";
+import { useApi } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import { XIcon } from "lucide-react";
 
@@ -32,7 +32,6 @@ export default function CreateProjectDialog({
   onOpenChange,
   onProjectCreated,
 }: CreateProjectDialogProps) {
-  const { apiKey } = useApiKey();
   const [projectName, setProjectName] = useState("");
   const [projectType, setProjectType] = useState("");
   const [projectTypes, setProjectTypes] = useState<string[]>([]);

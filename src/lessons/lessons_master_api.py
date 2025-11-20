@@ -20,7 +20,7 @@ def handler(event, context):
                 "headers": {
                     "Access-Control-Allow-Origin": "*",
                     "Access-Control-Allow-Methods": "GET, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type, X-Api-Key",
+                    "Access-Control-Allow-Headers": "Content-Type",
                 },
                 "body": "",
             }

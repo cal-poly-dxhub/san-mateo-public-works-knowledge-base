@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useApiKey } from "@/lib/api-context";
+import { useApi } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
 import { Search, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -38,7 +38,6 @@ interface SearchComponentProps {
 }
 
 export default function SearchComponent({ placeholder = "Ask a question..." }: SearchComponentProps) {
-  const { apiKey } = useApiKey();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,9 +70,6 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
   };
 
   useEffect(() => {
-    if (apiKey) {
-      loadAvailableModels();
-    }
   }, [apiKey]);
 
   const loadAvailableModels = async () => {
