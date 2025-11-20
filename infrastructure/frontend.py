@@ -35,7 +35,7 @@ class FrontendHosting(Construct):
                     "NEXT_PUBLIC_API_URL": api_url,
                     "NEXT_PUBLIC_USER_POOL_ID": user_pool_id,
                     "NEXT_PUBLIC_USER_POOL_CLIENT_ID": user_pool_client_id,
-                    "NEXT_PUBLIC_AWS_REGION": region,
+                    "NEXT_PUBLIC_REGION": region,
                 },
             ),
             public_load_balancer=True,
