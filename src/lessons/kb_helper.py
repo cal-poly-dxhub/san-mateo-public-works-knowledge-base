@@ -121,19 +121,7 @@ def sync_lessons_to_kb(
         )
 
         logger.info(f"Uploaded lessons to s3://{docs_bucket}/{lessons_s3_key}")
-
-        try:
-            response = bedrock_agent_client.start_ingestion_job(
-                knowledgeBaseId=kb_id, dataSourceId=get_data_source_id(kb_id)
-            )
-            logger.info(
-                f"Started KB ingestion job: {response.get('ingestionJob', {}).get('ingestionJobId')}"
-            )
-        except Exception as e:
-            logger.warning(
-                f"Could not trigger KB sync: {e}. Sync will happen on schedule."
-            )
-
+        logger.info(f"Lessons saved to S3. Use manual sync button to index in KB.")
         logger.info(f"Lessons sync completed for {project_name}")
 
     except Exception as e:
