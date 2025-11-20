@@ -1,5 +1,6 @@
 import aws_cdk as cdk
-from aws_cdk import Duration, aws_lambda as _lambda
+from aws_cdk import Duration
+from aws_cdk import aws_lambda as _lambda
 from constructs import Construct
 
 
@@ -73,8 +74,12 @@ class ComputeResources(Construct):
             layers=[self.common_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
-                "LESSONS_EXTRACTOR_MODEL_ID": config["models"]["lessons_extractor"],
-                "CONFLICT_DETECTOR_MODEL_ID": config["models"]["conflict_detector"],
+                "LESSONS_EXTRACTOR_MODEL_ID": config["models"][
+                    "lessons_extractor"
+                ],
+                "CONFLICT_DETECTOR_MODEL_ID": config["models"][
+                    "conflict_detector"
+                ],
                 "KB_ID": kb_id,
             },
         )
@@ -91,8 +96,12 @@ class ComputeResources(Construct):
             layers=[self.common_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
-                "LESSONS_EXTRACTOR_MODEL_ID": config["models"]["lessons_extractor"],
-                "CONFLICT_DETECTOR_MODEL_ID": config["models"]["conflict_detector"],
+                "LESSONS_EXTRACTOR_MODEL_ID": config["models"][
+                    "lessons_extractor"
+                ],
+                "CONFLICT_DETECTOR_MODEL_ID": config["models"][
+                    "conflict_detector"
+                ],
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
                 "ASYNC_LESSONS_PROCESSOR_NAME": self.async_lessons_processor.function_name,
                 "KB_ID": kb_id,
@@ -175,6 +184,7 @@ class ComputeResources(Construct):
             handler="projects_api.handler",
             code=_lambda.Code.from_asset("./src/projects"),
             layers=[self.meeting_data_layer, self.common_layer],
+            timeout=Duration.seconds(30),
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "PROJECT_WIZARD_LAMBDA_NAME": self.wizard_lambda.function_name,
