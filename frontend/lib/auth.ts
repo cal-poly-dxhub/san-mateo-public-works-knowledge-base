@@ -1,13 +1,12 @@
-import { Amplify } from 'aws-amplify';
+import { Amplify } from "aws-amplify";
 
 let configured = false;
 
 export const configureAmplify = () => {
   if (configured) return;
-  
-  const config = typeof window !== 'undefined' 
-    ? (window as any).__RUNTIME_CONFIG__ 
-    : null;
+
+  const config =
+    typeof window !== "undefined" ? (window as any).__RUNTIME_CONFIG__ : null;
 
   if (config?.userPoolId && config?.userPoolClientId && config?.region) {
     Amplify.configure({
@@ -26,4 +25,9 @@ export const configureAmplify = () => {
   }
 };
 
-export { signIn, signOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+export {
+  signIn,
+  signOut,
+  getCurrentUser,
+  fetchAuthSession,
+} from "aws-amplify/auth";

@@ -17,6 +17,7 @@ import {
 import ProjectCard from "@/components/ProjectCard";
 import CreateProjectDialog from "@/components/CreateProjectDialog";
 import BatchStatusDialog from "@/components/BatchStatusDialog";
+import KBSyncButton from "@/components/KBSyncButton";
 
 import { useApi } from "@/lib/api-context";
 import { apiRequest } from "@/lib/api";
@@ -200,6 +201,7 @@ export default function Home() {
       <header className="border-b bg-card shadow-sm mb-8">
         <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
           <h1 className="text-2xl font-semibold">Projects</h1>
+          <KBSyncButton />
         </div>
       </header>
 
@@ -216,6 +218,7 @@ export default function Home() {
         >
           Create Project
         </Button>
+        <KBSyncButton />
 
         {currentBatchId && (
           <Button variant="outline" onClick={() => setBatchStatusOpen(true)}>
