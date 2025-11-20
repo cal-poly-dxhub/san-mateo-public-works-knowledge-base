@@ -132,7 +132,7 @@ def search_with_rag(
         # Add custom prompt if provided
         if rag_prompt:
             rag_config["knowledgeBaseConfiguration"]["generationConfiguration"] = {
-                "promptTemplate": {"textPromptTemplate": rag_prompt}
+                "promptTemplate": {"textPromptTemplate": f"{rag_prompt}\n\n$search_results$"}
             }
 
         # Use retrieve_and_generate for RAG
