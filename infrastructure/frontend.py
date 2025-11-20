@@ -1,4 +1,11 @@
-from aws_cdk import aws_ec2 as ec2, aws_ecs as ecs, aws_ecs_patterns as ecs_patterns, aws_ecr_assets as ecr_assets
+from aws_cdk import (
+    aws_ec2 as ec2,
+    aws_ecs as ecs,
+    aws_ecs_patterns as ecs_patterns,
+    aws_ecr_assets as ecr_assets,
+    aws_cloudfront as cloudfront,
+    aws_cloudfront_origins as origins,
+)
 from constructs import Construct
 
 
@@ -42,4 +49,20 @@ class FrontendHosting(Construct):
             assign_public_ip=True,
         )
 
-        self.url = self.service.load_balancer.load_balancer_dns_name
+        # CloudFront distribution in front of ALB
+        self.distribution = cloudfront.Distribution(
+            self,
+            "Distribution",
+            default_behavior=cloudfront.BehaviorOptions(
+                origin=origins.LoadBalancerV2Origin(
+                    self.service.load_balancer,
+                    protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+                ),
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER,
+            ),
+        )
+
+        self.url = self.distribution.distribution_domain_name

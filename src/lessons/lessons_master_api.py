@@ -18,7 +18,7 @@ def handler(event, context):
             return {
                 "statusCode": 200,
                 "headers": {
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Allow-Methods": "GET, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type",
                 },
@@ -42,7 +42,7 @@ def handler(event, context):
 
         return {
             "statusCode": 404,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": "Not found"}),
         }
 
@@ -50,7 +50,7 @@ def handler(event, context):
         print(f"Error: {str(e)}")
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -98,7 +98,7 @@ def get_project_types():
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"projectTypes": project_types}),
         }
 
@@ -119,13 +119,13 @@ def get_lessons_by_type(project_type):
 
             return {
                 "statusCode": 200,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(data),
             }
         except s3.exceptions.NoSuchKey:
             return {
                 "statusCode": 200,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {"projectType": project_type, "lastUpdated": "", "lessons": []}
                 ),
@@ -152,7 +152,7 @@ def get_master_conflicts(project_type):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"conflicts": pending}),
         }
 
@@ -160,7 +160,7 @@ def get_master_conflicts(project_type):
         print(f"Error getting master conflicts: {str(e)}")
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -182,7 +182,7 @@ def resolve_master_conflict(event, conflict_id):
         if not project_type:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "project_type required"}),
             }
 
@@ -203,7 +203,7 @@ def resolve_master_conflict(event, conflict_id):
             print(f"Conflict {conflict_id} not found in conflicts")
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Conflict not found"}),
             }
 
@@ -257,7 +257,7 @@ def resolve_master_conflict(event, conflict_id):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"message": "Conflict resolved"}),
         }
 
@@ -265,7 +265,7 @@ def resolve_master_conflict(event, conflict_id):
         print(f"Error resolving master conflict: {str(e)}")
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -273,6 +273,6 @@ def resolve_master_conflict(event, conflict_id):
         print(f"Error resolving master conflict: {str(e)}")
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }

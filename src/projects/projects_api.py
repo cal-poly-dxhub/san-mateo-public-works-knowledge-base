@@ -55,7 +55,7 @@ def handler(event, context):
             return {
                 "statusCode": 200,
                 "headers": {
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
                 },
@@ -64,14 +64,14 @@ def handler(event, context):
 
         return {
             "statusCode": 404,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": "Not found"}),
         }
 
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -159,7 +159,7 @@ def get_projects_list(bucket_name, checklist_type="design", limit=50, offset=0):
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
             },
             "body": json.dumps({
                 "projects": paginated_projects,
@@ -171,7 +171,7 @@ def get_projects_list(bucket_name, checklist_type="design", limit=50, offset=0):
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -237,14 +237,14 @@ def get_project_detail(bucket_name, project_name):
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
             },
             "body": json.dumps(project_detail),
         }
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -311,7 +311,7 @@ def delete_project(project_name, bucket_name):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps(
                 {"message": f"Project {project_name} deleted successfully"}
             ),
@@ -319,7 +319,7 @@ def delete_project(project_name, bucket_name):
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -334,7 +334,7 @@ def create_project(event, bucket_name):
         if not project_name:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "project_name is required"}),
             }
 
@@ -360,7 +360,7 @@ def create_project(event, bucket_name):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps(
                 {"message": f"Project {project_name} created successfully"}
             ),
@@ -368,7 +368,7 @@ def create_project(event, bucket_name):
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -380,13 +380,13 @@ def get_project_types(bucket_name):
         data = json.loads(response["Body"].read().decode("utf-8"))
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps(data),
         }
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -403,7 +403,7 @@ def upload_document(event, bucket_name, project_name):
         if not filename or not content:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "filename and content are required"}),
             }
 
@@ -436,7 +436,7 @@ def upload_document(event, bucket_name, project_name):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps(
                 {
                     "message": f"Document {filename} uploaded successfully",
@@ -447,7 +447,7 @@ def upload_document(event, bucket_name, project_name):
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -462,7 +462,7 @@ def upload_general_document(event, bucket_name):
         if not filename or not content:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "filename and content are required"}),
             }
 
@@ -475,7 +475,7 @@ def upload_general_document(event, bucket_name):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps(
                 {
                     "message": f"Document {filename} uploaded successfully",
@@ -486,6 +486,6 @@ def upload_general_document(event, bucket_name):
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }

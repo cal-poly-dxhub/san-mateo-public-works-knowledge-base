@@ -14,7 +14,8 @@ def handler(event, context):
 
         # Cognito authorization is handled by API Gateway
         if path.startswith("/file/"):
-            file_path = path.replace            return get_file_content(bucket_name, file_path)
+            file_path = path.replace("/file/", "", 1)
+            return get_file_content(bucket_name, file_path)
 
         elif path.startswith("/upload-url") and method == "POST":
             return generate_upload_url(event, bucket_name)
@@ -23,7 +24,8 @@ def handler(event, context):
             return {
                 "statusCode": 200,
                 "headers": {
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                    "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
                 },
@@ -32,14 +34,14 @@ def handler(event, context):
 
         return {
             "statusCode": 404,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": "Not found"}),
         }
 
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -61,20 +63,21 @@ def get_file_content(bucket_name, file_path):
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                "Access-Control-Allow-Credentials": "true",
             },
             "body": json.dumps({"url": presigned_url}),
         }
     except s3_client.exceptions.NoSuchKey:
         return {
             "statusCode": 404,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": "File not found"}),
         }
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -89,7 +92,7 @@ def generate_upload_url(event, bucket_name):
         if not file_name or not project_id:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "fileName and projectId are required"}),
             }
 
@@ -107,13 +110,14 @@ def generate_upload_url(event, bucket_name):
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                "Access-Control-Allow-Credentials": "true",
             },
             "body": json.dumps({"uploadUrl": presigned_url, "s3Key": s3_key}),
         }
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }

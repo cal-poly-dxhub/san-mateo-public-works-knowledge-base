@@ -26,7 +26,7 @@ def handler(event, context):
 
     return {
         "statusCode": 404,
-        "headers": {"Access-Control-Allow-Origin": "*"},
+        "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
         "body": json.dumps({"error": "Not found"}),
     }
 
@@ -351,7 +351,7 @@ def get_lessons(event):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps(lessons_data),
         }
 
@@ -363,7 +363,7 @@ def get_lessons(event):
 def error_response(message):
     return {
         "statusCode": 500,
-        "headers": {"Access-Control-Allow-Origin": "*"},
+        "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
         "body": json.dumps({"error": message}),
     }
 
@@ -385,7 +385,7 @@ def get_conflicts(event):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"conflicts": pending}),
         }
 
@@ -459,7 +459,7 @@ def resolve_conflict(event):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"message": "Conflict resolved"}),
         }
 

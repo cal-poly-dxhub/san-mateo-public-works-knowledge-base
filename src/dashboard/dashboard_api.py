@@ -24,7 +24,7 @@ def handler(event, context):
             if not project_name or not filename:
                 return {
                     "statusCode": 400,
-                    "headers": {"Access-Control-Allow-Origin": "*"},
+                    "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                     "body": json.dumps({"error": "Missing project name or filename"}),
                 }
 
@@ -34,7 +34,7 @@ def handler(event, context):
             return {
                 "statusCode": 200,
                 "headers": {
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
                 },
@@ -43,14 +43,14 @@ def handler(event, context):
 
         return {
             "statusCode": 404,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": "Not found"}),
         }
 
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -67,7 +67,7 @@ def get_asset_file(project_name, filename):
         return {
             "statusCode": 200,
             "headers": {
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
                 "Content-Type": "text/plain",
             },
             "body": content,
@@ -75,13 +75,13 @@ def get_asset_file(project_name, filename):
     except s3_client.exceptions.NoSuchKey:
         return {
             "statusCode": 404,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": "Asset not found"}),
         }
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -96,13 +96,13 @@ def get_available_models():
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
             },
             "body": json.dumps(models),
         }
     except Exception as e:
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }

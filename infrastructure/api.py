@@ -1,4 +1,3 @@
-from aws_cdk import Fn
 from aws_cdk import aws_apigateway as apigateway
 from constructs import Construct
 
@@ -22,7 +21,7 @@ class APIGateway(Construct):
         # API Gateway
         cors_origins = []
         if frontend_url:
-            cors_origins.append(Fn.lower(frontend_url))
+            cors_origins.append(frontend_url)
 
         self.api = apigateway.RestApi(
             self,

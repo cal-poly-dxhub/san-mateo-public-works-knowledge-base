@@ -28,7 +28,7 @@ def handler(event, context):
             return {
                 "statusCode": 200,
                 "headers": {
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, OPTIONS",
                     "Access-Control-Allow-Headers": "Content-Type",
                 },
@@ -79,7 +79,7 @@ def handler(event, context):
 
         return {
             "statusCode": 404,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": "Not found"}),
         }
 
@@ -87,7 +87,7 @@ def handler(event, context):
         print(f"Error: {str(e)}")
         return {
             "statusCode": 500,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"error": str(e)}),
         }
 
@@ -105,7 +105,7 @@ def get_checklist(project_name, checklist_type="design"):
         if "Item" not in config_response:
             return {
                 "statusCode": 200,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {
                         "tasks": [],
@@ -173,7 +173,7 @@ def get_checklist(project_name, checklist_type="design"):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps(
                 {
                     "tasks": tasks,
@@ -209,7 +209,7 @@ def update_task(
         if not response["Items"]:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Project not found"}),
             }
 
@@ -223,7 +223,7 @@ def update_task(
         if "Item" not in task_response:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Task not found"}),
             }
 
@@ -263,7 +263,7 @@ def update_task(
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"message": "Task updated"}),
         }
 
@@ -307,7 +307,7 @@ def update_metadata(project_name, metadata):
         if not response["Items"]:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Project not found"}),
             }
 
@@ -323,7 +323,7 @@ def update_metadata(project_name, metadata):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"message": "Metadata updated"}),
         }
 
@@ -346,7 +346,7 @@ def add_task(project_name, task_data):
         if not response["Items"]:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Project not found"}),
             }
 
@@ -357,14 +357,14 @@ def add_task(project_name, task_data):
         if not task_number:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Task ID is required"}),
             }
 
         if not is_valid_task_id(task_number):
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {
                         "error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"
@@ -381,7 +381,7 @@ def add_task(project_name, task_data):
         if "Item" in existing_task:
             return {
                 "statusCode": 409,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {"error": f"Task ID '{task_number}' already exists"}
                 ),
@@ -391,7 +391,7 @@ def add_task(project_name, task_data):
         if projected_date and not is_valid_date(projected_date):
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {"error": "Projected date must be in YYYY-MM-DD format"}
                 ),
@@ -415,7 +415,7 @@ def add_task(project_name, task_data):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"message": "Task added", "task_id": task_id}),
         }
     except Exception as e:
@@ -437,7 +437,7 @@ def delete_task(project_name, task_id):
         if not response["Items"]:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Project not found"}),
             }
 
@@ -449,7 +449,7 @@ def delete_task(project_name, task_id):
         if "Item" not in existing:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Task not found"}),
             }
 
@@ -457,7 +457,7 @@ def delete_task(project_name, task_id):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"message": "Task deleted"}),
         }
     except Exception as e:
@@ -479,7 +479,7 @@ def edit_task(project_name, task_data):
         if not response["Items"]:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Project not found"}),
             }
 
@@ -491,7 +491,7 @@ def edit_task(project_name, task_data):
         if not task_id:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Task ID is required"}),
             }
 
@@ -502,21 +502,21 @@ def edit_task(project_name, task_data):
         if "Item" not in existing_task:
             return {
                 "statusCode": 404,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Task not found"}),
             }
 
         if not new_task_number:
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps({"error": "Task ID is required"}),
             }
 
         if not is_valid_task_id(new_task_number):
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {
                         "error": "Task ID must contain only letters, numbers, dashes, underscores, and periods"
@@ -534,7 +534,7 @@ def edit_task(project_name, task_data):
             if "Item" in duplicate_check:
                 return {
                     "statusCode": 409,
-                    "headers": {"Access-Control-Allow-Origin": "*"},
+                    "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                     "body": json.dumps(
                         {"error": f"Task ID '{new_task_number}' already exists"}
                     ),
@@ -547,7 +547,7 @@ def edit_task(project_name, task_data):
         if projected_date and not is_valid_date(projected_date):
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {"error": "Projected date must be in YYYY-MM-DD format"}
                 ),
@@ -556,7 +556,7 @@ def edit_task(project_name, task_data):
         if actual_date and not is_valid_date(actual_date):
             return {
                 "statusCode": 400,
-                "headers": {"Access-Control-Allow-Origin": "*"},
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
                 "body": json.dumps(
                     {"error": "Actual date must be in YYYY-MM-DD format"}
                 ),
@@ -604,7 +604,7 @@ def edit_task(project_name, task_data):
 
         return {
             "statusCode": 200,
-            "headers": {"Access-Control-Allow-Origin": "*"},
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
             "body": json.dumps({"message": "Task updated", "task_id": new_task_id}),
         }
     except Exception as e:
