@@ -40,12 +40,12 @@ s3_paths:
   project_documents: "documents/projects/{project_name}"
   project_lessons_json: "documents/projects/{project_name}/lessons-learned.json"
   project_lessons_txt: "documents/projects/{project_name}/lessons-learned.txt"
-  
+
   # Project metadata and configuration
   projects_prefix: "projects"
   project_metadata: "projects/{project_name}/metadata.json"
   project_checklist: "projects/{project_name}/checklist.json"
-  
+
   # Master lessons by type
   master_lessons_prefix: "lessons-learned"
   master_lessons_by_type: "lessons-learned/{project_type}/lessons.json"
@@ -57,7 +57,7 @@ knowledge_base:
   data_source_name: "project-documents"
   chunk_size_tokens: 512
   overlap_tokens: 64
-  vector_dimension: 1024  # Must match embedding model (Titan v2 = 1024)
+  vector_dimension: 1024 # Must match embedding model (Titan v2 = 1024)
 
 # API Gateway configuration
 api_gateway:
@@ -66,7 +66,7 @@ api_gateway:
     burst_limit: 1000
   quota:
     limit: 100000
-    period: "DAY"  # DAY, WEEK, MONTH
+    period: "DAY" # DAY, WEEK, MONTH
 
 # Project configuration
 project:
@@ -87,21 +87,22 @@ project:
 
 prompts:
   retrieve_and_generate: |
-    You are an experienced Public Works senior engineer assistant.
-    
+    You are an experienced Public Works engineer assistant.
+
     Use the provided context to answer the user's question accurately and helpfully.
-    
+
     Context:
     $search_results
-    
+
     User Question: $input
-    
+
     Provide a clear, specific answer that:
     1. Directly addresses the question
     2. References relevant regulations or procedures
     3. Suggests next steps when applicable
     4. Warns about common issues
-    
+    5. If there is a section number, cite it at the bottom of the page.
+
     Be concise but thorough.
 
   project_setup_wizard: |
