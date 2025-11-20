@@ -1,5 +1,7 @@
 import aws_cdk as cdk
-from aws_cdk import aws_dynamodb as dynamodb, aws_s3 as s3, aws_s3_notifications as s3n
+from aws_cdk import aws_dynamodb as dynamodb
+from aws_cdk import aws_s3 as s3
+from aws_cdk import aws_s3_notifications as s3n
 from constructs import Construct
 
 
@@ -12,6 +14,7 @@ class StorageResources(Construct):
             self,
             "project-management-data",
             removal_policy=cdk.RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
             versioned=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
             cors=[
@@ -71,10 +74,14 @@ class StorageResources(Construct):
         self.bucket.add_event_notification(
             s3.EventType.OBJECT_CREATED,
             s3n.LambdaDestination(lessons_sync_lambda),
-            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json"),
+            s3.NotificationKeyFilter(
+                prefix="projects/", suffix="/lessons.json"
+            ),
         )
         self.bucket.add_event_notification(
             s3.EventType.OBJECT_REMOVED,
             s3n.LambdaDestination(lessons_sync_lambda),
-            s3.NotificationKeyFilter(prefix="projects/", suffix="/lessons.json"),
+            s3.NotificationKeyFilter(
+                prefix="projects/", suffix="/lessons.json"
+            ),
         )
