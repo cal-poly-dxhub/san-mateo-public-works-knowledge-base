@@ -1,10 +1,16 @@
 import { fetchAuthSession } from 'aws-amplify/auth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-
-if (!API_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL environment variable is required");
-}
+const getApiUrl = () => {
+  const url = typeof window !== 'undefined'
+    ? (window as any).__RUNTIME_CONFIG__?.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL
+    : process.env.NEXT_PUBLIC_API_URL;
+  
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_API_URL environment variable is required");
+  }
+  
+  return url.replace(/\/$/, "");
+};
 
 export async function apiRequest(
   endpoint: string,
@@ -31,7 +37,7 @@ export async function apiRequest(
     throw new Error("Not authenticated");
   }
 
-  const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
+  const url = `${getApiUrl()}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
 
   const response = await fetch(url, {
     ...options,

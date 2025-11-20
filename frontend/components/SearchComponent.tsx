@@ -69,9 +69,6 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
     return source.source;
   };
 
-  useEffect(() => {
-  }, [apiKey]);
-
   const loadAvailableModels = async () => {
     try {
       const data = await apiRequest("/models");

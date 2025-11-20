@@ -85,9 +85,6 @@ export default function Home() {
     loadProjects();
   }, [refreshTrigger, checklistType, currentPage]);
 
-  useEffect(() => {
-  }, [apiKey]);
-
   const loadAvailableModels = async () => {
     try {
       const data = await apiRequest("/models");

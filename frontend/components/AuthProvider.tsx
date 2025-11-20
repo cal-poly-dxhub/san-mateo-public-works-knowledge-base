@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, configureAmplify } from '@/lib/auth';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,6 +11,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    configureAmplify();
+    
     getCurrentUser()
       .then(() => {
         setIsAuthenticated(true);

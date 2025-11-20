@@ -73,9 +73,6 @@ export default function ProjectPage() {
     }
   }, [params.name]);
 
-  useEffect(() => {
-  }, [apiKey]);
-
   const loadAvailableModels = async () => {
     try {
       const data = await apiRequest("/models");

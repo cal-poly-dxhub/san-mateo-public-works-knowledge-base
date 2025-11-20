@@ -51,12 +51,7 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
   const openSourceFile = async (filename: string) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/file/projects/${encodeURIComponent(projectName)}/documents/${encodeURIComponent(filename)}`,
-        {
-          headers: {
-            'x-api-key': apiKey
-          }
-        }
+        `${process.env.NEXT_PUBLIC_API_URL}/file/projects/${encodeURIComponent(projectName)}/documents/${encodeURIComponent(filename)}`
       );
       if (!response.ok) throw new Error('File not found');
       const data = await response.json();
