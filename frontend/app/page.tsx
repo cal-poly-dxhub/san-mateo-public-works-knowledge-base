@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, LayoutGrid, List, LogOut } from "lucide-react";
-import { signOut } from "aws-amplify/auth";
+import { Search, LayoutGrid, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -113,15 +112,6 @@ export default function Home() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
-
   const handleProjectClick = (projectName: string) => {
     router.push(`/project/${encodeURIComponent(projectName)}`);
   };
@@ -210,15 +200,6 @@ export default function Home() {
       <header className="border-b bg-card shadow-sm mb-8">
         <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
           <h1 className="text-2xl font-semibold">Projects</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="text-red-600 hover:text-red-700"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
         </div>
       </header>
 

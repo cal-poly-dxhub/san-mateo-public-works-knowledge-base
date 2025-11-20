@@ -3,9 +3,13 @@
 import * as React from "react";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
+import { Button } from "./ui/button";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "aws-amplify/auth";
+import { LogOut } from "lucide-react";
 
 function ChecklistToggle() {
   const [checklistType, setChecklistType] = useState<"design" | "construction">("design");
@@ -49,6 +53,17 @@ function ChecklistToggle() {
 }
 
 export default function Header() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   return (
     <nav className="bg-secondary w-full p-3 flex justify-between items-center">
       <div className="flex items-center gap-8">
@@ -72,6 +87,15 @@ export default function Header() {
           <ChecklistToggle />
         </div>
       </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleLogout}
+        className="text-red-600 hover:text-red-700"
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        Logout
+      </Button>
     </nav>
   );
 }
