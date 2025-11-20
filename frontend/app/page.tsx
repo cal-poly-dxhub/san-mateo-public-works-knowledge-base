@@ -60,14 +60,18 @@ export default function Home() {
   const [projects, setProjects] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
-  const [sortBy, setSortBy] = useState<"alphabetical" | "progress" | "date">("alphabetical");
-  const [checklistType, setChecklistType] = useState<"design" | "construction">(() => {
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('checklist-type');
-      return (stored as "design" | "construction") || "design";
-    }
-    return "design";
-  });
+  const [sortBy, setSortBy] = useState<"alphabetical" | "progress" | "date">(
+    "alphabetical",
+  );
+  const [checklistType, setChecklistType] = useState<"design" | "construction">(
+    () => {
+      if (typeof window !== "undefined") {
+        const stored = sessionStorage.getItem("checklist-type");
+        return (stored as "design" | "construction") || "design";
+      }
+      return "design";
+    },
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const projectsPerPage = 12;
   const [totalProjects, setTotalProjects] = useState(0);
@@ -76,9 +80,16 @@ export default function Home() {
     const handleChecklistTypeChange = (event: CustomEvent) => {
       setChecklistType(event.detail);
     };
-    
-    window.addEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
-    return () => window.removeEventListener('checklistTypeChange', handleChecklistTypeChange as EventListener);
+
+    window.addEventListener(
+      "checklistTypeChange",
+      handleChecklistTypeChange as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "checklistTypeChange",
+        handleChecklistTypeChange as EventListener,
+      );
   }, []);
 
   useEffect(() => {
@@ -103,8 +114,16 @@ export default function Home() {
   const loadProjects = async () => {
     try {
       const offset = (currentPage - 1) * projectsPerPage;
-      const data = await apiRequest(`/projects?type=${checklistType}&limit=${projectsPerPage}&offset=${offset}`);
-      setProjects(Array.isArray(data.projects) ? data.projects : Array.isArray(data) ? data : []);
+      const data = await apiRequest(
+        `/projects?type=${checklistType}&limit=${projectsPerPage}&offset=${offset}`,
+      );
+      setProjects(
+        Array.isArray(data.projects)
+          ? data.projects
+          : Array.isArray(data)
+            ? data
+            : [],
+      );
       setTotalProjects(data.total || (Array.isArray(data) ? data.length : 0));
     } catch (error) {
       console.error("Error loading projects:", error);
@@ -169,18 +188,26 @@ export default function Home() {
       sorted.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === "progress") {
       sorted.sort((a, b) => {
-        const progressA = a.task_progress?.total ? (a.task_progress.completed / a.task_progress.total) : 0;
-        const progressB = b.task_progress?.total ? (b.task_progress.completed / b.task_progress.total) : 0;
+        const progressA = a.task_progress?.total
+          ? a.task_progress.completed / a.task_progress.total
+          : 0;
+        const progressB = b.task_progress?.total
+          ? b.task_progress.completed / b.task_progress.total
+          : 0;
         return progressB - progressA;
       });
     } else if (sortBy === "date") {
       sorted.sort((a, b) => {
-        const dateA = new Date(a.next_task?.projected_date || "9999-12-31").getTime();
-        const dateB = new Date(b.next_task?.projected_date || "9999-12-31").getTime();
+        const dateA = new Date(
+          a.next_task?.projected_date || "9999-12-31",
+        ).getTime();
+        const dateB = new Date(
+          b.next_task?.projected_date || "9999-12-31",
+        ).getTime();
         return dateA - dateB;
       });
     }
-    
+
     return sorted;
   };
 
@@ -206,167 +233,179 @@ export default function Home() {
       </header>
 
       <div className="p-4">
-      <div className="mb-8">
-        <SearchComponent placeholder="Ask the AI Assistant: regulations, templates, timelines..." />
-      </div>
+        <div className="mb-8">
+          <SearchComponent placeholder="Ask the AI Assistant: regulations, templates, timelines..." />
+        </div>
 
-      <div className="flex gap-4 mb-8 justify-between items-center">
-        <div className="flex gap-4">
-        <Button
-          variant="secondary"
-          onClick={() => setCreateProjectOpen(true)}
-        >
-          Create Project
-        </Button>
-        <KBSyncButton />
-
-        {currentBatchId && (
-          <Button variant="outline" onClick={() => setBatchStatusOpen(true)}>
-            View Batch Status
+        <div className="flex gap-4 mb-8 justify-between items-center">
+          <div className="flex gap-4">
+            <Button
+              variant="secondary"
+              onClick={() => setCreateProjectOpen(true)}
+            >
+              Create Project
             </Button>
-          )}
-        </div>
-        
-        <div className="flex gap-2 items-center">
-          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="alphabetical">Alphabetical</SelectItem>
-              <SelectItem value="progress">Progress (High to Low)</SelectItem>
-              <SelectItem value="date">Earliest Date</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("grid")}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("list")}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+          </div>
 
-      {projects.length === 0 ? (
-        <div className="text-center py-16">
-          <h2 className="text-2xl font-semibold mb-4">No projects found</h2>
-          <p className="text-muted-foreground">
-            Upload a video to create your first project
-          </p>
+          <div className="flex gap-2 items-center">
+            <Select
+              value={sortBy}
+              onValueChange={(value: any) => setSortBy(value)}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                <SelectItem value="progress">Progress (High to Low)</SelectItem>
+                <SelectItem value="date">Earliest Date</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant={viewMode === "grid" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {getSortedProjects().map((project) => (
-            <ProjectCard
-              key={project.name}
-              project={project}
-              onClick={() => handleProjectClick(project.name)}
-              onDelete={loadProjects}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {getSortedProjects().map((project) => {
-            const isExpanded = expandedTasks.has(project.name);
-            const taskText = project.next_task?.text || "";
-            const shouldTruncate = taskText.length > 60;
-            
-            return (
-              <div
+
+        {projects.length === 0 ? (
+          <div className="text-center py-16">
+            <h2 className="text-2xl font-semibold mb-4">No projects found</h2>
+            <p className="text-muted-foreground">
+              Upload a video to create your first project
+            </p>
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {getSortedProjects().map((project) => (
+              <ProjectCard
                 key={project.name}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                project={project}
                 onClick={() => handleProjectClick(project.name)}
-              >
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <h3 className="font-semibold truncate">{project.name}</h3>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {project.task_progress?.completed || 0}/{project.task_progress?.total || 0}
-                      </span>
-                    </div>
-                    {project.next_task && (
-                      <div className="text-xs text-primary">
-                        <span className="font-medium">{project.next_task.number}:</span> {isExpanded || !shouldTruncate ? taskText : `${taskText.substring(0, 60)}...`}
-                        {shouldTruncate && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedTasks(prev => {
-                                const next = new Set(prev);
-                                if (next.has(project.name)) {
-                                  next.delete(project.name);
-                                } else {
-                                  next.add(project.name);
-                                }
-                                return next;
-                              });
-                            }}
-                            className="ml-1 underline hover:no-underline"
-                          >
-                            {isExpanded ? "less" : "more"}
-                          </button>
-                        )}
-                        <span className="text-muted-foreground ml-1">• Projected: {project.next_task.projected_date || "None"}</span>
+                onDelete={loadProjects}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {getSortedProjects().map((project) => {
+              const isExpanded = expandedTasks.has(project.name);
+              const taskText = project.next_task?.text || "";
+              const shouldTruncate = taskText.length > 60;
+
+              return (
+                <div
+                  key={project.name}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                  onClick={() => handleProjectClick(project.name)}
+                >
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <h3 className="font-semibold truncate">
+                          {project.name}
+                        </h3>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {project.task_progress?.completed || 0}/
+                          {project.task_progress?.total || 0}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-lg font-semibold">
-                      {project.task_progress?.total 
-                        ? Math.round((project.task_progress.completed / project.task_progress.total) * 100)
-                        : 0}%
+                      {project.next_task && (
+                        <div className="text-xs text-primary">
+                          <span className="font-medium">
+                            {project.next_task.number}:
+                          </span>{" "}
+                          {isExpanded || !shouldTruncate
+                            ? taskText
+                            : `${taskText.substring(0, 60)}...`}
+                          {shouldTruncate && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedTasks((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(project.name)) {
+                                    next.delete(project.name);
+                                  } else {
+                                    next.add(project.name);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className="ml-1 underline hover:no-underline"
+                            >
+                              {isExpanded ? "less" : "more"}
+                            </button>
+                          )}
+                          <span className="text-muted-foreground ml-1">
+                            • Projected:{" "}
+                            {project.next_task.projected_date || "None"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-lg font-semibold">
+                        {project.task_progress?.total
+                          ? Math.round(
+                              (project.task_progress.completed /
+                                project.task_progress.total) *
+                                100,
+                            )
+                          : 0}
+                        %
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
 
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          <span className="flex items-center px-4">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-8">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="flex items-center px-4">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
 
-      <CreateProjectDialog
-        open={createProjectOpen}
-        onOpenChange={setCreateProjectOpen}
-        onProjectCreated={handleProjectCreated}
-      />
+        <CreateProjectDialog
+          open={createProjectOpen}
+          onOpenChange={setCreateProjectOpen}
+          onProjectCreated={handleProjectCreated}
+        />
 
-      <BatchStatusDialog
-        open={batchStatusOpen}
-        onOpenChange={setBatchStatusOpen}
-        batchId={currentBatchId}
-      />
+        <BatchStatusDialog
+          open={batchStatusOpen}
+          onOpenChange={setBatchStatusOpen}
+          batchId={currentBatchId}
+        />
       </div>
     </div>
   );
