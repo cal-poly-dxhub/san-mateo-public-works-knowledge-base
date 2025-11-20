@@ -121,6 +121,7 @@ class ComputeResources(Construct):
             handler="checklist_api.handler",
             code=_lambda.Code.from_asset("./src/checklist"),
             timeout=Duration.seconds(30),
+            layers=[self.common_layer],
             environment={
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
@@ -134,6 +135,7 @@ class ComputeResources(Construct):
             handler="global_checklist_manager.handler",
             code=_lambda.Code.from_asset("./src/checklist"),
             timeout=Duration.seconds(60),
+            layers=[self.common_layer],
             environment={
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
@@ -177,6 +179,7 @@ class ComputeResources(Construct):
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "PROJECT_WIZARD_LAMBDA_NAME": self.wizard_lambda.function_name,
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
+                "LESSONS_PROCESSOR_LAMBDA_NAME": self.async_lessons_processor.function_name,
             },
         )
 
