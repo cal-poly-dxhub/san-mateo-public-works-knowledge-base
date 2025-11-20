@@ -1,10 +1,18 @@
-import aws_cdk as cdk
 from aws_cdk import aws_apigateway as apigateway
 from constructs import Construct
 
 
 class APIGateway(Construct):
-    def __init__(self, scope: Construct, construct_id: str, config: dict, compute, auth, frontend_url: str = None, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        config: dict,
+        compute,
+        auth,
+        frontend_url: str = None,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         api_config = config.get("api_gateway", {})
@@ -14,7 +22,7 @@ class APIGateway(Construct):
         cors_origins = ["http://localhost:3000"]
         if frontend_url:
             cors_origins.append(frontend_url)
-        
+
         self.api = apigateway.RestApi(
             self,
             "api",
@@ -44,7 +52,7 @@ class APIGateway(Construct):
             "usage-plan",
             throttle=apigateway.ThrottleSettings(
                 rate_limit=throttle_config.get("rate_limit", 100),
-                burst_limit=throttle_config.get("burst_limit", 200)
+                burst_limit=throttle_config.get("burst_limit", 200),
             ),
         )
 
@@ -290,7 +298,9 @@ class APIGateway(Construct):
         # Files
         file = self.api.root.add_resource("file")
         file_proxy = file.add_proxy(
-            default_integration=apigateway.LambdaIntegration(compute.files_lambda),
+            default_integration=apigateway.LambdaIntegration(
+                compute.files_lambda
+            ),
             any_method=False,
         )
         file_proxy.add_method(

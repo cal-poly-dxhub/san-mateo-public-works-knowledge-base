@@ -90,7 +90,10 @@ class IAMPermissions(Construct):
         compute.projects_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["lambda:InvokeFunction"],
-                resources=[compute.wizard_lambda.function_arn],
+                resources=[
+                    compute.wizard_lambda.function_arn,
+                    compute.async_lessons_processor.function_arn,
+                ],
             )
         )
 
