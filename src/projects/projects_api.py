@@ -425,7 +425,8 @@ def upload_document(event, bucket_name, project_name):
                         InvocationType="Event",
                         Payload=json.dumps(
                             {
-                                "s3_key": s3_key,
+                                "content": content,
+                                "filename": filename,
                                 "project_name": project_name,
                                 "project_type": project_type,
                             }

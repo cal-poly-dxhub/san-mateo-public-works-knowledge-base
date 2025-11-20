@@ -182,7 +182,7 @@ def sync_to_all_projects():
                                 highest_completed[checklist_type] = task_num
 
             # Delete tasks not in global (if unchecked)
-            for item_id, task_item in project_tasks.items():
+            for item_id, task_item in project_tasks_map.items():
                 if (
                     item_id not in global_tasks
                     and task_item.get("status") != "completed"

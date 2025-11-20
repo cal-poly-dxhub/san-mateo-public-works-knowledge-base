@@ -10,6 +10,20 @@ def handler(event, context):
     Handle search requests for the knowledge base
     """
     try:
+        # Handle OPTIONS for CORS preflight
+        method = event.get("httpMethod", "POST")
+        if method == "OPTIONS":
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
+                },
+                "body": "",
+            }
+
         # Parse request body
         body = json.loads(event.get("body", "{}"))
         query = body.get("query", "")
@@ -28,7 +42,8 @@ def handler(event, context):
                 "statusCode": 400,
                 "headers": {
                     "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                    "Access-Control-Allow-Credentials": "true",
                 },
                 "body": json.dumps({"error": "Query parameter is required"}),
             }
@@ -40,7 +55,8 @@ def handler(event, context):
                 "statusCode": 200,
                 "headers": {
                     "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                    "Access-Control-Allow-Credentials": "true",
                 },
                 "body": json.dumps(
                     {
@@ -58,7 +74,8 @@ def handler(event, context):
                 "statusCode": 200,
                 "headers": {
                     "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                    "Access-Control-Allow-Credentials": "true",
                 },
                 "body": json.dumps(
                     {
@@ -75,7 +92,8 @@ def handler(event, context):
             "statusCode": 500,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                "Access-Control-Allow-Credentials": "true",
             },
             "body": json.dumps({"error": "Internal server error"}),
         }
