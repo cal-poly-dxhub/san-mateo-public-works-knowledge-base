@@ -407,6 +407,24 @@ def upload_document(event, bucket_name, project_name):
                 "body": json.dumps({"error": "filename and content are required"}),
             }
 
+        # If project_type not provided, fetch from DynamoDB
+        if not project_type and extract_lessons:
+            try:
+                table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
+                if table_name:
+                    table = dynamodb.Table(table_name)
+                    response = table.query(
+                        IndexName="projectName-index",
+                        KeyConditionExpression="projectName = :name AND item_id = :config",
+                        ExpressionAttributeValues={":name": project_name, ":config": "config"},
+                    )
+                    if response.get("Items"):
+                        project_type = response["Items"][0].get("projectType", "other")
+                        print(f"Retrieved project_type from DynamoDB: {project_type}")
+            except Exception as e:
+                print(f"Warning: Could not fetch project_type from DynamoDB: {e}")
+                project_type = "other"
+
         # Save document to S3
         s3_key = f"documents/projects/{project_name}/{filename}"
         s3_client.put_object(
