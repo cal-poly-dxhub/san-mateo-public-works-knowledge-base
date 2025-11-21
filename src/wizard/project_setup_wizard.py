@@ -32,9 +32,10 @@ def handler(event, context):
             return {
                 "statusCode": 500,
                 "headers": {
-                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                    "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type",
+                    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
                 },
                 "body": json.dumps({"error": "Global checklist not initialized"}),
             }
@@ -72,9 +73,10 @@ def handler(event, context):
                 return {
                     "statusCode": 400,
                     "headers": {
-                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                        "Access-Control-Allow-Credentials": "true",
                         "Access-Control-Allow-Methods": "POST, OPTIONS",
-                        "Access-Control-Allow-Headers": "Content-Type",
+                        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
                     },
                     "body": json.dumps(
                         {"error": f'Project "{project_name}" already exists'}
@@ -123,9 +125,10 @@ def handler(event, context):
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                "Access-Control-Allow-Credentials": "true",
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
             },
             "body": json.dumps({"projectId": project_id, "config": project_config}),
         }
@@ -135,9 +138,10 @@ def handler(event, context):
         return {
             "statusCode": 500,
             "headers": {
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+                "Access-Control-Allow-Credentials": "true",
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
             },
             "body": json.dumps({"error": str(e)}),
         }

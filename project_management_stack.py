@@ -61,6 +61,7 @@ class ProjectManagementStack(Stack):
         frontend_origin = f"https://{frontend.url}"
         for lambda_func in [
             compute.projects_lambda,
+            compute.wizard_lambda,
             compute.dashboard_lambda,
             compute.lessons_lambda,
             compute.lessons_master_lambda,
