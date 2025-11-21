@@ -69,6 +69,7 @@ class ProjectManagementStack(Stack):
             compute.task_lambda,
             compute.files_lambda,
             compute.search_lambda,
+            compute.manual_sync_lambda,
         ]:
             lambda_func.add_environment("ALLOWED_ORIGIN", frontend_origin)
 

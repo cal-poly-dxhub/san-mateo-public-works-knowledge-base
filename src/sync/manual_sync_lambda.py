@@ -12,6 +12,13 @@ DATA_SOURCE_ID = os.environ.get("DATA_SOURCE_ID")
 def handler(event, context):
     """Manual Knowledge Base sync trigger with status checking."""
     
+    cors_headers = {
+        "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization",
+    }
+    
     # Get data source ID if not in env
     data_source_id = DATA_SOURCE_ID
     if not data_source_id:
@@ -21,6 +28,7 @@ def handler(event, context):
         except Exception as e:
             return {
                 "statusCode": 500,
+                "headers": cors_headers,
                 "body": json.dumps({"error": f"Failed to get data source: {str(e)}"})
             }
     
@@ -52,6 +60,7 @@ def handler(event, context):
             
             return {
                 "statusCode": 409,
+                "headers": cors_headers,
                 "body": json.dumps({
                     "message": "Sync already in progress",
                     "syncInProgress": True,
@@ -68,6 +77,7 @@ def handler(event, context):
         
         return {
             "statusCode": 200,
+            "headers": cors_headers,
             "body": json.dumps({
                 "message": "Sync started successfully",
                 "syncInProgress": False,
@@ -81,6 +91,7 @@ def handler(event, context):
         if error_code == "ConflictException":
             return {
                 "statusCode": 409,
+                "headers": cors_headers,
                 "body": json.dumps({
                     "message": "Sync already in progress",
                     "syncInProgress": True
@@ -89,5 +100,6 @@ def handler(event, context):
         
         return {
             "statusCode": 500,
+            "headers": cors_headers,
             "body": json.dumps({"error": f"Failed to sync: {str(e)}"})
         }
