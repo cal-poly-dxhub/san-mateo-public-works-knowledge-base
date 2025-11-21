@@ -55,6 +55,7 @@ Storage Layer
 
 ### Prerequisites
 - AWS Account with appropriate permissions
+- Docker
 - Node.js 18+ and npm
 - Python 3.9+
 - AWS CDK CLI (`npm install -g aws-cdk`)
@@ -80,7 +81,7 @@ Storage Layer
    ```
 
 4. **Configure settings**
-   
+
    Edit `config.yaml` to customize:
    - AI model selections
    - Project types and special conditions
@@ -92,69 +93,73 @@ Storage Layer
    cdk bootstrap  # First time only
    cdk deploy
    ```
-
-6. **Configure frontend environment**
-   
-   Create `frontend/.env.local`:
-   ```
-   NEXT_PUBLIC_API_URL=<your-api-gateway-url>
-   NEXT_PUBLIC_API_KEY=<your-api-key>
-   ```
-
-7. **Initialize Knowledge Base**
-   ```bash
-   python scripts/trigger_kb_creation.py
-   ```
-
-8. **Start the frontend**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-
 ## Configuration
 
 ### config.yaml
 
-The `config.yaml` file controls all AI models, prompts, and system behavior:
+The `config.yaml` file is the central configuration for all AI models, prompts, and system behavior. Edit this file to customize the system without changing code.
 
 **Models Section**
-- `primary_llm`: Main AI model for project setup and assistance
-- `lessons_extractor`: Fast model for extracting lessons from documents
-- `conflict_detector`: Model for detecting conflicting lessons
-- `embeddings`: Model for vector embeddings (used by Knowledge Base)
-- `available_search_models`: Models users can select in search UI
-
-**Knowledge Base Section**
-- `name`: Knowledge Base name (used to derive vector bucket and index names)
-- `data_source_name`: Name for the S3 data source
-- `chunk_size_tokens`: Token size for document chunking (default: 512)
-- `overlap_tokens`: Overlap between chunks (default: 64)
-- `vector_dimension`: Vector dimension (must match embedding model, Titan v2 = 1024)
+- `primary_llm`: Main AI model for project setup and assistance (Claude Sonnet 4)
+- `lessons_extractor`: Fast model for extracting lessons from documents (Llama 4 Maverick)
+- `conflict_detector`: Model for detecting conflicting lessons (Claude Sonnet 4)
+- `embeddings`: Model for vector embeddings (Titan Embed v2, 1024 dimensions)
+- `available_search_models`: Models users can select in search UI (Haiku, Sonnet, Llama, Nova)
 
 **S3 Paths Section**
-- Defines all S3 key patterns used throughout the system
-- **Important**: `documents/projects/` (for Knowledge Base) vs `projects/` (for metadata)
-- `documents_prefix`: Used by Knowledge Base for document ingestion
+Defines all S3 key patterns used throughout the system:
+- `documents_prefix`: "documents/projects" - Knowledge Base document storage
+- `project_documents`: "documents/projects/{project_name}" - Project-specific documents
+- `project_lessons_json/txt`: Lessons learned files in both formats
+- `projects_prefix`: "projects" - Project metadata (separate from documents)
+- `project_metadata`: "projects/{project_name}/metadata.json"
+- `project_checklist`: "projects/{project_name}/checklist.json"
+- `master_lessons_prefix`: "lessons-learned" - Aggregated lessons by type
+- `master_lessons_by_type`: "lessons-learned/{project_type}/lessons.json"
+- `master_conflicts_by_type`: Conflict tracking for master lessons
+
+**Important**: `documents/projects/` (Knowledge Base) and `projects/` (metadata) are different paths.
+
+**Knowledge Base Section**
+- `name`: "dpw-project-management-kb" - Knowledge Base identifier
+- `data_source_name`: "project-documents" - S3 data source name
+- `chunk_size_tokens`: 512 - Document chunk size for vector search
+- `overlap_tokens`: 64 - Overlap between chunks for context
+- `vector_dimension`: 1024 - Must match embedding model (Titan v2 = 1024)
+
+**API Gateway Section**
+- `throttle`: Rate limiting (500 req/sec, 1000 burst)
+- `quota`: Daily request limits (100,000 per day)
 
 **Project Section**
-- `types`: Available project types
-- `special_conditions`: Special conditions that can apply to projects
-- `max_document_length`: Maximum document size for processing
+- `max_document_length`: 100,000 characters
+- `types`: Reconstruction, Resurface, Slurry Seal, Drainage, Utilities, Other
+- `special_conditions`: Near coast, NFO area, Federal funding, Environmental sensitive, High traffic
 
 **Prompts Section**
-- Customizable prompts for all AI interactions
-- Use `{variable}` syntax for dynamic values
+Customizable prompts for all AI interactions:
+- `retrieve_and_generate`: RAG search responses
+- `project_setup_wizard`: New project configuration generation
+- `generate_task_checklist`: Task list generation
+- `ai_assistant_response`: General Q&A responses
+- `generate_document_template`: Document generation
+- `proactive_alert_check`: Issue detection and alerts
+- `estimate_timeline`: Timeline estimation
+
+Use `{variable}` or `$variable` syntax for dynamic values in prompts.
+
+**Templates Section**
+JSON templates for project configuration and task structure.
 
 ### Environment Variables
 
-See `ENV_VAR.md` for complete documentation of environment variables and consolidation opportunities.
+See `ENV_VAR.md` for complete documentation of environment variables.
 
-Key variables:
+Key variables set by CDK deployment:
 - `BUCKET_NAME`: S3 bucket for documents
 - `PROJECT_DATA_TABLE_NAME`: DynamoDB table name
 - `KB_ID`: Bedrock Knowledge Base ID
-- Model IDs for various AI tasks
+- Model IDs for various AI tasks (from config.yaml)
 
 ## Usage
 
@@ -230,41 +235,6 @@ Key variables:
 └── README.md             # This file
 ```
 
-## API Endpoints
-
-### Projects
-- `GET /projects` - List all projects
-- `POST /projects` - Create new project
-- `GET /projects/{name}` - Get project details
-- `PUT /projects/{name}` - Update project
-- `DELETE /projects/{name}` - Delete project
-
-### Checklists
-- `GET /projects/{name}/checklist` - Get project checklist
-- `PUT /projects/{name}/checklist` - Update checklist
-
-### Lessons (Project-Level)
-- `GET /projects/{name}/lessons` - Get project lessons
-- `POST /projects/{name}/lessons` - Add lesson
-- `PUT /projects/{name}/lessons/{id}` - Update lesson
-- `DELETE /projects/{name}/lessons/{id}` - Delete lesson
-- `GET /projects/{name}/conflicts` - Get pending conflicts
-- `POST /projects/{name}/conflicts/{id}/resolve` - Resolve conflict
-
-### Lessons (Master by Type)
-- `GET /lessons/project-types` - List all project types with counts
-- `GET /lessons/by-type/{type}` - Get master lessons for type
-- `GET /lessons/conflicts/by-type/{type}` - Get conflicts for type
-- `POST /lessons/conflicts/resolve/{id}` - Resolve master conflict
-
-### Search
-- `POST /search` - Search Knowledge Base with RAG
-- `GET /search/models` - Get available AI models
-
-### Documents
-- `POST /projects/{name}/documents` - Upload document
-- `GET /projects/{name}/documents` - List documents
-
 ## Development
 
 ### Running Tests
@@ -300,38 +270,6 @@ npm run dev
 - **Drainage**: Drainage improvement projects
 - **Utilities**: Utility coordination and installation
 - **Other**: Custom infrastructure projects
-
-## Troubleshooting
-
-### Knowledge Base Not Syncing
-1. Check `KB_ID` environment variable is set
-2. Verify S3 bucket permissions
-3. Run `python scripts/trigger_kb_creation.py`
-4. Check CloudWatch logs for sync Lambda
-
-### API Errors
-1. Verify API Gateway URL in frontend `.env.local`
-2. Check API key is valid
-3. Review Lambda function logs in CloudWatch
-4. Ensure DynamoDB table exists
-
-### Frontend Not Loading
-1. Check `NEXT_PUBLIC_API_URL` is set correctly
-2. Verify CORS settings in API Gateway
-3. Check browser console for errors
-4. Ensure API key is configured
-
-## Contributing
-
-1. Create a feature branch
-2. Make changes and test thoroughly
-3. Run code formatting: `ruff format`
-4. Run linting: `ruff check`
-5. Submit pull request
-
-## License
-
-[Your License Here]
 
 ## Support
 
