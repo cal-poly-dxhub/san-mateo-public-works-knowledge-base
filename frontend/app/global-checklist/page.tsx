@@ -191,11 +191,22 @@ export default function GlobalChecklistPage() {
       const result = await apiRequest("/global-checklist/sync", {
         method: "POST"
       });
-      alert(`Synced successfully: ${result.message}`);
+      
+      if (result.syncInProgress) {
+        alert(`Sync already in progress: ${result.message}`);
+      } else {
+        alert(`${result.message} (Job ID: ${result.jobId})`);
+      }
       setSyncConfirmOpen(false);
     } catch (error) {
       console.error("Error syncing:", error);
-      alert("Error syncing to projects");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (errorMessage.toLowerCase().includes("already") || errorMessage.toLowerCase().includes("active")) {
+        alert(`Sync already in progress: ${errorMessage}`);
+      } else {
+        alert(`Error syncing to projects: ${errorMessage}`);
+      }
     } finally {
       setSyncing(false);
     }

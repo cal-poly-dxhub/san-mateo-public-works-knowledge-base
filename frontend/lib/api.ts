@@ -58,5 +58,9 @@ export async function apiRequest(
     throw new Error(errorData.error || `API request failed: ${response.statusText}`);
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text) {
+    return {};
+  }
+  return JSON.parse(text);
 }
