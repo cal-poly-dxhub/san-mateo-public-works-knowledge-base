@@ -63,7 +63,7 @@ def test_02_create_project(api_timer):
     """Test project creation via setup wizard"""
     wizard_data = {
         "projectName": test_project_name,
-        "projectType": "Road Rehabilitation",
+        "projectType": "Reconstruction",
         "location": "Test Street",
         "areaSize": "1.0",
         "specialConditions": []
@@ -250,7 +250,7 @@ def test_12_concurrent_lesson_processing(api_timer):
         # Create race test project via wizard
         wizard_data = {
             "projectName": race_project,
-            "projectType": "Road Rehabilitation",
+            "projectType": "Drainage",
             "location": "Test",
             "areaSize": "1.0",
             "specialConditions": []
@@ -260,6 +260,7 @@ def test_12_concurrent_lesson_processing(api_timer):
         
         # Create debug test project
         wizard_data["projectName"] = debug_project
+        wizard_data["projectType"] = "Utilities"
         response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
         assert response.status_code == 200
         
@@ -386,7 +387,7 @@ def test_16_extract_lessons_from_document(api_timer):
         # Create project
         wizard_data = {
             "projectName": lesson_project,
-            "projectType": "Road Rehabilitation",
+            "projectType": "Resurface",
             "location": "Test",
             "areaSize": "1.0",
             "specialConditions": []
@@ -448,7 +449,7 @@ def test_17_lessons_markdown_sync(api_timer):
         # Create project
         wizard_data = {
             "projectName": md_project,
-            "projectType": "Road Rehabilitation",
+            "projectType": "Slurry Seal",
             "location": "Test",
             "areaSize": "1.0",
             "specialConditions": []
@@ -512,7 +513,7 @@ def test_18b_update_task_status(api_timer):
         # Create project
         wizard_data = {
             "projectName": put_test_project,
-            "projectType": "Road Rehabilitation",
+            "projectType": "Other",
             "location": "Test",
             "areaSize": "1.0",
             "specialConditions": []
@@ -600,7 +601,7 @@ def test_19_checklist_sync_to_projects(api_timer):
         # Create project
         wizard_data = {
             "projectName": sync_project,
-            "projectType": "Road Rehabilitation",
+            "projectType": "Reconstruction",
             "location": "Test",
             "areaSize": "1.0",
             "specialConditions": []
