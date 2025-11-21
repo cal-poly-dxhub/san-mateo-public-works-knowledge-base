@@ -4,10 +4,13 @@ import sys
 from datetime import datetime
 
 import boto3
+from boto3.dynamodb.types import TypeSerializer
 
 from db_utils import query_all_items
 
 dynamodb = boto3.resource("dynamodb")
+dynamodb_client = boto3.client("dynamodb")
+serializer = TypeSerializer()
 
 
 def handler(event, context):
@@ -124,7 +127,7 @@ def update_global_checklist(body, checklist_type="design"):
 
 
 def sync_to_all_projects():
-    """Sync global checklist changes to all projects"""
+    """Sync global checklist changes to all projects with optimizations"""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])
 
@@ -134,40 +137,53 @@ def sync_to_all_projects():
             ExpressionAttributeValues={":pid": "__GLOBAL__", ":task": "task#"},
         )
 
-        # Map by full item_id (task#type#number) for proper matching
         global_tasks = {item["item_id"]: item for item in global_response["Items"]}
-        global_version = (
-            global_response["Items"][0]["version"]
-            if global_response["Items"]
-            else datetime.utcnow().isoformat()
-        )
+        if not global_tasks:
+            return cors_response(200, {"message": "No global tasks to sync", "updates": 0})
+        
+        global_version = global_response["Items"][0]["version"]
 
-        # Get all projects using GSI
-        projects_response = table.query(
-            IndexName="item_id-index",
-            KeyConditionExpression="item_id = :config",
-            ExpressionAttributeValues={":config": "config"},
-        )
+        # Get all projects with pagination
+        projects = []
+        last_key = None
+        while True:
+            query_params = {
+                "IndexName": "item_id-index",
+                "KeyConditionExpression": "item_id = :config",
+                "ExpressionAttributeValues": {":config": "config"}
+            }
+            if last_key:
+                query_params["ExclusiveStartKey"] = last_key
+            
+            response = table.query(**query_params)
+            projects.extend([p["project_id"] for p in response.get("Items", []) if p["project_id"] != "__GLOBAL__"])
+            
+            last_key = response.get("LastEvaluatedKey")
+            if not last_key:
+                break
 
         updated_count = 0
-        for project in projects_response["Items"]:
-            project_id = project["project_id"]
-            if project_id == "__GLOBAL__":
-                continue
+        
+        def parse_task_id(task_id):
+            try:
+                return [int(x) for x in task_id.split(".")]
+            except:
+                return [999, 999]
 
-            # Get project tasks with pagination
-            project_tasks = query_all_items(
-                table,
+        for project_id in projects:
+            # Get project tasks - only query if needed
+            project_tasks_response = table.query(
                 KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
-                ExpressionAttributeValues={":pid": project_id, ":task": "task#"},
+                ExpressionAttributeValues={":pid": project_id, ":task": "task#"}
             )
-
+            
+            project_tasks = project_tasks_response.get("Items", [])
+            if not project_tasks and not global_tasks:
+                continue  # Skip if no tasks to sync
+            
             project_tasks_map = {item["item_id"]: item for item in project_tasks}
 
             # Find highest completed task per type
-            def parse_task_id(task_id):
-                return [int(x) for x in task_id.split(".")]
-
             highest_completed = {"design": None, "construction": None}
             for item_id, item in project_tasks_map.items():
                 if item.get("status") == "completed":
@@ -176,20 +192,23 @@ def sync_to_all_projects():
                         checklist_type = parts[1]
                         task_num = parts[2]
                         if checklist_type in highest_completed:
-                            if not highest_completed[checklist_type] or parse_task_id(
-                                task_num
-                            ) > parse_task_id(highest_completed[checklist_type]):
+                            if not highest_completed[checklist_type] or parse_task_id(task_num) > parse_task_id(highest_completed[checklist_type]):
                                 highest_completed[checklist_type] = task_num
 
+            # Batch delete and put operations
+            batch_items = []
+            
             # Delete tasks not in global (if unchecked)
             for item_id, task_item in project_tasks_map.items():
-                if (
-                    item_id not in global_tasks
-                    and task_item.get("status") != "completed"
-                ):
-                    table.delete_item(
-                        Key={"project_id": project_id, "item_id": item_id}
-                    )
+                if item_id not in global_tasks and task_item.get("status") != "completed":
+                    batch_items.append({
+                        "DeleteRequest": {
+                            "Key": {
+                                "project_id": {"S": project_id},
+                                "item_id": {"S": item_id}
+                            }
+                        }
+                    })
                     updated_count += 1
 
             # Add/update tasks from global
@@ -200,45 +219,54 @@ def sync_to_all_projects():
                 checklist_type = parts[1]
                 task_num = parts[2]
 
-                # Skip adding new tasks with IDs lower than highest completed for this type
-                if item_id not in project_tasks and highest_completed.get(
-                    checklist_type
-                ):
-                    if parse_task_id(task_num) < parse_task_id(
-                        highest_completed[checklist_type]
-                    ):
+                # Skip adding new tasks with IDs lower than highest completed
+                if item_id not in project_tasks_map and highest_completed.get(checklist_type):
+                    if parse_task_id(task_num) < parse_task_id(highest_completed[checklist_type]):
                         continue
 
+                item_data = {
+                    "project_id": project_id,
+                    "item_id": item_id,
+                    "taskData": global_task["taskData"],
+                    "global_version": global_version,
+                }
+                
                 if item_id in project_tasks_map:
-                    # Update only if unchecked
-                    if project_tasks_map[item_id].get("status") != "completed":
-                        table.update_item(
-                            Key={"project_id": project_id, "item_id": item_id},
-                            UpdateExpression="SET taskData = :data, global_version = :ver",
-                            ExpressionAttributeValues={
-                                ":data": global_task["taskData"],
-                                ":ver": global_version,
-                            },
-                        )
-                        updated_count += 1
+                    # Skip completed tasks - don't update them
+                    if project_tasks_map[item_id].get("status") == "completed":
+                        continue
+                    
+                    # Update unchecked task
+                    item_data["status"] = project_tasks_map[item_id].get("status", "not_started")
+                    batch_items.append({
+                        "PutRequest": {
+                            "Item": {k: serializer.serialize(v) for k, v in item_data.items()}
+                        }
+                    })
+                    updated_count += 1
                 else:
                     # Add new task
-                    table.put_item(
-                        Item={
-                            "project_id": project_id,
-                            "item_id": item_id,
-                            "taskData": global_task["taskData"],
-                            "status": "not_started",
-                            "global_version": global_version,
-                            "createdDate": datetime.utcnow().isoformat(),
+                    item_data["status"] = "not_started"
+                    item_data["createdDate"] = datetime.utcnow().isoformat()
+                    batch_items.append({
+                        "PutRequest": {
+                            "Item": {k: serializer.serialize(v) for k, v in item_data.items()}
                         }
-                    )
+                    })
                     updated_count += 1
+            
+            # Write in batches of 25
+            for i in range(0, len(batch_items), 25):
+                batch = batch_items[i:i+25]
+                if batch:
+                    dynamodb_client.batch_write_item(
+                        RequestItems={table.table_name: batch}
+                    )
 
         return cors_response(
             200,
             {
-                "message": f"Synced to {len(projects_response['Items'])} projects",
+                "message": f"Synced {len(projects)} projects",
                 "updates": updated_count,
             },
         )
