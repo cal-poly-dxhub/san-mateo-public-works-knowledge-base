@@ -3,6 +3,7 @@ import boto3
 import os
 from datetime import datetime
 from decimal import Decimal
+from urllib.parse import unquote
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -99,6 +100,12 @@ def update_task(project_name, task_id, body):
         # Use project name directly as project_id
         project_id = project_name.lower().replace(" ", "-")
 
+        # URL-decode the task_id
+        task_id = unquote(task_id)
+
+        # Handle task_id that may already have task# prefix
+        item_id = task_id if task_id.startswith("task#") else f"task#{task_id}"
+
         # Build update expression
         update_expr = "SET "
         expr_values = {}
@@ -111,12 +118,18 @@ def update_task(project_name, task_id, body):
             expr_values[value_key] = value
             expr_names[safe_key] = key
 
+        # If completed_date is provided, set status to completed
+        if "completed_date" in body:
+            update_expr += "#status = :status, "
+            expr_values[":status"] = "completed"
+            expr_names["#status"] = "status"
+
         update_expr += "#lastUpdated = :lastUpdated"
         expr_values[":lastUpdated"] = datetime.utcnow().isoformat()
         expr_names["#lastUpdated"] = "lastUpdated"
 
         table.update_item(
-            Key={"project_id": project_id, "item_id": f"task#{task_id}"},
+            Key={"project_id": project_id, "item_id": item_id},
             UpdateExpression=update_expr,
             ExpressionAttributeValues=expr_values,
             ExpressionAttributeNames=expr_names,

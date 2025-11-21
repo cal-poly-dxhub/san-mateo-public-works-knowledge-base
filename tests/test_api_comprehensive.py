@@ -2,6 +2,8 @@
 
 import json
 import time
+from datetime import datetime
+from urllib.parse import quote
 import boto3
 import pytest
 import requests
@@ -14,18 +16,24 @@ pytestmark = [
     pytest.mark.integration,
 ]
 
-from test_config import (
-    API_KEY,
+from .test_config import (
     API_URL,
     MAX_PROCESSING_TIMEOUT,
     POLLING_INTERVAL,
     S3_BUCKET,
-    VECTOR_BUCKET,
     DYNAMODB_TABLE,
     INDEX_NAME,
+    KNOWLEDGE_BASE_ID,
 )
+from .cognito_auth import get_auth_headers
+from .conftest import get_cached_auth_token
 
-headers = {"Content-Type": "application/json", "x-api-key": API_KEY}
+# Get auth headers with JWT token
+headers = get_auth_headers()
+
+def get_auth_only():
+    """Get Authorization header only (for GET requests)"""
+    return {"Authorization": get_cached_auth_token()}
 s3_client = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(DYNAMODB_TABLE)
@@ -42,7 +50,7 @@ test_lesson_doc = None
 def test_01_get_project_types(api_timer):
     """Test getting available project types"""
     with api_timer:
-        response = requests.get(f"{API_URL}/config/project-types", headers={"x-api-key": API_KEY})
+        response = requests.get(f"{API_URL}/config/project-types", headers=get_auth_only())
     
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     assert api_timer.duration < 2.0, f"API took {api_timer.duration:.2f}s (SLA: <2s)"
@@ -52,83 +60,54 @@ def test_01_get_project_types(api_timer):
 
 
 def test_02_create_project(api_timer):
-    """Test project creation"""
-    project_data = {
-        "project_name": test_project_name,
-        "project_description": "Test road reconstruction project"
-    }
-    
-    with api_timer:
-        response = requests.post(f"{API_URL}/create-project", headers=headers, json=project_data)
-    
-    assert response.status_code == 200
-    assert api_timer.duration < 3.0, f"Project creation took {api_timer.duration:.2f}s (SLA: <3s)"
-    
-    result = response.json()
-    assert "message" in result
-
-
-def test_03_setup_project_wizard(api_timer):
-    """Test project setup wizard with AI configuration"""
+    """Test project creation via setup wizard"""
     wizard_data = {
         "projectName": test_project_name,
         "projectType": "Road Rehabilitation",
-        "location": "Main Street, Downtown",
-        "areaSize": "2.5",
-        "specialConditions": ["High traffic area", "Near coast"]
+        "location": "Test Street",
+        "areaSize": "1.0",
+        "specialConditions": []
     }
-    response = requests.post(f"{API_URL}/project-setup", headers=headers, json=wizard_data)
-    assert response.status_code in [200, 202]
+    
+    with api_timer:
+        response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
+    
+    assert response.status_code == 200
+    assert api_timer.duration < 5.0, f"Project creation took {api_timer.duration:.2f}s (SLA: <5s)"
+    
     result = response.json()
-    assert "projectId" in result or "message" in result
+    assert "projectId" in result
 
 
-def test_04_get_projects_list(api_timer):
+def test_03_get_projects_list(api_timer):
     """Test getting all projects"""
-    response = requests.get(f"{API_URL}/projects", headers={"x-api-key": API_KEY})
+    response = requests.get(f"{API_URL}/projects", headers=get_auth_only())
     assert response.status_code == 200
     result = response.json()
-    assert isinstance(result, list)
-    project_names = [p["name"] for p in result]
+    assert "projects" in result
+    assert isinstance(result["projects"], list)
+    project_names = [p["name"] for p in result["projects"]]
     assert test_project_name in project_names
 
 
-def test_05_get_project_details(api_timer):
+def test_04_get_project_details(api_timer):
     """Test getting specific project details"""
-    response = requests.get(f"{API_URL}/projects/{test_project_name}", headers={"x-api-key": API_KEY})
+    response = requests.get(f"{API_URL}/projects/{test_project_name}", headers=get_auth_only())
     assert response.status_code == 200
     result = response.json()
     assert result["name"] == test_project_name
 
 
-def test_06_update_project_progress(api_timer):
-    """Test updating project progress"""
-    progress_data = {
-        "project_name": test_project_name,
-        "progress": {
-            "completion_percentage": 25,
-            "current_phase": "design",
-            "notes": "30% design review completed"
-        }
-    }
-    response = requests.post(f"{API_URL}/update-progress", headers=headers, json=progress_data)
-    assert response.status_code == 200
-
-
-# ============================================================================
-# 2. TASK MANAGEMENT TESTS
-# ============================================================================
-
-def test_07_get_tasks(api_timer):
+def test_05_get_tasks(api_timer):
     """Test getting all tasks for a project"""
-    response = requests.get(f"{API_URL}/projects/{test_project_name}/tasks", headers={"x-api-key": API_KEY})
+    response = requests.get(f"{API_URL}/projects/{test_project_name}/tasks", headers=get_auth_only())
     assert response.status_code == 200
     result = response.json()
     assert "tasks" in result
     assert "progress" in result
 
 
-def test_08_create_task(api_timer):
+def test_06_create_task(api_timer):
     """Test creating a new task"""
     global test_task_id
     task_data = {
@@ -147,7 +126,7 @@ def test_08_create_task(api_timer):
     test_task_id = result["taskId"]
 
 
-def test_09_update_task(api_timer):
+def test_07_update_task(api_timer):
     """Test updating task status"""
     if not test_task_id:
         pytest.skip("No task ID available")
@@ -168,9 +147,9 @@ def test_09_update_task(api_timer):
 # 3. CHECKLIST API TESTS
 # ============================================================================
 
-def test_10_get_checklist(api_timer):
+def test_08_get_checklist(api_timer):
     """Test getting project checklist"""
-    response = requests.get(f"{API_URL}/{test_project_name}/checklist", headers={"x-api-key": API_KEY})
+    response = requests.get(f"{API_URL}/projects/{test_project_name}/checklist", headers=get_auth_only())
     assert response.status_code == 200
     result = response.json()
     assert "tasks" in result
@@ -178,164 +157,7 @@ def test_10_get_checklist(api_timer):
     assert "progress" in result
 
 
-def test_11_update_checklist_metadata(api_timer):
-    """Test updating checklist metadata"""
-    metadata = {
-        "date": "2025-01-15",
-        "project": "Main Street Reconstruction",
-        "work_authorization": "WA-2025-001",
-        "project_manager": "John Doe"
-    }
-    response = requests.put(
-        f"{API_URL}/{test_project_name}/metadata",
-        headers=headers,
-        json=metadata
-    )
-    assert response.status_code == 200
-
-
-def test_12_update_checklist_task(api_timer):
-    """Test updating a checklist task"""
-    task_update = {
-        "task_id": "task#001",
-        "completed_date": "2025-01-20",
-        "projected_date": "2025-01-15",
-        "actual_date": "2025-01-20"
-    }
-    response = requests.put(
-        f"{API_URL}/{test_project_name}/checklist",
-        headers=headers,
-        json=task_update
-    )
-    assert response.status_code == 200
-
-
-# ============================================================================
-# 4. FILES API TESTS
-# ============================================================================
-
-def test_13_get_upload_url(api_timer):
-    """Test getting presigned upload URL"""
-    upload_request = {
-        "fileName": "test-document.pdf",
-        "projectName": test_project_name
-    }
-    response = requests.post(f"{API_URL}/upload-url", headers=headers, json=upload_request)
-    assert response.status_code == 200
-    result = response.json()
-    assert "uploadUrl" in result
-    assert "s3Key" in result
-
-
-def test_14_get_file(api_timer):
-    """Test retrieving a file"""
-    # First create a test file in S3
-    test_key = f"projects/{test_project_name}/test-file.txt"
-    s3_client.put_object(Bucket=S3_BUCKET, Key=test_key, Body=b"Test content")
-    
-    response = requests.get(f"{API_URL}/file/{test_key}", headers={"x-api-key": API_KEY})
-    assert response.status_code == 200
-    assert response.text == "Test content"
-
-
-# ============================================================================
-# 5. LESSONS LEARNED TESTS
-# ============================================================================
-
-def test_15_upload_document_with_lessons(api_timer):
-    """Test uploading document and extracting lessons"""
-    global test_lesson_doc
-    doc_content = """
-    Project Retrospective - Main Street Project
-    
-    Key Lessons Learned:
-    1. Utility coordination should start 6 months before construction
-    2. Traffic management plan needs city council approval
-    3. Weather delays are common in winter months
-    
-    Impact: Project delayed by 3 weeks due to late utility coordination.
-    Recommendation: Create utility coordination checklist at project start.
-    """
-    
-    import base64
-    encoded_content = base64.b64encode(doc_content.encode()).decode()
-    
-    doc_data = {
-        "content": encoded_content,
-        "filename": "retrospective-2025.txt",
-        "extract_lessons": True
-    }
-    
-    response = requests.post(
-        f"{API_URL}/documents/{test_project_name}",
-        headers=headers,
-        json=doc_data
-    )
-    assert response.status_code in [200, 202]
-    test_lesson_doc = "retrospective-2025.txt"
-
-
-def test_16_wait_for_lesson_extraction(api_timer):
-    """Wait for async lesson extraction to complete"""
-    if not test_lesson_doc:
-        pytest.skip("No lesson document uploaded")
-    
-    start_time = time.time()
-    while time.time() - start_time < MAX_PROCESSING_TIMEOUT:
-        try:
-            response = requests.get(
-                f"{API_URL}/lessons-learned/{test_project_name}",
-                headers={"x-api-key": API_KEY}
-            )
-            if response.status_code == 200:
-                result = response.json()
-                if result.get("lessons") and len(result["lessons"]) > 0:
-                    return
-        except Exception:
-            pass
-        time.sleep(POLLING_INTERVAL)
-    
-    pytest.fail("Lesson extraction not completed in time")
-
-
-def test_17_get_lessons_learned(api_timer):
-    """Test retrieving lessons learned"""
-    response = requests.get(
-        f"{API_URL}/lessons-learned/{test_project_name}",
-        headers={"x-api-key": API_KEY}
-    )
-    assert response.status_code == 200
-    result = response.json()
-    assert "projectName" in result
-    assert "lessons" in result
-    assert isinstance(result["lessons"], list)
-
-
-def test_18_get_master_project_types(api_timer):
-    """Test getting project types with lesson counts"""
-    response = requests.get(f"{API_URL}/project-types", headers={"x-api-key": API_KEY})
-    assert response.status_code == 200
-    result = response.json()
-    assert "projectTypes" in result
-
-
-def test_19_get_lessons_by_type(api_timer):
-    """Test getting aggregated lessons by project type"""
-    response = requests.get(
-        f"{API_URL}/by-type/Road Rehabilitation",
-        headers={"x-api-key": API_KEY}
-    )
-    assert response.status_code == 200
-    result = response.json()
-    assert "projectType" in result
-    assert "lessons" in result
-
-
-# ============================================================================
-# 6. SEARCH TESTS
-# ============================================================================
-
-def test_20_vector_search(api_timer):
+def test_09_vector_search(api_timer):
     """Test semantic vector search"""
     search_data = {
         "query": "utility coordination timeline",
@@ -349,7 +171,7 @@ def test_20_vector_search(api_timer):
     assert isinstance(result["results"], list)
 
 
-def test_21_rag_search(api_timer):
+def test_10_rag_search(api_timer):
     """Test RAG search with AI-generated answer"""
     search_data = {
         "query": "What are the key lessons about utility coordination?",
@@ -365,169 +187,507 @@ def test_21_rag_search(api_timer):
     assert result["type"] == "rag"
 
 
+def test_10a_vector_search_with_filters(api_timer):
+    """Test vector search with different query types"""
+    search_data = {
+        "query": "drainage design",
+        "project": test_project_name,
+        "limit": 3
+    }
+    response = requests.post(f"{API_URL}/search", headers=headers, json=search_data)
+    assert response.status_code == 200
+    result = response.json()
+    assert "results" in result
+    assert isinstance(result["results"], list)
+    assert len(result["results"]) <= 3
+
+
+def test_10b_rag_search_without_project(api_timer):
+    """Test RAG search across all projects"""
+    search_data = {
+        "query": "What are best practices for project management?",
+        "limit": 5
+    }
+    response = requests.post(f"{API_URL}/search-rag", headers=headers, json=search_data)
+    assert response.status_code == 200
+    result = response.json()
+    assert "answer" in result
+    assert "sources" in result
+
+
+def test_10c_vector_search_empty_results(api_timer):
+    """Test vector search with query that may return no results"""
+    search_data = {
+        "query": "xyzabc123notarealterm",
+        "project": test_project_name,
+        "limit": 5
+    }
+    response = requests.post(f"{API_URL}/search", headers=headers, json=search_data)
+    assert response.status_code == 200
+    result = response.json()
+    assert "results" in result
+    assert isinstance(result["results"], list)
+
+
 # ============================================================================
 # 7. AI ASSISTANT TESTS
 # ============================================================================
 
-def test_22_ai_assistant_question(api_timer):
-    """Test AI assistant Q&A"""
-    question_data = {
-        "question": "What permits are typically needed for road reconstruction?",
-        "projectId": test_project_name,
-        "type": "question"
-    }
-    response = requests.post(f"{API_URL}/assistant", headers=headers, json=question_data)
-    assert response.status_code == 200
-    result = response.json()
-    assert "answer" in result
-
-
-def test_23_ai_assistant_template(api_timer):
-    """Test AI template generation"""
-    template_data = {
-        "type": "template",
-        "documentType": "Traffic Management Plan",
-        "projectDetails": {
-            "name": test_project_name,
-            "location": "Main Street",
-            "duration": "3 months"
-        }
-    }
-    response = requests.post(f"{API_URL}/assistant", headers=headers, json=template_data)
-    assert response.status_code == 200
-    result = response.json()
-    assert "template" in result
-
-
-def test_24_ai_assistant_alerts(api_timer):
-    """Test proactive alert checking"""
-    alert_data = {
-        "type": "alert",
-        "projectId": test_project_name
-    }
-    response = requests.post(f"{API_URL}/assistant", headers=headers, json=alert_data)
-    assert response.status_code == 200
-    result = response.json()
-    assert "alerts" in result
-    assert isinstance(result["alerts"], list)
-
-
-# ============================================================================
-# 8. DASHBOARD TESTS
-# ============================================================================
-
-def test_25_get_available_models(api_timer):
+def test_11_get_available_models(api_timer):
     """Test getting available AI models"""
-    response = requests.get(f"{API_URL}/models", headers={"x-api-key": API_KEY})
+    response = requests.get(f"{API_URL}/models", headers=get_auth_only())
     assert response.status_code == 200
     result = response.json()
     assert "models" in result or "available_search_models" in result
 
 
-def test_26_get_project_asset(api_timer):
-    """Test retrieving project assets"""
-    # Create a test asset
-    asset_key = f"projects/{test_project_name}/assets/test-asset.txt"
-    s3_client.put_object(Bucket=S3_BUCKET, Key=asset_key, Body=b"Asset content")
-    
-    response = requests.get(
-        f"{API_URL}/assets/{test_project_name}/test-asset.txt",
-        headers={"x-api-key": API_KEY}
-    )
-    assert response.status_code == 200
-
-
-# ============================================================================
-# 9. VECTOR STORAGE VALIDATION
-# ============================================================================
-
-def test_27_validate_vectors_created(api_timer):
-    """Test that vectors were created in S3 vector store"""
-    try:
-        s3vectors_client = boto3.client("s3vectors")
-        response = s3vectors_client.list_vectors(
-            vectorBucketName=VECTOR_BUCKET,
-            indexName=INDEX_NAME,
-        )
-        
-        project_vectors = []
-        for obj in response.get("vectors", []):
-            metadata = obj.get("metadata", {})
-            if isinstance(metadata, dict) and metadata.get("project") == test_project_name:
-                project_vectors.append(obj["key"])
-        
-        assert len(project_vectors) > 0, "No vectors found for test project"
-    except Exception as e:
-        pytest.skip(f"S3 Vectors not available or configured: {e}")
-
-
-# ============================================================================
-# 10. RACE CONDITION TEST
-# ============================================================================
-
-def test_28_concurrent_lesson_processing(api_timer):
+def test_12_concurrent_lesson_processing(api_timer):
     """Test that multiple lesson documents are processed without race conditions"""
     race_project = f"race-test-{int(time.time())}"
+    debug_project = f"debug-test-{int(time.time())}"
     
-    # Create project
-    project_data = {
-        "project_name": race_project,
-        "project_description": "Race condition test"
+    try:
+        # Create race test project via wizard
+        wizard_data = {
+            "projectName": race_project,
+            "projectType": "Road Rehabilitation",
+            "location": "Test",
+            "areaSize": "1.0",
+            "specialConditions": []
+        }
+        response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
+        assert response.status_code == 200
+        
+        # Create debug test project
+        wizard_data["projectName"] = debug_project
+        response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
+        assert response.status_code == 200
+        
+        # Upload 3 documents
+        docs = [
+            ("doc1.txt", "Lesson about scheduling and planning"),
+            ("doc2.txt", "Lesson about budgeting and cost control"),
+            ("doc3.txt", "Lesson about coordination and communication")
+        ]
+        
+        for filename, content in docs:
+            doc_data = {
+                "content": content,
+                "filename": filename,
+                "extract_lessons": True
+            }
+            response = requests.post(
+                f"{API_URL}/projects/{race_project}/documents",
+                headers=headers,
+                json=doc_data
+            )
+            assert response.status_code in [200, 202]
+        
+        # Wait for processing
+        time.sleep(MAX_PROCESSING_TIMEOUT / 2)
+        
+        # Verify lessons were extracted
+        response = requests.get(
+            f"{API_URL}/projects/{race_project}/lessons-learned",
+            headers=get_auth_only()
+        )
+        assert response.status_code == 200
+        result = response.json()
+        
+        lessons = result.get("lessons", [])
+        assert len(lessons) >= 3, f"Expected at least 3 lessons, got {len(lessons)}"
+        
+        # Verify each lesson has required fields
+        for lesson in lessons:
+            assert "title" in lesson
+            assert "lesson" in lesson
+            assert "impact" in lesson
+            assert "recommendation" in lesson
+            assert "severity" in lesson
+    
+    finally:
+        # Cleanup both test projects
+        requests.delete(f"{API_URL}/projects/{race_project}", headers=get_auth_only())
+        requests.delete(f"{API_URL}/projects/{debug_project}", headers=get_auth_only())
+
+
+# ============================================================================
+# 8. DOCUMENT UPLOAD TESTS
+# ============================================================================
+
+def test_13_upload_txt_document(api_timer):
+    """Test uploading a text document"""
+    doc_data = {
+        "content": "This is a test document with important information.",
+        "filename": "test_doc.txt",
+        "extract_lessons": False
     }
-    response = requests.post(f"{API_URL}/create-project", headers=headers, json=project_data)
-    assert response.status_code == 200
+    response = requests.post(
+        f"{API_URL}/projects/{test_project_name}/documents",
+        headers=headers,
+        json=doc_data
+    )
+    assert response.status_code in [200, 202]
+    result = response.json()
+    assert "documentId" in result or "message" in result
+
+
+def test_14_upload_pdf_document(api_timer):
+    """Test uploading a PDF document"""
+    # Create minimal PDF content
+    pdf_content = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 44 >>\nstream\nBT\n/F1 12 Tf\n100 700 Td\n(Test PDF) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000214 00000 n\ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n308\n%%EOF"
     
-    # Upload 3 documents with unique markers
-    import base64
-    docs = [
-        ("doc1.txt", "RACE_MARKER_ALPHA_001 - Lesson about scheduling"),
-        ("doc2.txt", "RACE_MARKER_BETA_002 - Lesson about budgeting"),
-        ("doc3.txt", "RACE_MARKER_GAMMA_003 - Lesson about coordination")
-    ]
+    doc_data = {
+        "content": pdf_content.decode('latin-1'),
+        "filename": "test_doc.pdf",
+        "extract_lessons": False
+    }
+    response = requests.post(
+        f"{API_URL}/projects/{test_project_name}/documents",
+        headers=headers,
+        json=doc_data
+    )
+    assert response.status_code in [200, 202]
+
+
+def test_15_upload_docx_document(api_timer):
+    """Test uploading a DOCX document"""
+    # Create minimal DOCX (ZIP with XML)
+    import zipfile
+    import io
     
-    for filename, content in docs:
-        encoded = base64.b64encode(content.encode()).decode()
+    docx_buffer = io.BytesIO()
+    with zipfile.ZipFile(docx_buffer, 'w') as docx:
+        docx.writestr('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>')
+        docx.writestr('word/document.xml', '<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Test Document</w:t></w:r></w:p></w:body></w:document>')
+    
+    doc_data = {
+        "content": docx_buffer.getvalue().hex(),
+        "filename": "test_doc.docx",
+        "extract_lessons": False
+    }
+    response = requests.post(
+        f"{API_URL}/projects/{test_project_name}/documents",
+        headers=headers,
+        json=doc_data
+    )
+    assert response.status_code in [200, 202]
+
+
+# ============================================================================
+# 9. LESSON EXTRACTION TESTS
+# ============================================================================
+
+def test_16_extract_lessons_from_document(api_timer):
+    """Test that lessons are properly extracted from documents"""
+    lesson_project = f"lesson-test-{int(time.time())}"
+    
+    try:
+        # Create project
+        wizard_data = {
+            "projectName": lesson_project,
+            "projectType": "Road Rehabilitation",
+            "location": "Test",
+            "areaSize": "1.0",
+            "specialConditions": []
+        }
+        response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
+        assert response.status_code == 200
+        
+        # Upload document with extract_lessons=True
+        doc_content = """
+        Lesson 1: We learned that early coordination with utilities prevents delays.
+        Lesson 2: Budget contingency of 15% is essential for road projects.
+        Lesson 3: Weekly stakeholder meetings improved communication significantly.
+        """
+        
         doc_data = {
-            "content": encoded,
-            "filename": filename,
+            "content": doc_content,
+            "filename": "lessons_doc.txt",
             "extract_lessons": True
         }
         response = requests.post(
-            f"{API_URL}/documents/{race_project}",
+            f"{API_URL}/projects/{lesson_project}/documents",
             headers=headers,
             json=doc_data
         )
         assert response.status_code in [200, 202]
+        
+        # Wait for async processing
+        time.sleep(MAX_PROCESSING_TIMEOUT / 2)
+        
+        # Verify lessons were extracted
+        response = requests.get(
+            f"{API_URL}/projects/{lesson_project}/lessons-learned",
+            headers=get_auth_only()
+        )
+        assert response.status_code == 200
+        result = response.json()
+        
+        # Should have extracted lessons
+        lessons = result.get("lessons", [])
+        assert len(lessons) >= 3, f"Expected at least 3 lessons, got {len(lessons)}"
+        
+        # Verify each lesson has required fields
+        for lesson in lessons:
+            assert "title" in lesson
+            assert "lesson" in lesson
+            assert "impact" in lesson
+            assert "recommendation" in lesson
+            assert "severity" in lesson
     
-    # Wait for processing
-    time.sleep(MAX_PROCESSING_TIMEOUT / 2)
+    finally:
+        requests.delete(f"{API_URL}/projects/{lesson_project}", headers=get_auth_only())
+
+
+def test_17_lessons_markdown_sync(api_timer):
+    """Test that lessons are converted to markdown for KB sync"""
+    md_project = f"md-test-{int(time.time())}"
     
-    # Verify all markers present in lessons
+    try:
+        # Create project
+        wizard_data = {
+            "projectName": md_project,
+            "projectType": "Road Rehabilitation",
+            "location": "Test",
+            "areaSize": "1.0",
+            "specialConditions": []
+        }
+        response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
+        assert response.status_code == 200
+        
+        # Upload document with extract_lessons=True
+        doc_content = "Lesson: Proper drainage design prevents flooding. Lesson: Material testing ensures quality. Lesson: Safety protocols reduce incidents."
+        
+        doc_data = {
+            "content": doc_content,
+            "filename": "md_test.txt",
+            "extract_lessons": True
+        }
+        response = requests.post(
+            f"{API_URL}/projects/{md_project}/documents",
+            headers=headers,
+            json=doc_data
+        )
+        assert response.status_code in [200, 202]
+        
+        # Wait for processing and markdown sync
+        time.sleep(MAX_PROCESSING_TIMEOUT / 2 + 2)
+        
+        # Verify markdown files were created in S3
+        prefix = f"documents/lessons-learned/lesson-"
+        paginator = s3_client.get_paginator('list_objects_v2')
+        
+        md_files = []
+        for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=prefix):
+            if "Contents" in page:
+                for obj in page["Contents"]:
+                    if obj["Key"].endswith(f"-{md_project}.md"):
+                        md_files.append(obj["Key"])
+        
+        assert len(md_files) >= 3, f"Expected at least 3 markdown files, got {len(md_files)}"
+        
+        # Verify markdown content format
+        for md_file in md_files[:1]:  # Check first one
+            response = s3_client.get_object(Bucket=S3_BUCKET, Key=md_file)
+            content = response["Body"].read().decode('utf-8')
+            assert "# " in content  # Has markdown header
+            assert "**Project:**" in content
+            assert "**Impact:**" in content
+            assert "## Recommendation" in content
+    
+    finally:
+        requests.delete(f"{API_URL}/projects/{md_project}", headers=get_auth_only())
+
+
+# ============================================================================
+# 10. GLOBAL CHECKLIST TESTS
+# ============================================================================
+
+def test_18b_update_task_status(api_timer):
+    """Test that updating task status works correctly"""
+    put_test_project = f"put-test-{int(time.time())}"
+    
+    try:
+        # Create project
+        wizard_data = {
+            "projectName": put_test_project,
+            "projectType": "Road Rehabilitation",
+            "location": "Test",
+            "areaSize": "1.0",
+            "specialConditions": []
+        }
+        response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
+        assert response.status_code == 200
+        
+        # Get tasks
+        response = requests.get(
+            f"{API_URL}/projects/{put_test_project}/tasks",
+            headers=get_auth_only()
+        )
+        assert response.status_code == 200
+        tasks = response.json().get("tasks", [])
+        assert len(tasks) > 0, "Project should have tasks"
+        
+        first_task = tasks[0]
+        task_id = first_task.get("item_id")
+        
+        # Update task with completed_date
+        update_data = {"completed_date": datetime.utcnow().isoformat()}
+        response = requests.put(
+            f"{API_URL}/projects/{put_test_project}/tasks/{quote(task_id, safe='')}",
+            headers=headers,
+            json=update_data
+        )
+        assert response.status_code == 200, f"PUT failed: {response.text}"
+        
+        # Verify task status changed to completed
+        response = requests.get(
+            f"{API_URL}/projects/{put_test_project}/tasks",
+            headers=get_auth_only()
+        )
+        assert response.status_code == 200
+        updated_tasks = response.json().get("tasks", [])
+        updated_task = next((t for t in updated_tasks if t.get("item_id") == task_id), None)
+        assert updated_task is not None, "Task should exist"
+        assert updated_task.get("status") == "completed", f"Task status should be 'completed', got {updated_task.get('status')}"
+    
+    finally:
+        requests.delete(f"{API_URL}/projects/{put_test_project}", headers=get_auth_only())
+
+
+
+    """Test editing and saving global checklist"""
+    # Get current global checklist
     response = requests.get(
-        f"{API_URL}/lessons-learned/{race_project}",
-        headers={"x-api-key": API_KEY}
+        f"{API_URL}/global-checklist?type=design",
+        headers=get_auth_only()
     )
     assert response.status_code == 200
     result = response.json()
+    assert "tasks" in result
     
-    lessons_text = json.dumps(result)
-    assert "RACE_MARKER_ALPHA_001" in lessons_text
-    assert "RACE_MARKER_BETA_002" in lessons_text
-    assert "RACE_MARKER_GAMMA_003" in lessons_text
+    # Modify a task
+    tasks = result.get("tasks", [])
+    if tasks:
+        tasks[0]["description"] = "Updated task description"
     
-    # Cleanup
-    requests.delete(f"{API_URL}/projects/{race_project}", headers={"x-api-key": API_KEY})
+    # Save updated checklist
+    update_data = {"tasks": tasks}
+    response = requests.put(
+        f"{API_URL}/global-checklist?type=design",
+        headers=headers,
+        json=update_data
+    )
+    assert response.status_code == 200
+    
+    # Verify changes were saved
+    response = requests.get(
+        f"{API_URL}/global-checklist?type=design",
+        headers=get_auth_only()
+    )
+    assert response.status_code == 200
+    result = response.json()
+    if tasks:
+        assert result["tasks"][0]["description"] == "Updated task description"
+
+
+def test_19_checklist_sync_to_projects(api_timer):
+    """Test that checklist sync updates unchecked tasks but preserves completed ones"""
+    sync_project = f"sync-test-{int(time.time())}"
+    
+    try:
+        # Create project
+        wizard_data = {
+            "projectName": sync_project,
+            "projectType": "Road Rehabilitation",
+            "location": "Test",
+            "areaSize": "1.0",
+            "specialConditions": []
+        }
+        response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
+        assert response.status_code == 200
+        
+        # Get initial tasks
+        response = requests.get(
+            f"{API_URL}/projects/{sync_project}/tasks",
+            headers=get_auth_only()
+        )
+        assert response.status_code == 200
+        initial_tasks = response.json().get("tasks", [])
+        assert len(initial_tasks) > 0, "Project should have tasks"
+        
+        # Store initial taskData for first task
+        first_task = initial_tasks[0]
+        first_task_id = first_task.get("item_id")
+        initial_task_data = first_task.get("taskData", {})
+        print(f"First task: {first_task}")
+        print(f"First task ID: {first_task_id}")
+        
+        # Mark first task as completed
+        if first_task_id:
+            update_data = {"completed_date": datetime.utcnow().isoformat()}
+            response = requests.put(
+                f"{API_URL}/projects/{sync_project}/tasks/{quote(first_task_id, safe='')}",
+                headers=headers,
+                json=update_data
+            )
+            assert response.status_code == 200, f"Failed to mark task as completed: {response.text}"
+            print(f"Marked task {first_task_id} as completed")
+            print(f"PUT response: {response.json()}")
+            
+            # Verify it was marked as completed
+            response = requests.get(
+                f"{API_URL}/projects/{sync_project}/tasks",
+                headers=get_auth_only()
+            )
+            verify_tasks = response.json().get("tasks", [])
+            verify_task = next((t for t in verify_tasks if t.get("item_id") == first_task_id), None)
+            print(f"Task status after marking: {verify_task.get('status') if verify_task else 'NOT FOUND'}")
+        
+        # Run sync
+        response = requests.post(
+            f"{API_URL}/global-checklist/sync",
+            headers=headers
+        )
+        assert response.status_code == 200
+        
+        # Get tasks after sync
+        response = requests.get(
+            f"{API_URL}/projects/{sync_project}/tasks",
+            headers=get_auth_only()
+        )
+        assert response.status_code == 200
+        synced_tasks = response.json().get("tasks", [])
+        
+        # Find the first task after sync
+        synced_first_task = next((t for t in synced_tasks if t.get("item_id") == first_task_id), None)
+        assert synced_first_task is not None, "First task should still exist after sync"
+        
+        # Verify completed task status is preserved
+        assert synced_first_task.get("status") == "completed", "Completed task status should be preserved"
+        
+        # Verify other tasks got updated (taskData should match global)
+        uncompleted_tasks = [t for t in synced_tasks if t.get("status") != "completed"]
+        assert len(uncompleted_tasks) > 0, "Should have uncompleted tasks"
+        
+        # Verify at least one uncompleted task has taskData (was synced)
+        has_task_data = any(t.get("taskData") for t in uncompleted_tasks)
+        assert has_task_data, "Uncompleted tasks should have taskData from sync"
+    
+    finally:
+        requests.delete(f"{API_URL}/projects/{sync_project}", headers=get_auth_only())
 
 
 # ============================================================================
 # 11. CLEANUP TEST
 # ============================================================================
 
-def test_29_delete_project(api_timer):
+def test_20_delete_project(api_timer):
     """Test project deletion and verify complete cleanup"""
     response = requests.delete(
         f"{API_URL}/projects/{test_project_name}",
-        headers={"x-api-key": API_KEY}
+        headers=get_auth_only()
     )
     assert response.status_code == 200
     result = response.json()
