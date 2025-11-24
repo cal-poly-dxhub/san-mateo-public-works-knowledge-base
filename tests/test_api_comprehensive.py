@@ -264,7 +264,7 @@ def test_12_concurrent_lesson_processing(api_timer):
         response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
         assert response.status_code == 200
         
-        # Upload 3 documents
+        # Upload 3 documents using presigned URLs
         docs = [
             ("doc1.txt", "Lesson about scheduling and planning"),
             ("doc2.txt", "Lesson about budgeting and cost control"),
@@ -272,17 +272,27 @@ def test_12_concurrent_lesson_processing(api_timer):
         ]
         
         for filename, content in docs:
-            doc_data = {
-                "content": content,
-                "filename": filename,
-                "extract_lessons": True
-            }
+            # Request presigned URL
             response = requests.post(
-                f"{API_URL}/projects/{race_project}/documents",
+                f"{API_URL}/upload-url",
                 headers=headers,
-                json=doc_data
+                json={
+                    "files": [{
+                        "fileName": filename,
+                        "projectName": race_project,
+                        "projectType": "road",
+                        "extractLessons": True
+                    }]
+                }
             )
-            assert response.status_code in [200, 202]
+            assert response.status_code == 200
+            result = response.json()
+            assert "uploads" in result
+            
+            # Upload to S3 using presigned URL
+            upload_url = result["uploads"][0]["uploadUrl"]
+            upload_response = requests.put(upload_url, data=content.encode())
+            assert upload_response.status_code == 200
         
         # Wait for processing
         time.sleep(MAX_PROCESSING_TIMEOUT / 2)
@@ -318,37 +328,57 @@ def test_12_concurrent_lesson_processing(api_timer):
 
 def test_13_upload_txt_document(api_timer):
     """Test uploading a text document"""
-    doc_data = {
-        "content": "This is a test document with important information.",
-        "filename": "test_doc.txt",
-        "extract_lessons": False
-    }
+    content = "This is a test document with important information."
+    filename = "test_doc.txt"
+    
+    # Request presigned URL
     response = requests.post(
-        f"{API_URL}/projects/{test_project_name}/documents",
+        f"{API_URL}/upload-url",
         headers=headers,
-        json=doc_data
+        json={
+            "files": [{
+                "fileName": filename,
+                "projectName": test_project_name,
+                "extractLessons": False
+            }]
+        }
     )
-    assert response.status_code in [200, 202]
+    assert response.status_code == 200
     result = response.json()
-    assert "documentId" in result or "message" in result
+    assert "uploads" in result
+    
+    # Upload to S3 using presigned URL
+    upload_url = result["uploads"][0]["uploadUrl"]
+    upload_response = requests.put(upload_url, data=content.encode())
+    assert upload_response.status_code == 200
 
 
 def test_14_upload_pdf_document(api_timer):
     """Test uploading a PDF document"""
     # Create minimal PDF content
     pdf_content = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 44 >>\nstream\nBT\n/F1 12 Tf\n100 700 Td\n(Test PDF) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000214 00000 n\ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n308\n%%EOF"
+    filename = "test_doc.pdf"
     
-    doc_data = {
-        "content": pdf_content.decode('latin-1'),
-        "filename": "test_doc.pdf",
-        "extract_lessons": False
-    }
+    # Request presigned URL
     response = requests.post(
-        f"{API_URL}/projects/{test_project_name}/documents",
+        f"{API_URL}/upload-url",
         headers=headers,
-        json=doc_data
+        json={
+            "files": [{
+                "fileName": filename,
+                "projectName": test_project_name,
+                "extractLessons": False
+            }]
+        }
     )
-    assert response.status_code in [200, 202]
+    assert response.status_code == 200
+    result = response.json()
+    assert "uploads" in result
+    
+    # Upload to S3 using presigned URL
+    upload_url = result["uploads"][0]["uploadUrl"]
+    upload_response = requests.put(upload_url, data=pdf_content)
+    assert upload_response.status_code == 200
 
 
 def test_15_upload_docx_document(api_timer):
@@ -362,17 +392,28 @@ def test_15_upload_docx_document(api_timer):
         docx.writestr('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>')
         docx.writestr('word/document.xml', '<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Test Document</w:t></w:r></w:p></w:body></w:document>')
     
-    doc_data = {
-        "content": docx_buffer.getvalue().hex(),
-        "filename": "test_doc.docx",
-        "extract_lessons": False
-    }
+    filename = "test_doc.docx"
+    
+    # Request presigned URL
     response = requests.post(
-        f"{API_URL}/projects/{test_project_name}/documents",
+        f"{API_URL}/upload-url",
         headers=headers,
-        json=doc_data
+        json={
+            "files": [{
+                "fileName": filename,
+                "projectName": test_project_name,
+                "extractLessons": False
+            }]
+        }
     )
-    assert response.status_code in [200, 202]
+    assert response.status_code == 200
+    result = response.json()
+    assert "uploads" in result
+    
+    # Upload to S3 using presigned URL
+    upload_url = result["uploads"][0]["uploadUrl"]
+    upload_response = requests.put(upload_url, data=docx_buffer.getvalue())
+    assert upload_response.status_code == 200
 
 
 # ============================================================================
@@ -395,24 +436,35 @@ def test_16_extract_lessons_from_document(api_timer):
         response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
         assert response.status_code == 200
         
-        # Upload document with extract_lessons=True
+        # Upload document with extract_lessons=True using presigned URL
         doc_content = """
         Lesson 1: We learned that early coordination with utilities prevents delays.
         Lesson 2: Budget contingency of 15% is essential for road projects.
         Lesson 3: Weekly stakeholder meetings improved communication significantly.
         """
+        filename = "lessons_doc.txt"
         
-        doc_data = {
-            "content": doc_content,
-            "filename": "lessons_doc.txt",
-            "extract_lessons": True
-        }
+        # Request presigned URL
         response = requests.post(
-            f"{API_URL}/projects/{lesson_project}/documents",
+            f"{API_URL}/upload-url",
             headers=headers,
-            json=doc_data
+            json={
+                "files": [{
+                    "fileName": filename,
+                    "projectName": lesson_project,
+                    "projectType": "Resurface",
+                    "extractLessons": True
+                }]
+            }
         )
-        assert response.status_code in [200, 202]
+        assert response.status_code == 200
+        result = response.json()
+        assert "uploads" in result
+        
+        # Upload to S3 using presigned URL
+        upload_url = result["uploads"][0]["uploadUrl"]
+        upload_response = requests.put(upload_url, data=doc_content.encode())
+        assert upload_response.status_code == 200
         
         # Wait for async processing
         time.sleep(MAX_PROCESSING_TIMEOUT / 2)
@@ -457,20 +509,31 @@ def test_17_lessons_markdown_sync(api_timer):
         response = requests.post(f"{API_URL}/setup-wizard", headers=headers, json=wizard_data)
         assert response.status_code == 200
         
-        # Upload document with extract_lessons=True
+        # Upload document with extract_lessons=True using presigned URL
         doc_content = "Lesson: Proper drainage design prevents flooding. Lesson: Material testing ensures quality. Lesson: Safety protocols reduce incidents."
+        filename = "md_test.txt"
         
-        doc_data = {
-            "content": doc_content,
-            "filename": "md_test.txt",
-            "extract_lessons": True
-        }
+        # Request presigned URL
         response = requests.post(
-            f"{API_URL}/projects/{md_project}/documents",
+            f"{API_URL}/upload-url",
             headers=headers,
-            json=doc_data
+            json={
+                "files": [{
+                    "fileName": filename,
+                    "projectName": md_project,
+                    "projectType": "Slurry Seal",
+                    "extractLessons": True
+                }]
+            }
         )
-        assert response.status_code in [200, 202]
+        assert response.status_code == 200
+        result = response.json()
+        assert "uploads" in result
+        
+        # Upload to S3 using presigned URL
+        upload_url = result["uploads"][0]["uploadUrl"]
+        upload_response = requests.put(upload_url, data=doc_content.encode())
+        assert upload_response.status_code == 200
         
         # Wait for processing and markdown sync
         time.sleep(MAX_PROCESSING_TIMEOUT / 2 + 2)
