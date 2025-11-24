@@ -69,6 +69,18 @@ class StorageResources(Construct):
             projection_type=dynamodb.ProjectionType.ALL,
         )
 
+        # KB Sync Jobs Table
+        self.sync_jobs_table = dynamodb.Table(
+            self,
+            "kb-sync-jobs-table",
+            partition_key=dynamodb.Attribute(
+                name="job_id", type=dynamodb.AttributeType.STRING
+            ),
+            removal_policy=cdk.RemovalPolicy.DESTROY,
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            time_to_live_attribute="ttl",
+        )
+
     def add_lessons_sync_trigger(self, lessons_sync_lambda):
         """Add S3 event notification to trigger lessons sync Lambda"""
         self.bucket.add_event_notification(
@@ -84,4 +96,12 @@ class StorageResources(Construct):
             s3.NotificationKeyFilter(
                 prefix="projects/", suffix="/lessons.json"
             ),
+        )
+
+    def add_upload_processor_trigger(self, upload_processor_lambda):
+        """Add S3 event notification to trigger upload processor Lambda"""
+        self.bucket.add_event_notification(
+            s3.EventType.OBJECT_CREATED,
+            s3n.LambdaDestination(upload_processor_lambda),
+            s3.NotificationKeyFilter(prefix="documents/"),
         )

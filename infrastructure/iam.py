@@ -134,11 +134,14 @@ class IAMPermissions(Construct):
         storage.bucket.grant_read_write(compute.lessons_sync_lambda)
         storage.project_data_table.grant_read_data(compute.lessons_sync_lambda)
 
-        # Manual sync Lambda permissions
+        # S3 upload processor permissions
+        storage.bucket.grant_read(compute.s3_upload_processor)
+        compute.async_lessons_processor.grant_invoke(compute.s3_upload_processor)
         compute.manual_sync_lambda.add_to_role_policy(
             iam.PolicyStatement(
                 actions=[
                     "bedrock:StartIngestionJob",
+                    "bedrock:GetIngestionJob",
                     "bedrock:GetDataSource",
                     "bedrock:ListDataSources",
                     "bedrock:ListIngestionJobs",

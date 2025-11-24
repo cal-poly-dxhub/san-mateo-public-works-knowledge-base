@@ -353,3 +353,11 @@ class APIGateway(Construct):
             authorizer=self.authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
+        
+        sync_kb_status = sync_kb.add_resource("status")
+        sync_kb_status.add_method(
+            "GET",
+            apigateway.LambdaIntegration(compute.manual_sync_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigateway.AuthorizationType.COGNITO,
+        )

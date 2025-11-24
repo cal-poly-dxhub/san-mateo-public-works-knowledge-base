@@ -53,12 +53,33 @@ export default function DocumentUploadDialog({
   };
 
   const toggleFile = (index: number) => {
+    const file = files[index].file;
+    const newExtractLessons = !files[index].extractLessons;
+    
+    // Check file size limit for lesson extraction (256KB)
+    if (newExtractLessons && file.size > 256 * 1024) {
+      alert(`${file.name} is too large for lesson extraction (max 256KB). Upload without lesson extraction or use a smaller file.`);
+      return;
+    }
+    
     setFiles(prev => prev.map((f, i) => 
-      i === index ? { ...f, extractLessons: !f.extractLessons } : f
+      i === index ? { ...f, extractLessons: newExtractLessons } : f
     ));
   };
 
   const toggleAll = (checked: boolean) => {
+    // Check if any files exceed 256KB limit
+    if (checked) {
+      const oversizedFiles = files.filter(f => f.file.size > 256 * 1024);
+      if (oversizedFiles.length > 0) {
+        alert(`${oversizedFiles.length} file(s) exceed 256KB limit for lesson extraction. They will be skipped.`);
+        setFiles(prev => prev.map(f => ({ 
+          ...f, 
+          extractLessons: f.file.size <= 256 * 1024 
+        })));
+        return;
+      }
+    }
     setFiles(prev => prev.map(f => ({ ...f, extractLessons: checked })));
   };
 
@@ -70,24 +91,32 @@ export default function DocumentUploadDialog({
     setUploadProgress({});
 
     try {
-      for (const { file, extractLessons } of files) {
-        const content = await file.text();
-        
-        await apiRequest(
-          `/projects/${encodeURIComponent(projectName)}/documents`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              filename: file.name,
-              content: content,
-              extract_lessons: extractLessons,
-              project_type: projectType,
-            }),
-          }
-        );
+      // Request presigned URLs for all files
+      const response = await apiRequest("/upload-url", {
+        method: "POST",
+        body: JSON.stringify({
+          files: files.map(({ file, extractLessons }) => ({
+            fileName: file.name,
+            projectName: projectName,
+            projectType: projectType,
+            extractLessons: extractLessons,
+          })),
+        }),
+      });
 
-        setUploadProgress(prev => ({ ...prev, [file.name]: true }));
-      }
+      const uploads = response.uploads || [];
+
+      // Upload all files in parallel
+      await Promise.all(
+        uploads.map(async (upload: any, index: number) => {
+          const file = files[index].file;
+          await fetch(upload.uploadUrl, {
+            method: "PUT",
+            body: file,
+          });
+          setUploadProgress(prev => ({ ...prev, [file.name]: true }));
+        })
+      );
 
       alert(files.length === 1 ? "Document uploaded!" : "All documents uploaded!");
       onUploadComplete();

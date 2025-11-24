@@ -346,9 +346,10 @@ def cors_response(status_code, body):
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
             "Access-Control-Allow-Methods": "GET, PUT, POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Credentials": "true",
         },
         "body": json.dumps(body),
     }

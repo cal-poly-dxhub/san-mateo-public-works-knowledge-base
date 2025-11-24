@@ -271,5 +271,21 @@ class ComputeResources(Construct):
             timeout=Duration.seconds(30),
             environment={
                 "KB_ID": kb_id,
+                "SYNC_JOBS_TABLE": storage.sync_jobs_table.table_name,
+            },
+        )
+        storage.sync_jobs_table.grant_read_write_data(self.manual_sync_lambda)
+
+        # S3 upload processor Lambda
+        self.s3_upload_processor = _lambda.Function(
+            self,
+            "S3UploadProcessorLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="s3_upload_processor.handler",
+            code=_lambda.Code.from_asset("./src/files"),
+            timeout=Duration.seconds(30),
+            environment={
+                "BUCKET_NAME": storage.bucket.bucket_name,
+                "LESSONS_PROCESSOR_LAMBDA_NAME": self.async_lessons_processor.function_name,
             },
         )

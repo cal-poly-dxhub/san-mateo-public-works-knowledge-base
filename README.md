@@ -215,6 +215,9 @@ Key variables set by CDK deployment:
 │   ├── storage.py          # S3 and DynamoDB resources
 │   └── knowledge_base.py   # Bedrock Knowledge Base setup
 ├── src/                    # Lambda function source code
+│   ├── checklist/          # Checklist definitions
+│   │   ├── design_checklist.json       # Design phase checklist
+│   │   └── construction_checklist.json # Construction phase checklist
 │   ├── lessons/            # Lessons processing and API
 │   │   ├── kb_helper.py    # Knowledge Base operations
 │   │   ├── lessons_api.py  # Project lessons API
@@ -234,6 +237,10 @@ Key variables set by CDK deployment:
 ├── ENV_VAR.md            # Environment variables documentation
 └── README.md             # This file
 ```
+
+### Checklists
+
+Initial checklists are stored in `src/checklist/` as JSON files. After deployment, checklists are saved globally in DynamoDB and can be edited and saved in the app.
 
 ## Development
 

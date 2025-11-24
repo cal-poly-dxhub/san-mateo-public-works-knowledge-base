@@ -64,3 +64,38 @@ export async function apiRequest(
   }
   return JSON.parse(text);
 }
+
+// Raw API request that returns response object for custom status handling
+export async function apiRequestRaw(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (options.headers) {
+    Object.assign(headers, options.headers);
+  }
+
+  try {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.idToken?.toString();
+    
+    if (token) {
+      headers["Authorization"] = token;
+    }
+  } catch (error) {
+    console.error("Failed to get auth session:", error);
+    throw new Error("Not authenticated");
+  }
+
+  const url = `${getApiUrl()}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
+
+  return fetch(url, {
+    ...options,
+    headers,
+    mode: "cors",
+    credentials: "include",
+  });
+}

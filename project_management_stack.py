@@ -66,6 +66,7 @@ class ProjectManagementStack(Stack):
             compute.lessons_lambda,
             compute.lessons_master_lambda,
             compute.checklist_lambda,
+            compute.global_checklist_lambda,
             compute.task_lambda,
             compute.files_lambda,
             compute.search_lambda,
@@ -75,6 +76,9 @@ class ProjectManagementStack(Stack):
 
         # Configure S3 event trigger for lessons sync
         storage.add_lessons_sync_trigger(compute.lessons_sync_lambda)
+        
+        # Configure S3 event trigger for upload processing
+        storage.add_upload_processor_trigger(compute.s3_upload_processor)
 
         # Output Knowledge Base ID
         cdk.CfnOutput(self, "KnowledgeBaseId", value=kb.kb_id)
@@ -112,6 +116,34 @@ class ProjectManagementStack(Stack):
                     iam.PolicyStatement(
                         actions=["lambda:InvokeFunction"],
                         resources=[compute.setup_lambda.function_arn],
+                    )
+                ]
+            ),
+        )
+
+        # Custom resource for global checklist initialization
+        cr.AwsCustomResource(
+            self,
+            "GlobalChecklistInitCustomResource",
+            on_create=cr.AwsSdkCall(
+                service="Lambda",
+                action="invoke",
+                parameters={
+                    "FunctionName": compute.global_checklist_lambda.function_name,
+                    "Payload": json.dumps(
+                        {
+                            "httpMethod": "POST",
+                            "path": "/global-checklist/initialize",
+                        }
+                    ),
+                },
+                physical_resource_id=cr.PhysicalResourceId.of("global-checklist-init"),
+            ),
+            policy=cr.AwsCustomResourcePolicy.from_statements(
+                [
+                    iam.PolicyStatement(
+                        actions=["lambda:InvokeFunction"],
+                        resources=[compute.global_checklist_lambda.function_arn],
                     )
                 ]
             ),

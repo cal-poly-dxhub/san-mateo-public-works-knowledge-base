@@ -83,28 +83,55 @@ def get_file_content(bucket_name, file_path):
 
 
 def generate_upload_url(event, bucket_name):
-    """Generate presigned URL for file upload"""
+    """Generate presigned URLs for file uploads (supports batch)"""
     try:
         body = json.loads(event.get("body", "{}"))
-        file_name = body.get("fileName")
-        project_id = body.get("projectId") or body.get("projectName")
-
-        if not file_name or not project_id:
+        files = body.get("files", [])
+        
+        if not files:
             return {
                 "statusCode": 400,
                 "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
-                "body": json.dumps({"error": "fileName and projectId are required"}),
+                "body": json.dumps({"error": "files array is required"}),
             }
 
-        # Generate S3 key with new path structure
-        s3_key = f"documents/projects/{project_id}/{file_name}"
-
-        # Generate presigned URL
-        presigned_url = s3_client.generate_presigned_url(
-            "put_object",
-            Params={"Bucket": bucket_name, "Key": s3_key},
-            ExpiresIn=3600,  # 1 hour
-        )
+        upload_urls = []
+        for file_info in files:
+            file_name = file_info.get("fileName")
+            project_name = file_info.get("projectName")
+            extract_lessons = file_info.get("extractLessons", False)
+            project_type = file_info.get("projectType", "other")
+            
+            if not file_name:
+                continue
+            
+            # Store all documents under documents/
+            s3_key = f"documents/{file_name}"
+            
+            # Build metadata for S3 object
+            metadata = {}
+            if project_name:
+                metadata["project-name"] = project_name
+            if extract_lessons:
+                metadata["extract-lessons"] = "true"
+                metadata["project-type"] = project_type
+            
+            # Generate presigned URL with metadata
+            params = {"Bucket": bucket_name, "Key": s3_key}
+            if metadata:
+                params["Metadata"] = metadata
+            
+            presigned_url = s3_client.generate_presigned_url(
+                "put_object",
+                Params=params,
+                ExpiresIn=3600,
+            )
+            
+            upload_urls.append({
+                "fileName": file_name,
+                "uploadUrl": presigned_url,
+                "s3Key": s3_key,
+            })
 
         return {
             "statusCode": 200,
@@ -113,7 +140,7 @@ def generate_upload_url(event, bucket_name):
                 "Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"),
                 "Access-Control-Allow-Credentials": "true",
             },
-            "body": json.dumps({"uploadUrl": presigned_url, "s3Key": s3_key}),
+            "body": json.dumps({"uploads": upload_urls}),
         }
     except Exception as e:
         return {

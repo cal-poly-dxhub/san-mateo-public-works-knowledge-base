@@ -107,13 +107,14 @@ def on_event(event, context):
                 except Exception:
                     pass
             cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, kb_id)
-        else:
+        else:  # Update
+            kb_id = event.get("PhysicalResourceId")
             cfnresponse.send(
                 event,
                 context,
                 cfnresponse.SUCCESS,
-                {},
-                event.get("PhysicalResourceId"),
+                {"KnowledgeBaseId": kb_id},
+                kb_id,
             )
 
     except Exception as e:

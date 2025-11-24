@@ -36,10 +36,10 @@ models:
 # - projects/{name}/ = Project metadata and configuration
 s3_paths:
   # Document storage (for Knowledge Base ingestion)
-  documents_prefix: "documents/projects"
-  project_documents: "documents/projects/{project_name}"
-  project_lessons_json: "documents/projects/{project_name}/lessons-learned.json"
-  project_lessons_txt: "documents/projects/{project_name}/lessons-learned.txt"
+  documents_prefix: "documents"
+  project_documents: "documents/{project_name}"
+  project_lessons_json: "documents/{project_name}/lessons-learned.json"
+  project_lessons_txt: "documents/{project_name}/lessons-learned.txt"
 
   # Project metadata and configuration
   projects_prefix: "projects"
