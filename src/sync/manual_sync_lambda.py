@@ -71,8 +71,12 @@ def get_sync_status(cors_headers):
                 UpdateExpression="SET #status = :status, statistics = :stats, updated_at = :updated",
                 ExpressionAttributeNames={"#status": "status"},
                 ExpressionAttributeValues={
-                    ":status": ingestion_job["status"],
-                    ":stats": stats,
+                    ":status": ingestion_job["status"].lower(),
+                    ":stats": {
+                        "documentsScanned": stats.get("numberOfDocumentsScanned", 0),
+                        "documentsModified": stats.get("numberOfModifiedDocuments", 0),
+                        "documentsFailed": stats.get("numberOfDocumentsFailed", 0)
+                    },
                     ":updated": int(time.time())
                 }
             )
@@ -95,13 +99,18 @@ def get_sync_status(cors_headers):
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
                 # Job completed and cleaned up
+                stats = job.get("statistics", {})
                 return {
                     "statusCode": 200,
                     "headers": cors_headers,
                     "body": json.dumps({
-                        "status": job.get("status", "completed").lower(),
+                        "status": job.get("status", "complete").lower(),
                         "jobId": job_id,
-                        "statistics": job.get("statistics", {}),
+                        "statistics": {
+                            "documentsScanned": stats.get("documentsScanned", 0),
+                            "documentsModified": stats.get("documentsModified", 0),
+                            "documentsFailed": stats.get("documentsFailed", 0)
+                        },
                         "message": "Sync completed"
                     })
                 }
@@ -166,10 +175,14 @@ def start_sync(cors_headers):
         sync_jobs_table.put_item(
             Item={
                 "job_id": job_id,
-                "status": "STARTING",
+                "status": "starting",
                 "started_at": int(time.time()),
                 "updated_at": int(time.time()),
-                "statistics": {},
+                "statistics": {
+                    "documentsScanned": 0,
+                    "documentsModified": 0,
+                    "documentsFailed": 0
+                },
                 "ttl": int(time.time()) + 86400  # 24 hours
             }
         )
@@ -180,7 +193,12 @@ def start_sync(cors_headers):
             "body": json.dumps({
                 "message": "Sync started successfully",
                 "status": "starting",
-                "jobId": job_id
+                "jobId": job_id,
+                "statistics": {
+                    "documentsScanned": 0,
+                    "documentsModified": 0,
+                    "documentsFailed": 0
+                }
             })
         }
         

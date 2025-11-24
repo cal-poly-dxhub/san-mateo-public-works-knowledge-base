@@ -310,6 +310,16 @@ class APIGateway(Construct):
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
 
+        # Upload URL generation
+        upload_url = self.api.root.add_resource("upload-url")
+        upload_url.add_method(
+            "POST",
+            apigateway.LambdaIntegration(compute.files_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigateway.AuthorizationType.COGNITO,
+        )
+
+
         # Models
         models = self.api.root.add_resource("models")
         models.add_method(
