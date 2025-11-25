@@ -123,16 +123,8 @@ export default function LessonsLearnedMaster() {
                   onClick={() => loadLessonsForType(projectType.type)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">{projectType.type}</h3>
-                      <Badge variant="secondary">
-                        {projectType.count > 0 ? `${projectType.count} lessons` : "No lessons yet"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {projectType.projects?.length || 0} projects
-                    </p>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <h3 className="font-semibold">{projectType.type}</h3>
+                    <div className="text-xs text-muted-foreground mt-2">
                       {projectType.projects?.slice(0, 3).join(", ") || ""}
                       {(projectType.projects?.length || 0) > 3 && "..."}
                     </div>
