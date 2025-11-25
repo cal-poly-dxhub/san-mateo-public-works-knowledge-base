@@ -1,11 +1,19 @@
 import json
 import os
 import time
+from decimal import Decimal
 import boto3
 from botocore.exceptions import ClientError
 
 bedrock_agent = boto3.client("bedrock-agent")
 dynamodb = boto3.resource("dynamodb")
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return int(o)
+        return super().default(o)
 
 KB_ID = os.environ["KB_ID"]
 DATA_SOURCE_ID = os.environ.get("DATA_SOURCE_ID")
@@ -94,7 +102,7 @@ def get_sync_status(cors_headers):
                     },
                     "startedAt": job.get("started_at"),
                     "message": get_status_message(ingestion_job["status"], stats)
-                })
+                }, cls=DecimalEncoder)
             }
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
@@ -112,7 +120,7 @@ def get_sync_status(cors_headers):
                             "documentsFailed": stats.get("documentsFailed", 0)
                         },
                         "message": "Sync completed"
-                    })
+                    }, cls=DecimalEncoder)
                 }
             raise
             
