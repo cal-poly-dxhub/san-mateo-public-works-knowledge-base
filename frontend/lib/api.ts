@@ -62,7 +62,15 @@ export async function apiRequest(
   if (!text) {
     return {};
   }
-  return JSON.parse(text);
+  
+  const data = JSON.parse(text);
+  
+  // Handle Lambda proxy response format (statusCode, headers, body)
+  if (data.statusCode && data.body && typeof data.body === 'string') {
+    return JSON.parse(data.body);
+  }
+  
+  return data;
 }
 
 // Raw API request that returns response object for custom status handling

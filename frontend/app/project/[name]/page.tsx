@@ -68,6 +68,10 @@ export default function ProjectPage() {
   >("both");
 
   useEffect(() => {
+    loadAvailableModels();
+  }, []);
+
+  useEffect(() => {
     if (params.name) {
       loadProject(decodeURIComponent(params.name as string));
     }

@@ -93,6 +93,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    loadAvailableModels();
+  }, []);
+
+  useEffect(() => {
     loadProjects();
   }, [refreshTrigger, checklistType, currentPage]);
 

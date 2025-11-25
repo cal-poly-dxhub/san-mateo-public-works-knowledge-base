@@ -82,6 +82,10 @@ export default function SearchComponent({ placeholder = "Ask a question..." }: S
     }
   };
 
+  useEffect(() => {
+    loadAvailableModels();
+  }, []);
+
   const handleSearch = async () => {
     if (!query.trim()) return;
 
