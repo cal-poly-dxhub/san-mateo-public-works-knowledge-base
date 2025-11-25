@@ -1,7 +1,6 @@
 import aws_cdk as cdk
-from aws_cdk import Duration
+from aws_cdk import Duration, BundlingOptions
 from aws_cdk import aws_lambda as _lambda
-from aws_cdk.aws_lambda_python_alpha import PythonLayerVersion
 from constructs import Construct
 
 
@@ -34,10 +33,19 @@ class ComputeResources(Construct):
             description="Common utilities including vector_helper",
         )
 
-        self.doc_parser_layer = PythonLayerVersion(
+        self.doc_parser_layer = _lambda.LayerVersion(
             self,
             "DocParserLayer",
-            entry="./layers/doc_parser",
+            code=_lambda.Code.from_asset(
+                "./layers/doc_parser",
+                bundling=BundlingOptions(
+                    image=_lambda.Runtime.PYTHON_3_11.bundling_image,
+                    command=[
+                        "bash", "-c",
+                        "pip install -r requirements.txt -t /asset-output/python && cp -r . /asset-output/"
+                    ],
+                ),
+            ),
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_11],
             description="Document parsing (PDF, DOCX, XLSX)",
         )
