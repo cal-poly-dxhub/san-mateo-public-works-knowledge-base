@@ -150,20 +150,6 @@ class ComputeResources(Construct):
             },
         )
 
-        # Task manager Lambda
-        self.task_lambda = _lambda.Function(
-            self,
-            "TaskManagerLambda",
-            runtime=_lambda.Runtime.PYTHON_3_11,
-            handler="task_manager.handler",
-            code=_lambda.Code.from_asset("./src/tasks"),
-            timeout=Duration.seconds(30),
-            layers=[self.meeting_data_layer],
-            environment={
-                "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
-            },
-        )
-
         # Dashboard Lambda
         self.dashboard_lambda = _lambda.Function(
             self,

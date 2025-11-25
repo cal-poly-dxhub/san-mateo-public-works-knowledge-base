@@ -91,52 +91,11 @@ class APIGateway(Construct):
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
 
-        # Setup wizard
-        wizard = self.api.root.add_resource("setup-wizard")
-        wizard.add_method(
-            "POST",
-            apigateway.LambdaIntegration(compute.wizard_lambda),
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-        )
-
-        # Legacy create project
+        # Create project
         create_project = self.api.root.add_resource("create-project")
         create_project.add_method(
             "POST",
             apigateway.LambdaIntegration(compute.wizard_lambda),
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-        )
-
-        # Update progress
-        update_progress = self.api.root.add_resource("update-progress")
-        update_progress.add_method(
-            "POST",
-            apigateway.LambdaIntegration(compute.projects_lambda),
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-        )
-
-        # Tasks
-        tasks = project_detail.add_resource("tasks")
-        tasks.add_method(
-            "GET",
-            apigateway.LambdaIntegration(compute.task_lambda),
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-        )
-        tasks.add_method(
-            "POST",
-            apigateway.LambdaIntegration(compute.task_lambda),
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-        )
-
-        task_detail = tasks.add_resource("{task_id}")
-        task_detail.add_method(
-            "PUT",
-            apigateway.LambdaIntegration(compute.task_lambda),
             authorizer=self.authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
@@ -323,14 +282,6 @@ class APIGateway(Construct):
         # Search
         search = self.api.root.add_resource("search")
         search.add_method(
-            "POST",
-            apigateway.LambdaIntegration(compute.search_lambda),
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-        )
-
-        project_search = self.api.root.add_resource("project-search")
-        project_search.add_method(
             "POST",
             apigateway.LambdaIntegration(compute.search_lambda),
             authorizer=self.authorizer,
