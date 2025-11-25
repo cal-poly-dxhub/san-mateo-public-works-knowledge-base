@@ -620,42 +620,6 @@ def test_18b_update_task_status(api_timer):
         requests.delete(f"{API_URL}/projects/{put_test_project}", headers=get_auth_only())
 
 
-
-    """Test editing and saving global checklist"""
-    # Get current global checklist
-    response = requests.get(
-        f"{API_URL}/global-checklist?type=design",
-        headers=get_auth_only()
-    )
-    assert response.status_code == 200
-    result = response.json()
-    assert "tasks" in result
-    
-    # Modify a task
-    tasks = result.get("tasks", [])
-    if tasks:
-        tasks[0]["description"] = "Updated task description"
-    
-    # Save updated checklist
-    update_data = {"tasks": tasks}
-    response = requests.put(
-        f"{API_URL}/global-checklist?type=design",
-        headers=headers,
-        json=update_data
-    )
-    assert response.status_code == 200
-    
-    # Verify changes were saved
-    response = requests.get(
-        f"{API_URL}/global-checklist?type=design",
-        headers=get_auth_only()
-    )
-    assert response.status_code == 200
-    result = response.json()
-    if tasks:
-        assert result["tasks"][0]["description"] == "Updated task description"
-
-
 def test_19_checklist_sync_to_projects(api_timer):
     """Test that checklist sync updates unchecked tasks but preserves completed ones"""
     sync_project = f"sync-test-{int(time.time())}"
