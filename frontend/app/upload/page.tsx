@@ -25,25 +25,39 @@ export default function UploadPage() {
     setUploading(true);
     setProgress({});
 
-    for (const file of files) {
-      try {
-        const content = await file.text();
-        await apiRequest("/documents/upload", {
-          method: "POST",
-          body: JSON.stringify({
-            filename: file.name,
-            content: content,
-          }),
-        });
-        setProgress(prev => ({ ...prev, [file.name]: true }));
-      } catch (error) {
-        console.error(`Error uploading ${file.name}:`, error);
-        setProgress(prev => ({ ...prev, [file.name]: false }));
-      }
-    }
+    try {
+      const response = await apiRequest("/upload-url", {
+        method: "POST",
+        body: JSON.stringify({
+          files: files.map(file => ({
+            fileName: file.name,
+            extractLessons: false,
+          })),
+        }),
+      });
 
-    setUploading(false);
-    alert("Upload complete!");
+      await Promise.all(
+        response.uploads.map(async (upload: any, index: number) => {
+          try {
+            await fetch(upload.uploadUrl, {
+              method: "PUT",
+              body: files[index],
+            });
+            setProgress(prev => ({ ...prev, [files[index].name]: true }));
+          } catch (error) {
+            console.error(`Error uploading ${files[index].name}:`, error);
+            setProgress(prev => ({ ...prev, [files[index].name]: false }));
+          }
+        })
+      );
+
+      alert("Upload complete!");
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      alert("Error uploading files");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const removeFile = (index: number) => {

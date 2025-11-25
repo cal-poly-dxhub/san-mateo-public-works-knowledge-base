@@ -165,7 +165,7 @@ export default function Home() {
       });
 
       if (ragEnabled) {
-        setSearchResults([{ answer: data.answer, query: searchQuery }]);
+        setSearchResults([{ answer: data.answer, query: searchQuery, sources: data.sources || [] }]);
       } else {
         setSearchResults(data.results || []);
       }

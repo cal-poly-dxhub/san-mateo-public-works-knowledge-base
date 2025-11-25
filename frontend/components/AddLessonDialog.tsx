@@ -36,20 +36,30 @@ export default function AddLessonDialog({
 
     setLoading(true);
     try {
-      const contentWithPrompt = `INSTRUCTION: This is a note from a user. Generate only ONE lesson learned based on this note.\n\n${notes}`;
-      
-      await apiRequest(
-        `/projects/${encodeURIComponent(projectName)}/documents`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            filename: `lesson-${Date.now()}.txt`,
-            content: contentWithPrompt,
-            extract_lessons: true,
-            project_type: projectType,
-          }),
-        },
-      );
+      const fileName = `lesson-${Date.now()}.txt`;
+      const content = `INSTRUCTION: This is a note from a user. Generate only ONE lesson learned based on this note.\n\n${notes}`;
+
+      // Get presigned URL
+      const uploadResponse = await apiRequest("/upload-url", {
+        method: "POST",
+        body: JSON.stringify({
+          files: [{
+            fileName,
+            projectName,
+            extractLessons: true,
+            projectType,
+          }],
+        }),
+      });
+
+      const uploadUrl = uploadResponse.uploads[0].uploadUrl;
+
+      // Upload file with metadata
+      await fetch(uploadUrl, {
+        method: "PUT",
+        body: content,
+        headers: { "Content-Type": "text/plain" },
+      });
 
       alert("Lesson submitted! Processing in background...");
       onComplete();

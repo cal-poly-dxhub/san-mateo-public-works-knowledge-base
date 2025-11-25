@@ -99,22 +99,26 @@ export default function CreateProjectDialog({
 
       // Upload documents if any
       if (files.length > 0) {
-        for (const { file, extractLessons } of files) {
-          const content = await file.text();
-          
-          await apiRequest(
-            `/projects/${encodeURIComponent(projectName)}/documents`,
-            {
-              method: "POST",
-              body: JSON.stringify({
-                filename: file.name,
-                content: content,
-                extract_lessons: extractLessons,
-                project_type: projectType,
-              }),
-            }
-          );
-        }
+        const uploadResponse = await apiRequest("/upload-url", {
+          method: "POST",
+          body: JSON.stringify({
+            files: files.map(({ file, extractLessons }) => ({
+              fileName: file.name,
+              projectName: projectName,
+              projectType: projectType,
+              extractLessons: extractLessons,
+            })),
+          }),
+        });
+
+        await Promise.all(
+          uploadResponse.uploads.map(async (upload: any, index: number) => {
+            await fetch(upload.uploadUrl, {
+              method: "PUT",
+              body: files[index].file,
+            });
+          })
+        );
       }
 
       onProjectCreated();

@@ -100,107 +100,105 @@ export default function LessonsLearnedMaster() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Lessons Learned by Project Type</CardTitle>
-            {selectedType && (
-              <Button variant="outline" onClick={() => setSelectedType(null)}>
-                Back to Project Types
-              </Button>
+    <div className="flex gap-6 h-[calc(100vh-200px)]">
+      {/* Sidebar */}
+      <div className="w-64 border rounded-lg p-4 overflow-y-auto">
+        <h2 className="text-lg font-semibold mb-4">Project Types</h2>
+        <div className="space-y-2">
+          {projectTypes.map((projectType) => (
+            <button
+              key={projectType.type}
+              onClick={() => loadLessonsForType(projectType.type)}
+              className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                selectedType === projectType.type
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{projectType.type}</span>
+                <Badge variant={selectedType === projectType.type ? "default" : "secondary"}>
+                  {projectType.count}
+                </Badge>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        {!selectedType ? (
+          <div className="text-center text-muted-foreground py-12">
+            Select a project type from the sidebar to view lessons learned
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">{selectedType}</h2>
+              <p className="text-sm text-muted-foreground">{lessons.length} lessons learned</p>
+            </div>
+
+            <MasterConflictsSection projectType={selectedType} onResolved={() => loadLessonsForType(selectedType)} />
+            
+            {loading ? (
+              <div className="text-center text-muted-foreground py-8">Loading lessons...</div>
+            ) : lessons.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">No lessons found for this project type.</div>
+            ) : (
+              <div className="space-y-3">
+                {lessons
+                  .sort((a, b) => {
+                    const severityOrder = { High: 0, Medium: 1, Low: 2 };
+                    return severityOrder[a.severity] - severityOrder[b.severity];
+                  })
+                  .map((lesson, index) => (
+                    <Card key={`${lesson.id}-${index}`} className="hover:bg-muted/50 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className={getSeverityColor(lesson.severity)}>
+                                {lesson.severity}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {lesson.projectName} • {lesson.dateEntered}
+                              </span>
+                            </div>
+                            <h4 className="font-semibold mb-2">{lesson.title}</h4>
+                            <p className="text-sm mb-2">{lesson.lesson}</p>
+                            {lesson.details && (
+                              <p className="text-sm text-muted-foreground mb-2">
+                                <strong>Details:</strong> {lesson.details}
+                              </p>
+                            )}
+                            {lesson.impact && (
+                              <p className="text-sm text-muted-foreground mb-2">
+                                <strong>Impact:</strong> {lesson.impact}
+                              </p>
+                            )}
+                            {lesson.recommendation && (
+                              <p className="text-sm text-muted-foreground">
+                                <strong>Recommendation:</strong> {lesson.recommendation}
+                              </p>
+                            )}
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setEditingLesson(lesson)}
+                          >
+                            Edit
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
-          {!selectedType ? (
-            // Project Types List
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projectTypes.map((projectType) => (
-                <Card 
-                  key={projectType.type} 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => loadLessonsForType(projectType.type)}
-                >
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold">{projectType.type}</h3>
-                    <div className="text-xs text-muted-foreground mt-2">
-                      {projectType.projects?.slice(0, 3).join(", ") || ""}
-                      {(projectType.projects?.length || 0) > 3 && "..."}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            // Lessons List for Selected Type
-            <div className="space-y-4">
-              <MasterConflictsSection projectType={selectedType} onResolved={() => loadLessonsForType(selectedType)} />
-              
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{selectedType} - Lessons Learned</h3>
-                <Badge variant="outline">{lessons.length} lessons</Badge>
-              </div>
-              
-              {loading ? (
-                <div className="text-center text-muted-foreground py-8">Loading lessons...</div>
-              ) : lessons.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">No lessons found for this project type.</div>
-              ) : (
-                <div className="space-y-3">
-                  {lessons
-                    .sort((a, b) => {
-                      const severityOrder = { High: 0, Medium: 1, Low: 2 };
-                      return severityOrder[a.severity] - severityOrder[b.severity];
-                    })
-                    .map((lesson, index) => (
-                      <Card key={`${lesson.id}-${index}`} className="hover:bg-muted/50 transition-colors">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge className={getSeverityColor(lesson.severity)}>
-                                  {lesson.severity}
-                                </Badge>
-                                <span className="text-sm text-muted-foreground">
-                                  {lesson.projectName} • {lesson.dateEntered}
-                                </span>
-                              </div>
-                              <h4 className="font-semibold mb-2">{lesson.title}</h4>
-                              <p className="text-sm mb-2">{lesson.lesson}</p>
-                              {lesson.details && (
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  <strong>Details:</strong> {lesson.details}
-                                </p>
-                              )}
-                              {lesson.impact && (
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  <strong>Impact:</strong> {lesson.impact}
-                                </p>
-                              )}
-                              {lesson.recommendation && (
-                                <p className="text-sm text-muted-foreground">
-                                  <strong>Recommendation:</strong> {lesson.recommendation}
-                                </p>
-                              )}
-                            </div>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setEditingLesson(lesson)}
-                            >
-                              Edit
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       {/* Edit Lesson Dialog */}
       {editingLesson && (
