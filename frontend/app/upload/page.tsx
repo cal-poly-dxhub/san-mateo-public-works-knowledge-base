@@ -39,9 +39,10 @@ export default function UploadPage() {
       await Promise.all(
         response.uploads.map(async (upload: any, index: number) => {
           try {
+            const blob = new Blob([await files[index].arrayBuffer()]);
             await fetch(upload.uploadUrl, {
               method: "PUT",
-              body: files[index],
+              body: blob,
             });
             setProgress(prev => ({ ...prev, [files[index].name]: true }));
           } catch (error) {

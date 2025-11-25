@@ -72,9 +72,6 @@ class IAMPermissions(Construct):
             compute.global_checklist_lambda
         )
 
-        # Task Lambda permissions
-        storage.project_data_table.grant_read_write_data(compute.task_lambda)
-
         # Dashboard Lambda permissions
         storage.bucket.grant_read(compute.dashboard_lambda)
         compute.dashboard_lambda.add_to_role_policy(

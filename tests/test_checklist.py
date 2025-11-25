@@ -256,4 +256,6 @@ def test_sync_global_checklist():
         headers=get_auth_headers()
     )
     
-    assert response.status_code in [200, 409]  # 409 if sync already in progress
+    assert response.status_code == 200
+    result = response.json()
+    assert result.get("message") == "Global sync started"

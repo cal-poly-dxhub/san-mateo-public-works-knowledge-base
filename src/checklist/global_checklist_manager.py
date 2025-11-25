@@ -8,6 +8,7 @@ from boto3.dynamodb.types import TypeSerializer
 
 dynamodb = boto3.resource("dynamodb")
 dynamodb_client = boto3.client("dynamodb")
+lambda_client = boto3.client("lambda")
 serializer = TypeSerializer()
 
 MAX_WORKERS = 10  # Parallel threads for project sync
@@ -34,7 +35,11 @@ def handler(event, context):
             return update_global_checklist(body, checklist_type)
 
         elif method == "POST" and "/global-checklist/sync" in path:
-            return sync_to_all_projects()
+            # Check if this is the async invocation
+            if event.get("source") == "async-sync":
+                return perform_sync_to_all_projects()
+            else:
+                return trigger_async_sync()
 
         elif method == "POST" and "/global-checklist/initialize" in path:
             return initialize_global_checklist()
@@ -125,7 +130,25 @@ def update_global_checklist(body, checklist_type="design"):
         raise
 
 
-def sync_to_all_projects():
+def trigger_async_sync():
+    """Trigger async sync and return immediately"""
+    try:
+        lambda_client.invoke(
+            FunctionName=os.environ["AWS_LAMBDA_FUNCTION_NAME"],
+            InvocationType="Event",
+            Payload=json.dumps({
+                "source": "async-sync",
+                "httpMethod": "POST",
+                "path": "/global-checklist/sync"
+            })
+        )
+        return cors_response(200, {"message": "Global sync started"})
+    except Exception as e:
+        print(f"Error triggering async sync: {str(e)}")
+        raise
+
+
+def perform_sync_to_all_projects():
     """Sync global checklist changes to all projects with parallel processing."""
     try:
         table = dynamodb.Table(os.environ["PROJECT_DATA_TABLE_NAME"])

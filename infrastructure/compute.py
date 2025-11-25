@@ -188,6 +188,7 @@ class ComputeResources(Construct):
             code=_lambda.Code.from_asset("./src/files"),
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
+                "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
         )
 
@@ -273,5 +274,6 @@ class ComputeResources(Construct):
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "LESSONS_PROCESSOR_LAMBDA_NAME": self.async_lessons_processor.function_name,
+                "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
         )

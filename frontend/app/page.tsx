@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import ProjectCard from "@/components/ProjectCard";
 import CreateProjectDialog from "@/components/CreateProjectDialog";
-import BatchStatusDialog from "@/components/BatchStatusDialog";
 import KBSyncButton from "@/components/KBSyncButton";
 
 import { useApi } from "@/lib/api-context";
@@ -54,8 +53,6 @@ export default function Home() {
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [searchLimit, setSearchLimit] = useState("5");
-  const [batchStatusOpen, setBatchStatusOpen] = useState(false);
-  const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -165,7 +162,13 @@ export default function Home() {
       });
 
       if (ragEnabled) {
-        setSearchResults([{ answer: data.answer, query: searchQuery, sources: data.sources || [] }]);
+        setSearchResults([
+          {
+            answer: data.answer,
+            query: searchQuery,
+            sources: data.sources || [],
+          },
+        ]);
       } else {
         setSearchResults(data.results || []);
       }
@@ -178,12 +181,8 @@ export default function Home() {
     }
   };
 
-  const handleProjectCreated = (batchId?: string) => {
+  const handleProjectCreated = () => {
     loadProjects();
-    if (batchId) {
-      setCurrentBatchId(batchId);
-      setBatchStatusOpen(true);
-    }
   };
 
   const getSortedProjects = () => {
@@ -420,12 +419,6 @@ export default function Home() {
           open={createProjectOpen}
           onOpenChange={setCreateProjectOpen}
           onProjectCreated={handleProjectCreated}
-        />
-
-        <BatchStatusDialog
-          open={batchStatusOpen}
-          onOpenChange={setBatchStatusOpen}
-          batchId={currentBatchId}
         />
       </div>
     </div>

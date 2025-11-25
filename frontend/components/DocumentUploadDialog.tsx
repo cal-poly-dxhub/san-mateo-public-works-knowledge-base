@@ -110,9 +110,10 @@ export default function DocumentUploadDialog({
       await Promise.all(
         uploads.map(async (upload: any, index: number) => {
           const file = files[index].file;
+          const blob = new Blob([await file.arrayBuffer()]);
           await fetch(upload.uploadUrl, {
             method: "PUT",
-            body: file,
+            body: blob,
           });
           setUploadProgress(prev => ({ ...prev, [file.name]: true }));
         })

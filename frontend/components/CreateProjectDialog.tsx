@@ -113,9 +113,10 @@ export default function CreateProjectDialog({
 
         await Promise.all(
           uploadResponse.uploads.map(async (upload: any, index: number) => {
+            const blob = new Blob([await files[index].file.arrayBuffer()]);
             await fetch(upload.uploadUrl, {
               method: "PUT",
-              body: files[index].file,
+              body: blob,
             });
           })
         );

@@ -113,11 +113,13 @@ def generate_upload_url(event, bucket_name):
             s3_key = f"documents/{file_name}"
             
             # Generate presigned URL without metadata
+            print(f"Generating presigned URL for: {s3_key}")
             presigned_url = s3_client.generate_presigned_url(
                 "put_object",
                 Params={"Bucket": bucket_name, "Key": s3_key},
                 ExpiresIn=3600,
             )
+            print(f"Generated URL: {presigned_url[:100]}...")
             
             # Store metadata in DynamoDB for S3 processor to retrieve
             if table and (project_name or extract_lessons):
