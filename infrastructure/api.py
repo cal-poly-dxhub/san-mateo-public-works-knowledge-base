@@ -150,14 +150,6 @@ class APIGateway(Construct):
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
 
-        documents = project_detail.add_resource("documents")
-        documents.add_method(
-            "POST",
-            apigateway.LambdaIntegration(compute.projects_lambda),
-            authorizer=self.authorizer,
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-        )
-
         conflicts = project_detail.add_resource("conflicts")
         conflicts.add_method(
             "GET",
@@ -319,7 +311,6 @@ class APIGateway(Construct):
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
 
-
         # Models
         models = self.api.root.add_resource("models")
         models.add_method(
@@ -363,7 +354,7 @@ class APIGateway(Construct):
             authorizer=self.authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
-        
+
         sync_kb_status = sync_kb.add_resource("status")
         sync_kb_status.add_method(
             "GET",

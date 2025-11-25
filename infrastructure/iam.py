@@ -99,6 +99,7 @@ class IAMPermissions(Construct):
 
         # Files Lambda permissions
         storage.bucket.grant_read_write(compute.files_lambda)
+        storage.project_data_table.grant_read_write_data(compute.files_lambda)
 
         # Search Lambda permissions
         storage.bucket.grant_read_write(compute.search_lambda)
@@ -136,6 +137,7 @@ class IAMPermissions(Construct):
 
         # S3 upload processor permissions
         storage.bucket.grant_read(compute.s3_upload_processor)
+        storage.project_data_table.grant_read_write_data(compute.s3_upload_processor)
         compute.async_lessons_processor.grant_invoke(compute.s3_upload_processor)
         compute.manual_sync_lambda.add_to_role_policy(
             iam.PolicyStatement(
