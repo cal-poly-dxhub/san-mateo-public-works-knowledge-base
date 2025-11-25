@@ -1,9 +1,11 @@
 import json
 import os
 import boto3
+import time
 from urllib.parse import unquote
 
 s3_client = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb")
 
 
 def handler(event, context):
@@ -95,6 +97,9 @@ def generate_upload_url(event, bucket_name):
                 "body": json.dumps({"error": "files array is required"}),
             }
 
+        table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
+        table = dynamodb.Table(table_name) if table_name else None
+
         upload_urls = []
         for file_info in files:
             file_name = file_info.get("fileName")
@@ -105,27 +110,27 @@ def generate_upload_url(event, bucket_name):
             if not file_name:
                 continue
             
-            # Store all documents under documents/
             s3_key = f"documents/{file_name}"
             
-            # Build metadata for S3 object
-            metadata = {}
-            if project_name:
-                metadata["project-name"] = project_name
-            if extract_lessons:
-                metadata["extract-lessons"] = "true"
-                metadata["project-type"] = project_type
-            
-            # Generate presigned URL with metadata
-            params = {"Bucket": bucket_name, "Key": s3_key}
-            if metadata:
-                params["Metadata"] = metadata
-            
+            # Generate presigned URL without metadata
             presigned_url = s3_client.generate_presigned_url(
                 "put_object",
-                Params=params,
+                Params={"Bucket": bucket_name, "Key": s3_key},
                 ExpiresIn=3600,
             )
+            
+            # Store metadata in DynamoDB for S3 processor to retrieve
+            if table and (project_name or extract_lessons):
+                table.put_item(
+                    Item={
+                        "project_id": "upload-metadata",
+                        "item_id": f"file#{s3_key}",
+                        "projectName": project_name or "",
+                        "extractLessons": extract_lessons,
+                        "projectType": project_type,
+                        "ttl": int(time.time()) + 7200,  # 2 hour TTL
+                    }
+                )
             
             upload_urls.append({
                 "fileName": file_name,

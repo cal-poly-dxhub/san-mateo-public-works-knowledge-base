@@ -135,83 +135,86 @@ def search_with_rag(
                 "promptTemplate": {"textPromptTemplate": rag_prompt}
             }
 
-        # Use retrieve_and_generate for RAG
+        # First retrieve sources
+        retrieve_response = bedrock_agent_client.retrieve(
+            knowledgeBaseId=kb_id,
+            retrievalQuery={"text": query},
+            retrievalConfiguration={
+                "vectorSearchConfiguration": {"numberOfResults": limit}
+            },
+        )
+
+        # Then use retrieve_and_generate for RAG answer
         response = bedrock_agent_client.retrieve_and_generate(
             input={"text": query},
             retrieveAndGenerateConfiguration=rag_config,
         )
 
-        # Extract answer and sources
         answer = response.get("output", {}).get("text", "No answer generated")
-        citations = response.get("citations", [])
-        
-        print(f"RAG response keys: {response.keys()}")
-        print(f"Number of citations: {len(citations)}")
-        if citations:
-            print(f"First citation keys: {citations[0].keys() if citations else 'N/A'}")
 
-        # Format sources from citations
+        # Format sources from retrieve response
         sources = []
-        for citation in citations:
-            for reference in citation.get("retrievedReferences", []):
-                content = reference.get("content", {}).get("text", "")
-                metadata = reference.get("metadata", {})
-                location = reference.get("location", {})
+        for reference in retrieve_response.get("retrievalResults", []):
+            content = reference.get("content", {}).get("text", "")
+            metadata = reference.get("metadata", {})
+            content = reference.get("content", {}).get("text", "")
+            metadata = reference.get("metadata", {})
+            location = reference.get("location", {})
 
-                # Extract S3 info and generate presigned URL
-                s3_uri = location.get("s3Location", {}).get("uri", "")
-                presigned_url = None
-                project_name = "unknown"
-                chunk_info = None
-                source_doc_key = None
+            # Extract S3 info and generate presigned URL
+            s3_uri = location.get("s3Location", {}).get("uri", "")
+            presigned_url = None
+            project_name = "unknown"
+            chunk_info = None
+            source_doc_key = None
 
-                if s3_uri and bucket_name:
-                    s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
+            if s3_uri and bucket_name:
+                s3_key = s3_uri.replace(f"s3://{bucket_name}/", "")
 
-                    # Get metadata from S3 object
-                    try:
-                        obj_metadata = s3_client.head_object(
-                            Bucket=bucket_name, Key=s3_key
-                        )
-                        obj_meta = obj_metadata.get("Metadata", {})
+                # Get metadata from S3 object
+                try:
+                    obj_metadata = s3_client.head_object(
+                        Bucket=bucket_name, Key=s3_key
+                    )
+                    obj_meta = obj_metadata.get("Metadata", {})
 
-                        # Use project name from metadata
-                        project_name = obj_meta.get("project-name", "unknown")
+                    # Use project name from metadata
+                    project_name = obj_meta.get("project-name", "unknown")
 
-                        # Extract lesson ID for chunk info
-                        lesson_id = obj_meta.get("lesson-id", "")
-                        if lesson_id:
-                            chunk_info = f"Lesson {lesson_id[:8]}"
+                    # Extract lesson ID for chunk info
+                    lesson_id = obj_meta.get("lesson-id", "")
+                    if lesson_id:
+                        chunk_info = f"Lesson {lesson_id[:8]}"
 
-                        # Get source document key
-                        source_doc_key = obj_meta.get("source-document")
+                    # Get source document key
+                    source_doc_key = obj_meta.get("source-document")
 
-                    except Exception as e:
-                        print(f"Error getting object metadata: {e}")
+                except Exception as e:
+                    print(f"Error getting object metadata: {e}")
 
-                    # Generate presigned URL for markdown
-                    try:
-                        presigned_url = s3_client.generate_presigned_url(
-                            "get_object",
-                            Params={"Bucket": bucket_name, "Key": s3_key},
-                            ExpiresIn=3600,
-                        )
-                    except Exception as e:
-                        print(f"Error generating presigned URL: {e}")
+                # Generate presigned URL for markdown
+                try:
+                    presigned_url = s3_client.generate_presigned_url(
+                        "get_object",
+                        Params={"Bucket": bucket_name, "Key": s3_key},
+                        ExpiresIn=3600,
+                    )
+                except Exception as e:
+                    print(f"Error generating presigned URL: {e}")
 
-                sources.append(
-                    {
-                        "content": content,
-                        "source": source_doc_key
-                        or metadata.get(
-                            "file_name",
-                            s3_uri.split("/")[-1] if s3_uri else "unknown",
-                        ),
-                        "project": project_name,
-                        "presigned_url": presigned_url,
-                        "chunk": chunk_info,
-                    }
-                )
+            sources.append(
+                {
+                    "content": content,
+                    "source": source_doc_key
+                    or metadata.get(
+                        "file_name",
+                        s3_uri.split("/")[-1] if s3_uri else "unknown",
+                    ),
+                    "project": project_name,
+                    "presigned_url": presigned_url,
+                    "chunk": chunk_info,
+                }
+            )
 
         print(f"Returning {len(sources)} sources")
         return {"answer": answer, "sources": sources}

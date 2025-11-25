@@ -5,10 +5,14 @@ from urllib.parse import unquote_plus
 
 s3 = boto3.client("s3")
 lambda_client = boto3.client("lambda")
+dynamodb = boto3.resource("dynamodb")
 
 
 def handler(event, context):
     """Process S3 upload events and trigger lessons extraction if needed"""
+    
+    table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
+    table = dynamodb.Table(table_name) if table_name else None
     
     for record in event.get("Records", []):
         bucket = record["s3"]["bucket"]["name"]
@@ -19,13 +23,34 @@ def handler(event, context):
             continue
         
         try:
-            # Get object metadata
-            response = s3.head_object(Bucket=bucket, Key=key)
-            metadata = response.get("Metadata", {})
+            # Try to get metadata from DynamoDB
+            extract_lessons = False
+            project_name = None
+            project_type = "other"
             
-            extract_lessons = metadata.get("extract-lessons") == "true"
-            project_name = metadata.get("project-name")
-            project_type = metadata.get("project-type", "other")
+            if table:
+                try:
+                    response = table.get_item(
+                        Key={
+                            "project_id": "upload-metadata",
+                            "item_id": f"file#{key}"
+                        }
+                    )
+                    if "Item" in response:
+                        item = response["Item"]
+                        extract_lessons = item.get("extractLessons", False)
+                        project_name = item.get("projectName")
+                        project_type = item.get("projectType", "other")
+                        
+                        # Delete the metadata item after reading
+                        table.delete_item(
+                            Key={
+                                "project_id": "upload-metadata",
+                                "item_id": f"file#{key}"
+                            }
+                        )
+                except Exception as e:
+                    print(f"Could not read metadata from DynamoDB: {e}")
             
             if extract_lessons and project_name:
                 # Get file content
