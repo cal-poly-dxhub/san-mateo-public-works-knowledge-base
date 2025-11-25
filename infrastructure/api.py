@@ -62,7 +62,7 @@ class APIGateway(Construct):
         projects = self.api.root.add_resource("projects")
         projects.add_method(
             "GET",
-            apigateway.LambdaIntegration(compute.projects_lambda),
+            apigateway.LambdaIntegration(compute.projects_lambda, proxy=True),
             authorizer=self.authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
@@ -70,13 +70,13 @@ class APIGateway(Construct):
         project_detail = projects.add_resource("{project_name}")
         project_detail.add_method(
             "GET",
-            apigateway.LambdaIntegration(compute.projects_lambda),
+            apigateway.LambdaIntegration(compute.projects_lambda, proxy=True),
             authorizer=self.authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
         project_detail.add_method(
             "DELETE",
-            apigateway.LambdaIntegration(compute.projects_lambda),
+            apigateway.LambdaIntegration(compute.projects_lambda, proxy=True),
             authorizer=self.authorizer,
             authorization_type=apigateway.AuthorizationType.COGNITO,
         )
