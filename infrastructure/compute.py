@@ -1,6 +1,7 @@
 import aws_cdk as cdk
 from aws_cdk import Duration
 from aws_cdk import aws_lambda as _lambda
+from aws_cdk.aws_lambda_python_alpha import PythonLayerVersion
 from constructs import Construct
 
 
@@ -31,6 +32,14 @@ class ComputeResources(Construct):
             code=_lambda.Code.from_asset("./layers/common"),
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_11],
             description="Common utilities including vector_helper",
+        )
+
+        self.doc_parser_layer = PythonLayerVersion(
+            self,
+            "DocParserLayer",
+            entry="./layers/doc_parser",
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_11],
+            description="Document parsing (PDF, DOCX, XLSX)",
         )
 
         # Bucket setup Lambda
@@ -271,6 +280,7 @@ class ComputeResources(Construct):
             handler="s3_upload_processor.handler",
             code=_lambda.Code.from_asset("./src/files"),
             timeout=Duration.seconds(30),
+            layers=[self.doc_parser_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "LESSONS_PROCESSOR_LAMBDA_NAME": self.async_lessons_processor.function_name,

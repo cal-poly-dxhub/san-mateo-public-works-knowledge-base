@@ -1,4 +1,5 @@
 aws-cdk-lib>=2.38.0
+aws-cdk.aws-lambda-python-alpha
 constructs>=10.0.0
 boto3==1.40.14
 botocore==1.40.14

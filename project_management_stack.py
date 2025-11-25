@@ -67,7 +67,6 @@ class ProjectManagementStack(Stack):
             compute.lessons_master_lambda,
             compute.checklist_lambda,
             compute.global_checklist_lambda,
-            compute.task_lambda,
             compute.files_lambda,
             compute.search_lambda,
             compute.manual_sync_lambda,
@@ -76,7 +75,7 @@ class ProjectManagementStack(Stack):
 
         # Configure S3 event trigger for lessons sync
         storage.add_lessons_sync_trigger(compute.lessons_sync_lambda)
-        
+
         # Configure S3 event trigger for upload processing
         storage.add_upload_processor_trigger(compute.s3_upload_processor)
 

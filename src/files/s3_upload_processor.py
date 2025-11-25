@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from urllib.parse import unquote_plus
+from doc_parser import extract_text
 
 s3 = boto3.client("s3")
 lambda_client = boto3.client("lambda")
@@ -55,7 +56,8 @@ def handler(event, context):
             if extract_lessons and project_name:
                 # Get file content
                 obj = s3.get_object(Bucket=bucket, Key=key)
-                content = obj["Body"].read().decode("utf-8")
+                file_bytes = obj["Body"].read()
+                content = extract_text(file_bytes, key)
                 
                 # Invoke async lessons processor
                 lessons_lambda = os.environ.get("LESSONS_PROCESSOR_LAMBDA_NAME")
