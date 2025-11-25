@@ -37,7 +37,7 @@ models:
 s3_paths:
   # Document storage (for Knowledge Base ingestion)
   documents_prefix: "documents"
-  project_documents: "documents/{project_name}"
+  project_documents: "documents"
   project_lessons_json: "documents/{project_name}/lessons-learned.json"
   project_lessons_txt: "documents/{project_name}/lessons-learned.txt"
 
