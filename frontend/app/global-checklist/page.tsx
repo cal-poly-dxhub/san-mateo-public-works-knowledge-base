@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Save, RefreshCw, Pencil } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 import {
@@ -19,7 +18,6 @@ import {
 interface Task {
   task_id: string;
   description: string;
-  required: boolean;
   notes: string;
   projected_date: string;
 }
@@ -75,7 +73,6 @@ export default function GlobalChecklistPage() {
     const newTask: Task = {
       task_id: "",
       description: "",
-      required: true,
       notes: "",
       projected_date: ""
     };
@@ -265,10 +262,6 @@ export default function GlobalChecklistPage() {
                     className="w-48"
                   />
                   <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={task.required}
-                      onCheckedChange={(checked) => updateTask(index, "required", !!checked)}
-                    />
                     <Button
                       variant="ghost"
                       size="sm"
@@ -293,10 +286,6 @@ export default function GlobalChecklistPage() {
                   <div className="flex-1 text-sm">{task.description}</div>
                   <div className="w-48 text-sm text-muted-foreground">{task.notes}</div>
                   <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={task.required}
-                      disabled
-                    />
                     <Button
                       variant="ghost"
                       size="sm"

@@ -92,9 +92,9 @@ prompts:
     Use the provided context to answer the user's question accurately and helpfully.
 
     Context:
-    $search_results
+    $search_results$
 
-    User Question: $input
+    User Question: $query$
 
     Provide a clear, specific answer that:
     1. Directly addresses the question

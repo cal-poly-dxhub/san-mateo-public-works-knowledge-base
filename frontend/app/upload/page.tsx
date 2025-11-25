@@ -66,15 +66,16 @@ export default function UploadPage() {
       >
         <p className="text-lg mb-4">Drag and drop files here</p>
         <p className="text-sm text-gray-500 mb-4">or</p>
-        <label className="cursor-pointer">
-          <input
-            type="file"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Button type="button" variant="outline">
-            Browse Files
+        <input
+          id="file-input"
+          type="file"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <label htmlFor="file-input">
+          <Button type="button" variant="outline" asChild>
+            <span>Browse Files</span>
           </Button>
         </label>
       </div>

@@ -63,7 +63,6 @@ def get_global_checklist(checklist_type="design"):
                 {
                     "task_id": item["taskData"]["task_id"],
                     "description": item["taskData"]["description"],
-                    "required": item["taskData"].get("required", True),
                     "notes": item["taskData"].get("notes", ""),
                     "projected_date": item["taskData"].get("projected_date", ""),
                     "version": item.get("version", ""),

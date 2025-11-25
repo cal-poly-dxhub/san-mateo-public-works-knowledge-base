@@ -155,7 +155,6 @@ def get_checklist(project_name, checklist_type="design"):
                 "description": task_data.get("description", ""),
                 "projected_date": task_data.get("projected_date", ""),
                 "actual_date": completed_date or "",
-                "required": task_data.get("required", True),
                 "notes": task_data.get("notes", ""),
                 "status": "completed"
                 if completed_date
@@ -405,7 +404,6 @@ def add_task(project_name, task_data):
                     "task_id": task_number,
                     "description": task_data.get("description", "").strip(),
                     "projected_date": projected_date,
-                    "required": task_data.get("required", True),
                     "notes": task_data.get("notes", "").strip(),
                 },
                 "status": "not_started",
@@ -576,7 +574,6 @@ def edit_task(project_name, task_data):
                         "task_id": new_task_number,
                         "description": task_data.get("description", "").strip(),
                         "projected_date": projected_date,
-                        "required": task_data.get("required", True),
                         "notes": task_data.get("notes", "").strip(),
                     },
                     "status": old_task.get("status", "not_started"),
@@ -596,7 +593,6 @@ def edit_task(project_name, task_data):
                         "task_id": new_task_number,
                         "description": task_data.get("description", "").strip(),
                         "projected_date": projected_date,
-                        "required": task_data.get("required", True),
                         "notes": task_data.get("notes", "").strip(),
                     }
                 },

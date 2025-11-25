@@ -73,7 +73,7 @@ export default function Home() {
     },
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const projectsPerPage = 12;
+  const [projectsPerPage, setProjectsPerPage] = useState(20);
   const [totalProjects, setTotalProjects] = useState(0);
 
   useEffect(() => {
@@ -252,6 +252,23 @@ export default function Home() {
           </div>
 
           <div className="flex gap-2 items-center">
+            <Select
+              value={projectsPerPage.toString()}
+              onValueChange={(value) => {
+                setProjectsPerPage(parseInt(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 per page</SelectItem>
+                <SelectItem value="10">10 per page</SelectItem>
+                <SelectItem value="20">20 per page</SelectItem>
+                <SelectItem value="50">50 per page</SelectItem>
+              </SelectContent>
+            </Select>
             <Select
               value={sortBy}
               onValueChange={(value: any) => setSortBy(value)}

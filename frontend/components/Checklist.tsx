@@ -18,7 +18,6 @@ interface Task {
   description: string;
   projected_date: string;
   actual_date: string;
-  required: boolean;
   notes: string;
   status: string;
 }
@@ -57,7 +56,6 @@ export default function Checklist({ projectName, projectType }: ChecklistProps) 
     checklist_task_id: "",
     description: "",
     projected_date: "",
-    required: true,
     notes: ""
   });
   const [checklistType, setChecklistType] = useState<"design" | "construction">(() => {
@@ -184,7 +182,7 @@ export default function Checklist({ projectName, projectType }: ChecklistProps) 
         body: JSON.stringify({ ...newTask, checklist_type: checklistType }),
       });
       setAddingTask(false);
-      setNewTask({ checklist_task_id: "", description: "", projected_date: "", required: true, notes: "" });
+      setNewTask({ checklist_task_id: "", description: "", projected_date: "", notes: "" });
       loadChecklist();
     } catch (error: any) {
       alert(error?.message || "Failed to add task");
@@ -545,9 +543,6 @@ export default function Checklist({ projectName, projectType }: ChecklistProps) 
                           <span className="text-xs font-mono text-muted-foreground">
                             {task.checklist_task_id}
                           </span>
-                          {task.required && (
-                            <Badge variant="outline" className="text-xs">Required</Badge>
-                          )}
                         </div>
                     <p className={`${task.actual_date ? "line-through text-muted-foreground" : ""}`}>
                       {task.description}

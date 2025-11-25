@@ -132,7 +132,7 @@ def search_with_rag(
         # Add custom prompt if provided
         if rag_prompt:
             rag_config["knowledgeBaseConfiguration"]["generationConfiguration"] = {
-                "promptTemplate": {"textPromptTemplate": f"{rag_prompt}\n\n$search_results$"}
+                "promptTemplate": {"textPromptTemplate": rag_prompt}
             }
 
         # Use retrieve_and_generate for RAG
@@ -144,6 +144,11 @@ def search_with_rag(
         # Extract answer and sources
         answer = response.get("output", {}).get("text", "No answer generated")
         citations = response.get("citations", [])
+        
+        print(f"RAG response keys: {response.keys()}")
+        print(f"Number of citations: {len(citations)}")
+        if citations:
+            print(f"First citation keys: {citations[0].keys() if citations else 'N/A'}")
 
         # Format sources from citations
         sources = []
@@ -208,6 +213,7 @@ def search_with_rag(
                     }
                 )
 
+        print(f"Returning {len(sources)} sources")
         return {"answer": answer, "sources": sources}
 
     except Exception as e:
