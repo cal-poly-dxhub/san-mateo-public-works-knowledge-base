@@ -65,7 +65,7 @@ def handler(event, context):
                         InvocationType="Event",
                         Payload=json.dumps({
                             "content": content,
-                            "filename": key.split("/")[-1],
+                            "filename": key,
                             "project_name": project_name,
                             "project_type": project_type,
                         }),

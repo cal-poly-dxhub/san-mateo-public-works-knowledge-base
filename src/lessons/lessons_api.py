@@ -338,15 +338,14 @@ def get_lessons(event):
         # Fetch source documents for each lesson
         lessons = lessons_data.get("lessons", [])
         for lesson in lessons:
-            source_doc = lesson.get("source_document")
-            if source_doc:
+            source_doc_path = lesson.get("source_document")
+            if source_doc_path:
                 try:
-                    doc_key = f"projects/{project_name}/lessons_learned.txt"
-                    doc_response = s3.get_object(Bucket=bucket_name, Key=doc_key)
+                    doc_response = s3.get_object(Bucket=bucket_name, Key=source_doc_path)
                     doc_content = doc_response["Body"].read().decode("utf-8")
                     lesson["source_content"] = doc_content
                 except Exception as e:
-                    print(f"Could not fetch source document {source_doc}: {str(e)}")
+                    print(f"Could not fetch source document {source_doc_path}: {str(e)}")
                     lesson["source_content"] = "Source document not available"
 
         return {
