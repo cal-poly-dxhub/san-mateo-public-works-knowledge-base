@@ -73,6 +73,8 @@ def get_sync_status(cors_headers):
             ingestion_job = job_response["ingestionJob"]
             stats = ingestion_job.get("statistics", {})
             
+            docs_indexed = stats.get("numberOfNewDocumentsIndexed", 0) + stats.get("numberOfModifiedDocumentsIndexed", 0)
+            
             # Update DynamoDB with latest stats
             sync_jobs_table.update_item(
                 Key={"job_id": job_id},
@@ -82,7 +84,7 @@ def get_sync_status(cors_headers):
                     ":status": ingestion_job["status"].lower(),
                     ":stats": {
                         "documentsScanned": stats.get("numberOfDocumentsScanned", 0),
-                        "documentsModified": stats.get("numberOfModifiedDocuments", 0),
+                        "documentsModified": docs_indexed,
                         "documentsFailed": stats.get("numberOfDocumentsFailed", 0)
                     },
                     ":updated": int(time.time())
@@ -97,7 +99,7 @@ def get_sync_status(cors_headers):
                     "jobId": job_id,
                     "statistics": {
                         "documentsScanned": stats.get("numberOfDocumentsScanned", 0),
-                        "documentsModified": stats.get("numberOfModifiedDocuments", 0),
+                        "documentsModified": docs_indexed,
                         "documentsFailed": stats.get("numberOfDocumentsFailed", 0),
                     },
                     "startedAt": job.get("started_at"),
@@ -155,6 +157,7 @@ def start_sync(cors_headers):
             if jobs_response.get("ingestionJobSummaries"):
                 job = jobs_response["ingestionJobSummaries"][0]
                 stats = job.get("statistics", {})
+                docs_indexed = stats.get("numberOfNewDocumentsIndexed", 0) + stats.get("numberOfModifiedDocumentsIndexed", 0)
                 
                 return {
                     "statusCode": 409,
@@ -165,7 +168,7 @@ def start_sync(cors_headers):
                         "jobId": job["ingestionJobId"],
                         "statistics": {
                             "documentsScanned": stats.get("numberOfDocumentsScanned", 0),
-                            "documentsModified": stats.get("numberOfModifiedDocuments", 0),
+                            "documentsModified": docs_indexed,
                             "documentsFailed": stats.get("numberOfDocumentsFailed", 0),
                         }
                     })
@@ -238,15 +241,17 @@ def get_data_source_id():
 def get_status_message(status, stats):
     """Generate user-friendly status message."""
     scanned = stats.get("numberOfDocumentsScanned", 0)
-    modified = stats.get("numberOfModifiedDocuments", 0)
+    new_indexed = stats.get("numberOfNewDocumentsIndexed", 0)
+    modified_indexed = stats.get("numberOfModifiedDocumentsIndexed", 0)
+    indexed = new_indexed + modified_indexed
     failed = stats.get("numberOfDocumentsFailed", 0)
     
     if status == "STARTING":
         return "Sync is starting..."
     elif status == "IN_PROGRESS":
-        return f"Syncing... {scanned} documents scanned, {modified} indexed"
+        return f"Syncing... {scanned} documents scanned"
     elif status == "COMPLETE":
-        return f"Sync complete! {modified} documents indexed"
+        return f"Sync complete! {indexed} documents indexed"
     elif status == "FAILED":
         return f"Sync failed. {failed} documents had errors"
     else:

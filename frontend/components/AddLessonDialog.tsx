@@ -54,11 +54,11 @@ export default function AddLessonDialog({
 
       const uploadUrl = uploadResponse.uploads[0].uploadUrl;
 
-      // Upload file with metadata
+      // Upload file without Content-Type header
+      const blob = new Blob([content]);
       await fetch(uploadUrl, {
         method: "PUT",
-        body: content,
-        headers: { "Content-Type": "text/plain" },
+        body: blob,
       });
 
       alert("Lesson submitted! Processing in background...");

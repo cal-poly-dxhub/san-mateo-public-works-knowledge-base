@@ -109,7 +109,7 @@ export default function KBSyncButton() {
       return `${documentsModified} docs indexed`;
     }
     
-    return `${documentsScanned} scanned, ${documentsModified} indexed${documentsFailed > 0 ? `, ${documentsFailed} failed` : ""}`;
+    return `${documentsScanned} docs scanned${documentsFailed > 0 ? `, ${documentsFailed} failed` : ""}`;
   };
 
   return (
