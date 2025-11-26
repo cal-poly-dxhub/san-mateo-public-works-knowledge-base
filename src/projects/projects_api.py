@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from datetime import datetime
 
 import boto3
 
@@ -329,25 +330,8 @@ def create_project(event, bucket_name):
                 "body": json.dumps({"error": "project_name is required"}),
             }
 
-        # Call project setup wizard Lambda to create folder structure
-        lambda_client = boto3.client("lambda")
-        setup_payload = {
-            "body": json.dumps(
-                {
-                    "projectName": project_name,
-                    "projectType": "Other",
-                    "location": "TBD",
-                    "areaSize": "0",
-                    "specialConditions": [],
-                }
-            )
-        }
-
-        lambda_client.invoke(
-            FunctionName=os.environ.get("PROJECT_WIZARD_LAMBDA_NAME"),
-            InvocationType="RequestResponse",
-            Payload=json.dumps(setup_payload),
-        )
+        # Create S3 folder structure
+        s3_client.put_object(Bucket=bucket_name, Key=f"projects/{project_name}/.keep", Body=b"")
 
         return {
             "statusCode": 200,
@@ -357,6 +341,9 @@ def create_project(event, bucket_name):
             ),
         }
     except Exception as e:
+        print(f"DEBUG: Exception in create_project: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             "statusCode": 500,
             "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},

@@ -1,5 +1,5 @@
 import io
-import PyPDF2
+import pypdf
 import docx
 import openpyxl
 
@@ -15,29 +15,55 @@ def extract_text(file_bytes, filename):
     elif ext in ['xls', 'xlsx']:
         return extract_xlsx(file_bytes)
     else:
-        return file_bytes.decode('utf-8')
+        return file_bytes.decode('utf-8', errors='ignore')
 
 
 def extract_pdf(file_bytes):
     """Extract text from PDF"""
-    reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
-    return '\n'.join(page.extract_text() for page in reader.pages)
+    try:
+        reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+        text = []
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text.append(extracted)
+        return '\n'.join(text) if text else ""
+    except Exception as e:
+        print(f"Error extracting PDF: {e}")
+        return ""
 
 
 def extract_docx(file_bytes):
     """Extract text from DOCX"""
-    doc = docx.Document(io.BytesIO(file_bytes))
-    return '\n'.join(para.text for para in doc.paragraphs)
+    try:
+        doc = docx.Document(io.BytesIO(file_bytes))
+        text = []
+        for para in doc.paragraphs:
+            if para.text.strip():
+                text.append(para.text)
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = '\t'.join(cell.text for cell in row.cells)
+                if row_text.strip():
+                    text.append(row_text)
+        return '\n'.join(text) if text else ""
+    except Exception as e:
+        print(f"Error extracting DOCX: {e}")
+        return ""
 
 
 def extract_xlsx(file_bytes):
     """Extract text from XLSX"""
-    wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
-    text = []
-    for sheet in wb.worksheets:
-        text.append(f"Sheet: {sheet.title}")
-        for row in sheet.iter_rows(values_only=True):
-            row_text = '\t'.join(str(c) if c else '' for c in row)
-            if row_text.strip():
-                text.append(row_text)
-    return '\n'.join(text)
+    try:
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
+        text = []
+        for sheet in wb.worksheets:
+            text.append(f"Sheet: {sheet.title}")
+            for row in sheet.iter_rows(values_only=True):
+                row_text = '\t'.join(str(c) if c else '' for c in row)
+                if row_text.strip():
+                    text.append(row_text)
+        return '\n'.join(text) if text else ""
+    except Exception as e:
+        print(f"Error extracting XLSX: {e}")
+        return ""

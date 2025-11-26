@@ -33,22 +33,7 @@ class ComputeResources(Construct):
             description="Common utilities including vector_helper",
         )
 
-        self.doc_parser_layer = _lambda.LayerVersion(
-            self,
-            "DocParserLayer",
-            code=_lambda.Code.from_asset(
-                "./layers/doc_parser",
-                bundling=BundlingOptions(
-                    image=_lambda.Runtime.PYTHON_3_11.bundling_image,
-                    command=[
-                        "bash", "-c",
-                        "pip install -r requirements.txt -t /asset-output/python && cp -r . /asset-output/"
-                    ],
-                ),
-            ),
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_11],
-            description="Document parsing (PDF, DOCX, XLSX)",
-        )
+
 
         # Bucket setup Lambda
         self.setup_lambda = _lambda.Function(
@@ -306,9 +291,20 @@ class ComputeResources(Construct):
             "S3UploadProcessorLambda",
             runtime=_lambda.Runtime.PYTHON_3_11,
             handler="s3_upload_processor.handler",
-            code=_lambda.Code.from_asset("./src/files"),
+            code=_lambda.Code.from_asset(
+                "./src/files",
+                bundling=BundlingOptions(
+                    image=_lambda.Runtime.PYTHON_3_11.bundling_image,
+                    command=[
+                        "bash", "-c",
+                        "pip install pypdf python-docx openpyxl "
+                        "--platform manylinux2014_x86_64 "
+                        "--only-binary=:all: "
+                        "-t /asset-output && cp -r . /asset-output/"
+                    ],
+                ),
+            ),
             timeout=Duration.seconds(30),
-            layers=[self.doc_parser_layer],
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "LESSONS_PROCESSOR_LAMBDA_NAME": self.async_lessons_processor.function_name,
