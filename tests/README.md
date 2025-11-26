@@ -1,6 +1,6 @@
 # API Test Suite
 
-Comprehensive integration tests for the DXHub Meeting Automation API.
+Integration tests for the Project Management API.
 
 ## Setup
 
@@ -9,101 +9,61 @@ Comprehensive integration tests for the DXHub Meeting Automation API.
 pip install -r requirements.txt
 ```
 
-2. Configure environment variables:
+2. Configure environment variables in `tests/.env`:
 ```bash
-export API_URL="https://your-api-gateway-url.execute-api.us-west-2.amazonaws.com/prod"
-export API_KEY="your-api-key"
-export S3_BUCKET="dpw-project-mgmt-data"
-export VECTOR_BUCKET="dpw-project-mgmt-vectors"
-export DYNAMODB_TABLE="dpw-project-data"
-export INDEX_NAME="project-mgmt-index"
+API_URL=https://your-api-gateway-url.execute-api.us-west-2.amazonaws.com/prod
+USER_POOL_ID=us-west-2_xxxxxxxx
+USER_POOL_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
+TEST_USERNAME=your-test-user@example.com
+TEST_PASSWORD=your-test-password
+S3_BUCKET=your-s3-bucket-name
+DYNAMODB_TABLE=your-dynamodb-table-name
+KNOWLEDGE_BASE_ID=your-knowledge-base-id
 ```
-
-Or create a `.env` file with these values.
 
 ## Running Tests
 
 Run all tests:
 ```bash
-pytest test_api_comprehensive.py -v
+cd tests
+pytest -v
 ```
 
-Run specific test:
+Run a specific test file:
 ```bash
-pytest test_api_comprehensive.py::test_01_get_project_types -v
+pytest test_projects.py -v
+pytest test_lessons.py -v
+pytest test_checklist.py -v
+pytest test_search.py -v
+pytest test_uploads.py -v
+```
+
+Run a specific test:
+```bash
+pytest test_projects.py::test_create_project -v
 ```
 
 Run with coverage:
 ```bash
-pytest test_api_comprehensive.py --cov --cov-report=html
+pytest --cov --cov-report=html
 ```
 
-## Test Coverage
+## Test Suites
 
-### 1. Project Management (Tests 1-6)
-- Get project types configuration
-- Create new project
-- Setup project with wizard (AI-generated config)
-- List all projects
-- Get project details
-- Update project progress
+| File | Description |
+|------|-------------|
+| `test_projects.py` | Project CRUD operations, setup wizard |
+| `test_lessons.py` | Lessons learned extraction, sync, conflicts |
+| `test_checklist.py` | Checklist retrieval and task updates |
+| `test_search.py` | Vector search and RAG queries |
+| `test_uploads.py` | File upload presigned URLs and processing |
 
-### 2. Task Management (Tests 7-9)
-- Get all tasks for a project
-- Create new task
-- Update task status
+## Configuration
 
-### 3. Checklist API (Tests 10-12)
-- Get project checklist with progress
-- Update checklist metadata
-- Update individual checklist tasks
-
-### 4. Files API (Tests 13-14)
-- Get presigned upload URL
-- Retrieve file content
-
-### 5. Lessons Learned (Tests 15-19)
-- Upload document with lesson extraction
-- Wait for async processing
-- Get project-specific lessons
-- Get master project types
-- Get aggregated lessons by type
-
-### 6. Search (Tests 20-21)
-- Semantic vector search
-- RAG search with AI-generated answers
-
-### 7. AI Assistant (Tests 22-24)
-- Q&A functionality
-- Template generation
-- Proactive alerts
-
-### 8. Dashboard (Tests 25-26)
-- Get available AI models
-- Retrieve project assets
-
-### 9. Vector Storage (Test 27)
-- Validate vectors created in S3 vector store
-
-### 10. Race Conditions (Test 28)
-- Concurrent lesson processing without data corruption
-
-### 11. Cleanup (Test 29)
-- Project deletion with complete cleanup verification
-
-## Test Workflows
-
-The tests follow realistic user workflows:
-
-1. **Project Creation Flow**: Create → Setup Wizard → Verify
-2. **Task Management Flow**: List → Create → Update → Check Progress
-3. **Lessons Flow**: Upload Docs → Extract → Review → Aggregate
-4. **Search Flow**: Vector Search → RAG Answer → AI Follow-up
+Test configuration is in `test_config.py`. All values are read from environment variables with no defaults for sensitive data.
 
 ## Notes
 
-- Tests run sequentially to maintain state
-- Each test creates unique project names with timestamps
-- Cleanup test ensures no orphaned resources
-- Race condition test validates concurrent processing
-- All tests include proper assertions and error handling
+- Tests require valid Cognito credentials
+- Some tests create/delete resources - use a test environment
+- Async operations (lessons extraction) have configurable timeouts
