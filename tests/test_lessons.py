@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Lessons Learned Tests"""
 
+import io
 import json
 import time
 import pytest
@@ -18,6 +19,19 @@ def get_auth_headers():
         "Authorization": get_cached_auth_token(),
         "Content-Type": "application/json"
     }
+
+
+def wait_for_lessons(project_name, min_count=1, timeout=30, interval=2):
+    """Poll until lessons exist or timeout"""
+    start = time.time()
+    while time.time() - start < timeout:
+        resp = requests.get(f"{API_URL}/projects/{project_name}/lessons-learned", headers=get_auth_only())
+        if resp.status_code == 200:
+            lessons = resp.json().get("lessons", [])
+            if len(lessons) >= min_count:
+                return lessons
+        time.sleep(interval)
+    return []
 
 
 def test_extract_lessons_from_document():
@@ -62,18 +76,8 @@ def test_extract_lessons_from_document():
     """
     requests.put(upload_url, data=content.encode())
     
-    # Wait for processing
-    time.sleep(MAX_PROCESSING_TIMEOUT / 2)
-    
-    # Get lessons
-    response = requests.get(
-        f"{API_URL}/projects/{project_name}/lessons-learned",
-        headers=get_auth_only()
-    )
-    
-    assert response.status_code == 200
-    result = response.json()
-    lessons = result.get("lessons", [])
+    # Wait for processing with polling
+    lessons = wait_for_lessons(project_name, min_count=3)
     assert len(lessons) >= 3
     
     # Cleanup
@@ -120,7 +124,7 @@ def test_get_project_lesson_conflicts():
                 content = "Lesson: Late coordination can be more cost-effective."
             requests.put(upload_url, data=content.encode())
     
-    time.sleep(MAX_PROCESSING_TIMEOUT / 2)
+    wait_for_lessons(project_name, min_count=2)
     
     # Get conflicts
     response = requests.get(
@@ -173,7 +177,7 @@ def test_resolve_project_lesson_conflict():
             content = f"Lesson {i}: Conflicting information about project management."
             requests.put(upload_url, data=content.encode())
     
-    time.sleep(MAX_PROCESSING_TIMEOUT / 2)
+    wait_for_lessons(project_name, min_count=2)
     
     # Get conflicts
     conflicts_response = requests.get(
@@ -200,6 +204,115 @@ def test_resolve_project_lesson_conflict():
             assert response.status_code == 200
     
     # Cleanup
+    requests.delete(f"{API_URL}/projects/{project_name}", headers=get_auth_only())
+
+
+def test_extract_lessons_from_pdf():
+    """Test extracting lessons from a PDF document"""
+    from reportlab.pdfgen import canvas
+    
+    project_name = f"test-pdf-{int(time.time())}"
+    
+    requests.post(
+        f"{API_URL}/setup-wizard",
+        headers=get_auth_headers(),
+        json={"projectName": project_name, "projectType": "Other", "location": "Test", "areaSize": "1.0", "specialConditions": []}
+    )
+    
+    response = requests.post(
+        f"{API_URL}/upload-url",
+        headers=get_auth_headers(),
+        json={"files": [{"fileName": "lessons.pdf", "projectName": project_name, "projectType": "Other", "extractLessons": True}]}
+    )
+    assert response.status_code == 200
+    upload_url = response.json()["uploads"][0]["uploadUrl"]
+    
+    # Create PDF with actual text content
+    pdf_buffer = io.BytesIO()
+    c = canvas.Canvas(pdf_buffer)
+    c.drawString(100, 700, "Lesson learned: PDF coordination with utilities prevents delays.")
+    c.drawString(100, 680, "Lesson learned: Budget 20% contingency for unexpected conditions.")
+    c.save()
+    pdf_buffer.seek(0)
+    requests.put(upload_url, data=pdf_buffer.getvalue())
+    
+    lessons = wait_for_lessons(project_name, min_count=1)
+    assert len(lessons) >= 1
+    
+    requests.delete(f"{API_URL}/projects/{project_name}", headers=get_auth_only())
+
+
+def test_extract_lessons_from_docx():
+    """Test extracting lessons from a DOCX document"""
+    from docx import Document
+    
+    project_name = f"test-docx-{int(time.time())}"
+    
+    requests.post(
+        f"{API_URL}/setup-wizard",
+        headers=get_auth_headers(),
+        json={"projectName": project_name, "projectType": "Other", "location": "Test", "areaSize": "1.0", "specialConditions": []}
+    )
+    
+    response = requests.post(
+        f"{API_URL}/upload-url",
+        headers=get_auth_headers(),
+        json={"files": [{"fileName": "lessons.docx", "projectName": project_name, "projectType": "Other", "extractLessons": True}]}
+    )
+    assert response.status_code == 200
+    upload_url = response.json()["uploads"][0]["uploadUrl"]
+    
+    # Create DOCX with lessons
+    doc = Document()
+    doc.add_paragraph("Lesson 1: DOCX early coordination prevents project delays.")
+    doc.add_paragraph("Lesson 2: DOCX budget contingency of 15% is essential.")
+    doc.add_paragraph("Lesson 3: DOCX weekly stakeholder meetings improve communication.")
+    
+    docx_buffer = io.BytesIO()
+    doc.save(docx_buffer)
+    requests.put(upload_url, data=docx_buffer.getvalue())
+    
+    lessons = wait_for_lessons(project_name, min_count=3)
+    assert len(lessons) >= 3
+    
+    requests.delete(f"{API_URL}/projects/{project_name}", headers=get_auth_only())
+
+
+def test_extract_lessons_from_xlsx():
+    """Test extracting lessons from an XLSX spreadsheet"""
+    from openpyxl import Workbook
+    
+    project_name = f"test-xlsx-{int(time.time())}"
+    
+    requests.post(
+        f"{API_URL}/setup-wizard",
+        headers=get_auth_headers(),
+        json={"projectName": project_name, "projectType": "Other", "location": "Test", "areaSize": "1.0", "specialConditions": []}
+    )
+    
+    response = requests.post(
+        f"{API_URL}/upload-url",
+        headers=get_auth_headers(),
+        json={"files": [{"fileName": "lessons.xlsx", "projectName": project_name, "projectType": "Other", "extractLessons": True}]}
+    )
+    assert response.status_code == 200
+    upload_url = response.json()["uploads"][0]["uploadUrl"]
+    
+    # Create XLSX with lessons
+    wb = Workbook()
+    ws = wb.active
+    ws["A1"] = "Lesson"
+    ws["A2"] = "Lesson 1: XLSX early coordination prevents project delays."
+    ws["A3"] = "Lesson 2: XLSX budget contingency of 15% is essential."
+    ws["A4"] = "Lesson 3: XLSX weekly stakeholder meetings improve communication."
+    
+    xlsx_buffer = io.BytesIO()
+    wb.save(xlsx_buffer)
+    requests.put(upload_url, data=xlsx_buffer.getvalue())
+    
+    lessons = wait_for_lessons(project_name, min_count=3)
+    assert len(lessons) >= 3
+    
     requests.delete(f"{API_URL}/projects/{project_name}", headers=get_auth_only())
 
 

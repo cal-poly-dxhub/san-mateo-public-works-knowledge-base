@@ -29,20 +29,23 @@ def test_get_project_types():
 
 
 def test_create_project():
-    """Test project creation via setup wizard"""
+    """Test project creation"""
     project_name = f"test-project-{int(time.time())}"
     
     response = requests.post(
-        f"{API_URL}/setup-wizard",
+        f"{API_URL}/create-project",
         headers=get_auth_headers(),
         json={
             "projectName": project_name,
-            "projectType": "Reconstruction",
-            "location": "Test Street",
+            "projectType": "Other",
+            "location": "Test",
             "areaSize": "1.0",
             "specialConditions": []
         }
     )
+    
+    print(f"Status: {response.status_code}")
+    print(f"Response: {response.text}")
     
     assert response.status_code == 200
     result = response.json()
@@ -105,13 +108,25 @@ def test_update_project_metadata():
         }
     )
     
-    # Update metadata
+    # Allow GSI propagation
+    time.sleep(1)
+    
+    # Update metadata with proper structure
     response = requests.put(
         f"{API_URL}/projects/{project_name}/metadata",
         headers=get_auth_headers(),
         json={
-            "description": "Updated description",
-            "status": "In Progress"
+            "date": "",
+            "project": "",
+            "work_authorization": "",
+            "office_plans_file_no": "",
+            "design_engineer": "",
+            "survey_books": "",
+            "project_manager": "Test Manager",
+            "project_type": "Other",
+            "location": "Updated Location",
+            "area_size": "1.0",
+            "special_conditions": []
         }
     )
     
