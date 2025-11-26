@@ -50,7 +50,7 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
 
   const openSourceFile = async (filename: string) => {
     try {
-      const response = await apiRequest(`/file/documents/${encodeURIComponent(filename)}`);
+      const response = await apiRequest(`/file/${encodeURIComponent(filename)}`);
       window.open(response.url, '_blank');
     } catch (error) {
       console.error('Error opening file:', error);
