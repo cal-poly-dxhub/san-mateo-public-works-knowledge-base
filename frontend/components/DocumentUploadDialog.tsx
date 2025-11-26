@@ -147,7 +147,7 @@ export default function DocumentUploadDialog({
             <Input
               id="files"
               type="file"
-              accept=".txt,.md,.pdf,.doc,.docx"
+              accept=".txt,.md,.pdf,.doc,.docx,.xls,.xlsx"
               onChange={handleFileChange}
               multiple
             />
