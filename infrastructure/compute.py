@@ -298,8 +298,12 @@ class ComputeResources(Construct):
                     image=_lambda.Runtime.PYTHON_3_11.bundling_image,
                     command=[
                         "bash", "-c",
-                        "pip install pypdf python-docx openpyxl "
-                        "-t /asset-output && cp -r . /asset-output/"
+                        "pip install pypdf openpyxl "
+                        "--platform manylinux2014_x86_64 "
+                        "--only-binary=:all: "
+                        "-t /asset-output && "
+                        "pip install python-docx -t /asset-output && "
+                        "cp -r . /asset-output/"
                     ],
                 ),
             ),
