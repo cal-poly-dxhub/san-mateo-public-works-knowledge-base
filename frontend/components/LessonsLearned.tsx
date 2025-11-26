@@ -50,12 +50,8 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
 
   const openSourceFile = async (filename: string) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/file/${encodeURIComponent(filename)}`
-      );
-      if (!response.ok) throw new Error('File not found');
-      const data = await response.json();
-      window.open(data.url, '_blank');
+      const response = await apiRequest(`/file/documents/${encodeURIComponent(filename)}`);
+      window.open(response.url, '_blank');
     } catch (error) {
       console.error('Error opening file:', error);
       alert('Failed to open file');
