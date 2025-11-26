@@ -126,6 +126,7 @@ Defines all S3 key patterns used throughout the system:
 - `chunk_size_tokens`: 512 - Document chunk size for vector search
 - `overlap_tokens`: 64 - Overlap between chunks for context
 - `vector_dimension`: 1024 - Must match embedding model (Titan v2 = 1024)
+- Supported formats: .txt, .md, .html, .doc, .docx, .csv, .xls, .xlsx, .pdf
 
 **API Gateway Section**
 - `throttle`: Rate limiting (500 req/sec, 1000 burst)
@@ -186,6 +187,12 @@ Key variables set by CDK deployment:
 - Edit or add custom tasks
 
 ### Lessons Learned
+
+**Supported Document Types for Lessons Extraction**
+- PDF (.pdf)
+- Microsoft Word (.doc, .docx)
+- Microsoft Excel (.xls, .xlsx)
+- Plain text (.txt, .md, .html, .csv, and other text formats)
 
 **Project-Level Lessons**
 - Upload documents to extract lessons automatically
