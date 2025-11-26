@@ -77,7 +77,7 @@ class IAMPermissions(Construct):
                 resources=[compute.global_checklist_sync_lambda.function_arn],
             )
         )
-        
+
         # Global checklist sync Lambda permissions
         storage.project_data_table.grant_read_write_data(
             compute.global_checklist_sync_lambda
@@ -119,7 +119,7 @@ class IAMPermissions(Construct):
                 actions=["bedrock:Retrieve", "bedrock:RetrieveAndGenerate"],
                 resources=[
                     "arn:aws:bedrock:*:*:knowledge-base/*"
-                ],  # #TODO: Restrict to specific knowledge bases if needed
+                ],
             )
         )
         compute.search_lambda.add_to_role_policy(
