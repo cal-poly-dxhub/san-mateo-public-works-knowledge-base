@@ -174,6 +174,7 @@ def get_project_detail(bucket_name, project_name):
         # First try to find project by name in DynamoDB
         table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
         project_id = project_name
+        project_type = "other"
 
         if table_name:
             table = dynamodb.Table(table_name)
@@ -184,11 +185,14 @@ def get_project_detail(bucket_name, project_name):
                 ExpressionAttributeValues={":name": project_name, ":config": "config"},
             )
             if response.get("Items"):
-                project_id = response["Items"][0]["project_id"]
+                config_item = response["Items"][0]
+                project_id = config_item["project_id"]
+                project_type = config_item.get("projectType", "other")
 
         project_detail = {
             "name": project_name,
             "project_id": project_id,
+            "projectType": project_type,
             "meeting_summaries": [],
             "action_items_detail": [],
             "generated_assets": [],
