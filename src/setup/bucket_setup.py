@@ -43,22 +43,3 @@ def setup_base_structure(bucket_name):
     for folder in base_folders:
         s3_client.put_object(Bucket=bucket_name, Key=folder)
         logger.info(f"Created folder: {folder}")
-
-    project_types = {
-        "project_types": [
-            "Reconstruction",
-            "Resurface",
-            "Slurry Seal",
-            "Drainage",
-            "Utilities",
-            "Other",
-        ]
-    }
-
-    s3_client.put_object(
-        Bucket=bucket_name,
-        Key="project-types.json",
-        Body=json.dumps(project_types, indent=2),
-        ContentType="application/json",
-    )
-    logger.info("Created project-types.json")

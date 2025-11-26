@@ -59,7 +59,12 @@ class ComputeResources(Construct):
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "PROJECT_SETUP_MODEL_ID": config["models"]["primary_llm"],
-                "TASK_GENERATION_MODEL_ID": config["models"]["primary_llm"],
+                "
+
+
+
+
+                _GENERATION_MODEL_ID": config["models"]["primary_llm"],
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
         )
@@ -151,7 +156,7 @@ class ComputeResources(Construct):
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
         )
-        
+
         # Global checklist sync Lambda (async)
         self.global_checklist_sync_lambda = _lambda.Function(
             self,
@@ -166,7 +171,7 @@ class ComputeResources(Construct):
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
         )
-        
+
         # Add sync lambda name to global checklist lambda
         self.global_checklist_lambda.add_environment(
             "SYNC_LAMBDA_NAME", self.global_checklist_sync_lambda.function_name
@@ -198,6 +203,7 @@ class ComputeResources(Construct):
                 "PROJECT_WIZARD_LAMBDA_NAME": self.wizard_lambda.function_name,
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
                 "LESSONS_PROCESSOR_LAMBDA_NAME": self.async_lessons_processor.function_name,
+                "PROJECT_TYPES": ",".join(config["project"]["types"]),
             },
         )
 

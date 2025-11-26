@@ -352,10 +352,10 @@ def create_project(event, bucket_name):
 
 
 def get_project_types(bucket_name):
-    """Get project types from S3"""
+    """Get project types from environment"""
     try:
-        response = s3_client.get_object(Bucket=bucket_name, Key="project-types.json")
-        data = json.loads(response["Body"].read().decode("utf-8"))
+        project_types = os.environ.get("PROJECT_TYPES", "").split(",")
+        data = {"project_types": project_types}
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
