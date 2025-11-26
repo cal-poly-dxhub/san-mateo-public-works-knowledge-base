@@ -37,19 +37,6 @@ models:
 s3_paths:
   # Document storage (for Knowledge Base ingestion)
   documents_prefix: "documents"
-  project_documents: "documents"
-  project_lessons_json: "documents/{project_name}/lessons-learned.json"
-  project_lessons_txt: "documents/{project_name}/lessons-learned.txt"
-
-  # Project metadata and configuration
-  projects_prefix: "projects"
-  project_metadata: "projects/{project_name}/metadata.json"
-  project_checklist: "projects/{project_name}/checklist.json"
-
-  # Master lessons by type
-  master_lessons_prefix: "lessons-learned"
-  master_lessons_by_type: "lessons-learned/{project_type}/lessons.json"
-  master_conflicts_by_type: "lessons-learned/{project_type}/lessons-conflicts.json"
 
 # Knowledge Base configuration
 knowledge_base:
@@ -64,13 +51,9 @@ api_gateway:
   throttle:
     rate_limit: 500
     burst_limit: 1000
-  quota:
-    limit: 100000
-    period: "DAY" # DAY, WEEK, MONTH
 
 # Project configuration
 project:
-  max_document_length: 100000
   types:
     - "Reconstruction"
     - "Resurface"
@@ -78,12 +61,6 @@ project:
     - "Drainage"
     - "Utilities"
     - "Other"
-  special_conditions:
-    - "Near coast"
-    - "In NFO area"
-    - "Federal funding"
-    - "Environmental sensitive area"
-    - "High traffic area"
 
 prompts:
   retrieve_and_generate: |
@@ -104,177 +81,3 @@ prompts:
     5. If there is a section number, cite it at the bottom of the page.
 
     Be concise but thorough.
-
-  project_setup_wizard: |
-    You are an AI assistant helping set up a new Public Works infrastructure project.
-
-    Based on the following project information, generate a complete project configuration.
-
-    Project Information:
-    - Project Type: {project_type}
-    - Location: {location}
-    - Work Area Size: {area_size} acres
-    - Special Conditions: {special_conditions}
-
-    Generate a comprehensive project setup including:
-    1. Task checklist (only relevant tasks for this project type)
-    2. Stakeholder contact list (utilities, agencies, property owners)
-    3. Required permits and approvals
-    4. Suggested timeline with milestones
-    5. Estimated budget range based on project type and size
-
-    Format as JSON:
-    {{
-      "projectConfig": {{
-        "tasks": [
-          {{"phase": "Survey", "task": "Task name", "description": "Details", "estimatedDays": 5, "dependencies": [], "required": true}}
-        ],
-        "stakeholders": [
-          {{"name": "Organization", "type": "utility/agency/owner", "contactReason": "Why contact", "timing": "When to contact"}}
-        ],
-        "permits": [
-          {{"name": "Permit name", "agency": "Issuing agency", "estimatedTime": "Processing time", "required": true}}
-        ],
-        "timeline": {{
-          "totalEstimatedDays": 365,
-          "milestones": [
-            {{"name": "Milestone", "estimatedDay": 30, "description": "Details"}}
-          ]
-        }},
-        "budgetEstimate": {{
-          "low": 100000,
-          "high": 150000,
-          "basis": "Similar projects in area"
-        }}
-      }}
-    }}
-
-  generate_task_checklist: |
-    Generate a detailed task checklist for a {project_type} project.
-
-    Include all phases: Survey, Design (30%, 60%, 90%), Approvals, Bidding, Construction, Closeout.
-
-    For each task include:
-    - Task name and description
-    - Estimated duration
-    - Dependencies (which tasks must complete first)
-    - Required documents/deliverables
-    - Who needs to approve
-
-    Only include tasks relevant to this project type. Format as JSON array.
-
-  ai_assistant_response: |
-    You are an experienced Public Works senior engineer assistant helping with project management questions.
-
-    Project Context:
-    {project_context}
-
-    User Question: {question}
-
-    Relevant Information from Knowledge Base:
-    {knowledge_base_results}
-
-    Provide a helpful, specific answer that:
-    1. Directly answers the question
-    2. References specific regulations, forms, or procedures when applicable
-    3. Suggests next steps or actions
-    4. Warns about common pitfalls or delays
-    5. Provides links to templates or forms if relevant
-
-    Be concise but thorough. Use plain English.
-
-  generate_document_template: |
-    Generate a {document_type} for the following project:
-
-    Project Details:
-    {project_details}
-
-    The document should be professional, complete, and ready to use with all project-specific information filled in.
-
-    Include:
-    - Proper formatting and structure
-    - All required sections for this document type
-    - Project-specific details (names, dates, locations, etc.)
-    - Distribution list if applicable
-    - Next steps or required actions
-
-    Format as markdown for easy editing.
-
-  proactive_alert_check: |
-    Analyze the current project status and identify potential issues or recommendations.
-
-    Project Status:
-    {project_status}
-
-    Recent Activity:
-    {recent_activity}
-
-    Check for:
-    - Tasks that should have started but haven't
-    - Dependencies blocking progress
-    - Upcoming deadlines that need preparation
-    - Common issues from similar projects
-    - Coordination gaps (e.g., utilities not contacted at right time)
-
-    Return JSON array of alerts:
-    {{
-      "alerts": [
-        {{
-          "severity": "warning/info",
-          "title": "Brief alert title",
-          "message": "Detailed explanation",
-          "suggestedAction": "What to do",
-          "relatedTasks": ["task_id"]
-        }}
-      ]
-    }}
-
-  estimate_timeline: |
-    Based on similar {project_type} projects, estimate the timeline for this project.
-
-    Project Size: {area_size} acres
-    Special Conditions: {special_conditions}
-
-    Historical Data:
-    {historical_projects}
-
-    Provide realistic estimates for each phase with:
-    - Typical duration
-    - Factors that could extend timeline
-    - Critical path items
-    - Recommended buffer time
-
-    Format as JSON with phase-by-phase breakdown.
-
-templates:
-  project_config: |
-    {{
-      "projectName": "",
-      "projectType": "",
-      "location": "",
-      "areaSize": 0,
-      "specialConditions": [],
-      "status": "setup",
-      "createdDate": "",
-      "tasks": [],
-      "stakeholders": [],
-      "permits": [],
-      "timeline": {{}},
-      "budget": {{}}
-    }}
-
-  task: |
-    {{
-      "taskId": "",
-      "phase": "",
-      "taskName": "",
-      "description": "",
-      "estimatedDays": 0,
-      "dependencies": [],
-      "required": true,
-      "status": "not_started",
-      "assignedTo": "",
-      "plannedCompletionDate": "",
-      "actualCompletionDate": "",
-      "notes": ""
-    }}
