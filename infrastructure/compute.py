@@ -166,6 +166,26 @@ class ComputeResources(Construct):
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
         )
+        
+        # Global checklist sync Lambda (async)
+        self.global_checklist_sync_lambda = _lambda.Function(
+            self,
+            "GlobalChecklistSyncLambda",
+            runtime=_lambda.Runtime.PYTHON_3_11,
+            handler="global_checklist_sync.handler",
+            code=_lambda.Code.from_asset("./src/checklist"),
+            timeout=Duration.seconds(300),
+            memory_size=512,
+            layers=[self.common_layer],
+            environment={
+                "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
+            },
+        )
+        
+        # Add sync lambda name to global checklist lambda
+        self.global_checklist_lambda.add_environment(
+            "SYNC_LAMBDA_NAME", self.global_checklist_sync_lambda.function_name
+        )
 
         # Dashboard Lambda
         self.dashboard_lambda = _lambda.Function(

@@ -71,6 +71,17 @@ class IAMPermissions(Construct):
         storage.project_data_table.grant_read_write_data(
             compute.global_checklist_lambda
         )
+        compute.global_checklist_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["lambda:InvokeFunction"],
+                resources=[compute.global_checklist_sync_lambda.function_arn],
+            )
+        )
+        
+        # Global checklist sync Lambda permissions
+        storage.project_data_table.grant_read_write_data(
+            compute.global_checklist_sync_lambda
+        )
 
         # Dashboard Lambda permissions
         storage.bucket.grant_read(compute.dashboard_lambda)
