@@ -83,24 +83,19 @@ Thanks for your interest in our solution.  Having specific examples of replicati
    cd ..
    ```
 
-4. **Configure settings**
-
-   Edit `config.yaml` to customize:
-   - AI model selections
-   - Project types and special conditions
-   - Prompts for AI interactions
-   - S3 path patterns
-
-5. **Deploy AWS infrastructure**
+4. **Deploy AWS infrastructure**
    ```bash
    cdk bootstrap  # First time only
    cdk deploy
    ```
+
+Look for the cloudfront URL among the cdk outputs.
+
 ## Configuration
 
 ### config.yaml
 
-The `config.yaml` file is the central configuration for all AI models, prompts, and system behavior. Edit this file to customize the system without changing code.
+The `config.yaml` file is the central configuration for all AI models, prompts, and system behavior. Edit this file to customize the system without changing code. For changes to take effect, re-run `cdk deploy`.
 
 ## Usage
 

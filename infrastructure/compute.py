@@ -59,12 +59,7 @@ class ComputeResources(Construct):
             environment={
                 "BUCKET_NAME": storage.bucket.bucket_name,
                 "PROJECT_SETUP_MODEL_ID": config["models"]["primary_llm"],
-                "
-
-
-
-
-                _GENERATION_MODEL_ID": config["models"]["primary_llm"],
+                "GENERATION_MODEL_ID": config["models"]["primary_llm"],
                 "PROJECT_DATA_TABLE_NAME": storage.project_data_table.table_name,
             },
         )
