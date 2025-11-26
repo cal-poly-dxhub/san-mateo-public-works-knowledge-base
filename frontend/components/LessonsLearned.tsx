@@ -50,8 +50,10 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
 
   const openSourceFile = async (filename: string) => {
     try {
+      // Remove 'documents/' prefix if it exists since we'll add it
+      const cleanFilename = filename.replace(/^documents\//, '');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/file/projects/${encodeURIComponent(projectName)}/documents/${encodeURIComponent(filename)}`
+        `${process.env.NEXT_PUBLIC_API_URL}/file/projects/${encodeURIComponent(projectName)}/documents/${encodeURIComponent(cleanFilename)}`
       );
       if (!response.ok) throw new Error('File not found');
       const data = await response.json();
