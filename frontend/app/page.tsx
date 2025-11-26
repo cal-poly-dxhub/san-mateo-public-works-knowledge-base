@@ -95,7 +95,7 @@ export default function Home() {
 
   useEffect(() => {
     loadProjects();
-  }, [refreshTrigger, checklistType, currentPage]);
+  }, [refreshTrigger, checklistType, currentPage, projectsPerPage]);
 
   const loadAvailableModels = async () => {
     try {
