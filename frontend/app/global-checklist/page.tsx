@@ -192,7 +192,7 @@ export default function GlobalChecklistPage() {
       if (result.syncInProgress) {
         alert(`Sync already in progress: ${result.message}`);
       } else {
-        alert(`${result.message} (Job ID: ${result.jobId})`);
+        alert(result.message);
       }
       setSyncConfirmOpen(false);
     } catch (error) {
