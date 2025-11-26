@@ -91,6 +91,13 @@ Thanks for your interest in our solution.  Having specific examples of replicati
 
 Look for the cloudfront URL among the cdk outputs.
 
+5. **Create a Cognito user to access the application**
+   - Go to Amazon Cognito in the AWS Console
+   - Find the user pool named `project-management-users`
+   - Click "Users" → "Create user"
+   - Enter username (email), email address, and temporary password
+   - User will need to change password on first login
+
 ## Configuration
 
 ### config.yaml
