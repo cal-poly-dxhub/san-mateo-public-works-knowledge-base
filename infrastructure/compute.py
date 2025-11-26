@@ -299,8 +299,6 @@ class ComputeResources(Construct):
                     command=[
                         "bash", "-c",
                         "pip install pypdf python-docx openpyxl "
-                        "--platform manylinux2014_x86_64 "
-                        "--only-binary=:all: "
                         "-t /asset-output && cp -r . /asset-output/"
                     ],
                 ),
