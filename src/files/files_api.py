@@ -1,10 +1,15 @@
 import json
 import os
 import boto3
+from botocore.config import Config
 import time
 from urllib.parse import unquote
 
-s3_client = boto3.client("s3")
+s3_client = boto3.client(
+    "s3",
+    region_name=os.environ.get("AWS_REGION", "us-west-2"),
+    config=Config(s3={"addressing_style": "virtual"}),
+)
 dynamodb = boto3.resource("dynamodb")
 
 
