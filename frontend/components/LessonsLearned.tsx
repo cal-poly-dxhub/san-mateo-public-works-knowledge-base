@@ -50,10 +50,10 @@ export default function LessonsLearned({ projectName }: LessonsLearnedProps) {
 
   const openSourceFile = async (filename: string) => {
     try {
-      // Remove 'documents/' prefix if it exists since we'll add it
-      const cleanFilename = filename.replace(/^documents\//, '');
+      // Ensure path starts with 'documents/' since that's where files are stored in S3
+      const s3Key = filename.startsWith('documents/') ? filename : `documents/${filename}`;
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/file/projects/${encodeURIComponent(projectName)}/documents/${encodeURIComponent(cleanFilename)}`
+        `${process.env.NEXT_PUBLIC_API_URL}/file/${encodeURIComponent(s3Key)}`
       );
       if (!response.ok) throw new Error('File not found');
       const data = await response.json();
