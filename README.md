@@ -108,7 +108,7 @@ The `config.yaml` file is the central configuration for all AI models, prompts, 
 
 ### Upload Initial Knowledge Base Files
 
-It is reccomended that any documentation that is not specific to a singular project be uploaded using the "Upload Files" button.
+It is recommended that any documentation that is not specific to a singular project be uploaded using the "Upload Files" button.
 This will place the file into the general knowledge base for RAG search.
 
 1. Click on "Upload Files" button at top of page.
