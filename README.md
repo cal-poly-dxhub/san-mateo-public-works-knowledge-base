@@ -202,4 +202,4 @@ Storage Layer
 ## Support
 For queries or issues:
 - Darren Kraker, Sr Solutions Architect - dkraker@amazon.com
-- Nick Riley, Jr SDE - test-user@example.com
+- Nick Riley, Jr SDE - njriley@calpoly.edu
