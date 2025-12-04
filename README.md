@@ -76,7 +76,7 @@ Thanks for your interest in our solution.  Having specific examples of replicati
    pip install -r requirements.txt
    ```
 
-3. **Install frontend dependencies**
+3. **Install frontend dependencies** (only needed for local development)
    ```bash
    cd frontend
    npm install
