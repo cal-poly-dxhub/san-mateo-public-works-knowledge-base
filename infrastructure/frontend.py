@@ -36,6 +36,7 @@ class FrontendHosting(Construct):
                 image=ecs.ContainerImage.from_asset(
                     "./frontend",
                     platform=ecr_assets.Platform.LINUX_AMD64,
+                    exclude=["node_modules", ".next"],
                 ),
                 container_port=3000,
                 environment={
