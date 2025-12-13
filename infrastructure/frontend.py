@@ -1,10 +1,20 @@
 from aws_cdk import (
-    aws_ec2 as ec2,
-    aws_ecs as ecs,
-    aws_ecs_patterns as ecs_patterns,
-    aws_ecr_assets as ecr_assets,
     aws_cloudfront as cloudfront,
+)
+from aws_cdk import (
     aws_cloudfront_origins as origins,
+)
+from aws_cdk import (
+    aws_ec2 as ec2,
+)
+from aws_cdk import (
+    aws_ecr_assets as ecr_assets,
+)
+from aws_cdk import (
+    aws_ecs as ecs,
+)
+from aws_cdk import (
+    aws_ecs_patterns as ecs_patterns,
 )
 from constructs import Construct
 
@@ -21,9 +31,22 @@ class FrontendHosting(Construct):
     ) -> None:
         super().__init__(scope, construct_id)
 
-        vpc = ec2.Vpc(self, "VPC", max_azs=2, nat_gateways=0)
+        vpc = ec2.Vpc(
+            self,
+            "VPC",
+            max_azs=2,
+            nat_gateways=1,
+        )
 
         cluster = ecs.Cluster(self, "Cluster", vpc=vpc)
+
+        task_security_group = ec2.SecurityGroup(
+            self,
+            "TaskSecurityGroup",
+            vpc=vpc,
+            description="Security group for Fargate tasks",
+            allow_all_outbound=True,
+        )
 
         self.service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
@@ -47,7 +70,16 @@ class FrontendHosting(Construct):
                 },
             ),
             public_load_balancer=True,
-            assign_public_ip=True,
+            assign_public_ip=False,
+            task_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_groups=[task_security_group],
+        )
+
+        # Restrict ALB to only accept traffic from CloudFront
+        self.alb_security_group = (
+            self.service.load_balancer.connections.security_groups[0]
         )
 
         # CloudFront distribution in front of ALB
