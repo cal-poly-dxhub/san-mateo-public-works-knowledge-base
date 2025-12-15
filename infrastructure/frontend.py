@@ -1,3 +1,5 @@
+import secrets
+
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_ecs as ecs,
@@ -5,8 +7,12 @@ from aws_cdk import (
     aws_ecr_assets as ecr_assets,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
+    aws_elasticloadbalancingv2 as elbv2,
 )
 from constructs import Construct
+
+# Generate a secret header value (fixed at synth time)
+CLOUDFRONT_SECRET_HEADER = secrets.token_hex(32)
 
 
 class FrontendHosting(Construct):
@@ -22,6 +28,20 @@ class FrontendHosting(Construct):
         super().__init__(scope, construct_id)
 
         vpc = ec2.Vpc(self, "VPC", max_azs=2, nat_gateways=0)
+
+        # VPC endpoints for private subnet access to AWS services
+        vpc.add_interface_endpoint(
+            "EcrEndpoint", service=ec2.InterfaceVpcEndpointAwsService.ECR
+        )
+        vpc.add_interface_endpoint(
+            "EcrDockerEndpoint", service=ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER
+        )
+        vpc.add_gateway_endpoint(
+            "S3Endpoint", service=ec2.GatewayVpcEndpointAwsService.S3
+        )
+        vpc.add_interface_endpoint(
+            "LogsEndpoint", service=ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS
+        )
 
         cluster = ecs.Cluster(self, "Cluster", vpc=vpc)
 
@@ -47,8 +67,30 @@ class FrontendHosting(Construct):
                 },
             ),
             public_load_balancer=True,
-            assign_public_ip=True,
+            assign_public_ip=False,
         )
+
+        # Configure ALB to only accept requests with the secret header
+        # Remove default action and add header-based routing
+        listener = self.service.listener
+        
+        # Add a rule that checks for the secret header
+        listener.add_action(
+            "AllowCloudFrontOnly",
+            priority=1,
+            conditions=[
+                elbv2.ListenerCondition.http_header(
+                    "X-CloudFront-Secret", [CLOUDFRONT_SECRET_HEADER]
+                )
+            ],
+            action=elbv2.ListenerAction.forward([self.service.target_group]),
+        )
+        
+        # Change default action to return 403
+        cfn_listener = listener.node.default_child
+        cfn_listener.default_actions = [
+            {"type": "fixed-response", "fixedResponseConfig": {"statusCode": "403", "contentType": "text/plain", "messageBody": "Forbidden"}}
+        ]
 
         # CloudFront distribution in front of ALB
         self.distribution = cloudfront.Distribution(
@@ -58,6 +100,7 @@ class FrontendHosting(Construct):
                 origin=origins.LoadBalancerV2Origin(
                     self.service.load_balancer,
                     protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+                    custom_headers={"X-CloudFront-Secret": CLOUDFRONT_SECRET_HEADER},
                 ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
