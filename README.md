@@ -63,6 +63,14 @@ Thanks for your interest in our solution.  Having specific examples of replicati
 - Python 3.9+
 - AWS CDK CLI (`npm install -g aws-cdk`)
 
+### EC2 Quick Start
+To install prerequisites and deploy on a fresh EC2 instance:
+```bash
+curl -O https://raw.githubusercontent.com/cal-poly-dxhub/san-mateo-public-works-knowledge-base/main/setup-ec2.sh
+chmod +x setup-ec2.sh
+./setup-ec2.sh
+```
+
 ### Installation
 
 1. **Clone the repository**
