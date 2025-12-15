@@ -45,7 +45,7 @@ echo "✓ Python dependencies installed"
 # Bootstrap and deploy with Docker group
 echo ""
 echo "=== Running CDK bootstrap and deploy ==="
-sg docker -c "cdk bootstrap && cdk deploy --require-approval never"
+sg docker -c "cdk bootstrap && cdk deploy"
 
 echo ""
 echo "=== Deployment complete! ==="
