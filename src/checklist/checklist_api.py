@@ -314,8 +314,6 @@ def check_and_update_project_status(project_id, table):
         )
     except Exception as e:
         print(f"Error updating project status: {str(e)}")
-    except:
-        return False
 
 
 def is_valid_task_id(task_id):
