@@ -18,7 +18,6 @@ def handler(event, context):
         project_type = body.get("projectType")
         location = body.get("location")
         area_size = body.get("areaSize")
-        area_size_unit = body.get("areaSizeUnit", "linear feet")
         special_conditions = body.get("specialConditions", [])
 
         # Load tasks from global checklist in DynamoDB
@@ -57,7 +56,6 @@ def handler(event, context):
                 "project_type": project_type,
                 "location": location,
                 "area_size": area_size,
-                "area_size_unit": area_size_unit,
                 "special_conditions": special_conditions,
             },
             "tasks": [],
@@ -99,7 +97,6 @@ def handler(event, context):
                 "projectType": project_type,
                 "location": location,
                 "areaSize": area_size,
-                "areaSizeUnit": area_size_unit,
                 "specialConditions": special_conditions,
                 "config": project_config,
                 "status": "active",

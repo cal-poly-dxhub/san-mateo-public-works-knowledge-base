@@ -33,7 +33,6 @@ interface Metadata {
   project_type?: string;
   location?: string;
   area_size?: string;
-  area_size_unit?: string;
   special_conditions?: string[];
 }
 
@@ -297,10 +296,10 @@ export default function Checklist({ projectName, projectType }: ChecklistProps) 
                     value={editedMetadata?.area_size || ''}
                     onChange={(e) => setEditedMetadata({ ...editedMetadata!, area_size: e.target.value })}
                     className="h-8 mt-1"
-                    placeholder="acres"
+                    placeholder="e.g., 32 linear feet"
                   />
                 ) : (
-                  metadata.area_size ? `${metadata.area_size} ${metadata.area_size_unit || 'acres'}` : <span className="text-muted-foreground">Not set</span>
+                  metadata.area_size || <span className="text-muted-foreground">Not set</span>
                 )}
               </div>
               

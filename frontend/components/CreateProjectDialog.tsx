@@ -37,7 +37,6 @@ export default function CreateProjectDialog({
   const [projectTypes, setProjectTypes] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [areaSize, setAreaSize] = useState("");
-  const [areaSizeUnit, setAreaSizeUnit] = useState("linear feet");
   const [specialConditions, setSpecialConditions] = useState<string[]>([]);
   const [files, setFiles] = useState<FileWithToggle[]>([]);
   const [loading, setLoading] = useState(false);
@@ -94,7 +93,6 @@ export default function CreateProjectDialog({
           projectType: projectType,
           location: location,
           areaSize: areaSize,
-          areaSizeUnit: areaSizeUnit,
           specialConditions: specialConditions,
         }),
       });
@@ -140,7 +138,6 @@ export default function CreateProjectDialog({
     setProjectType(projectTypes[0] || "");
     setLocation("");
     setAreaSize("");
-    setAreaSizeUnit("linear feet");
     setSpecialConditions([]);
     setFiles([]);
   };
@@ -200,26 +197,12 @@ export default function CreateProjectDialog({
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="areaSize">Work Area Size (Optional)</Label>
-            <div className="flex gap-2">
-              <Input
-                id="areaSize"
-                type="number"
-                step="0.1"
-                value={areaSize}
-                onChange={(e) => setAreaSize(e.target.value)}
-                placeholder="Enter size"
-                className="flex-1"
-              />
-              <select
-                value={areaSizeUnit}
-                onChange={(e) => setAreaSizeUnit(e.target.value)}
-                className="flex h-10 w-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="linear feet">Linear Feet</option>
-                <option value="miles">Miles</option>
-                <option value="acres">Acres</option>
-              </select>
-            </div>
+            <Input
+              id="areaSize"
+              value={areaSize}
+              onChange={(e) => setAreaSize(e.target.value)}
+              placeholder="e.g., 32 linear feet, 1.5 miles, 2 acres"
+            />
           </div>
 
           <div className="flex flex-col gap-2">
