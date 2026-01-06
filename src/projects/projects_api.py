@@ -92,7 +92,10 @@ def get_projects_list(bucket_name, checklist_type="design", status_filter="activ
                         config_response = table.get_item(
                             Key={"project_id": project_name, "item_id": "config"}
                         )
-                        project_status = config_response.get("Item", {}).get("status", "active")
+                        config = config_response.get("Item", {})
+                        # Use checklist-specific status (design_status or construction_status)
+                        status_field = f"{checklist_type}_status"
+                        project_status = config.get(status_field, config.get("status", "active"))
                         
                         # Filter by status
                         if status_filter != "all" and project_status != status_filter:

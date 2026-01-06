@@ -261,7 +261,9 @@ def update_task(
         )
 
         # Check if all tasks are completed and update project status
-        check_and_update_project_status(project_id, table)
+        # Extract checklist type from task_id (e.g., "task#design#1.1" -> "design")
+        checklist_type = task_id.split("#")[1] if "#" in task_id else None
+        check_and_update_project_status(project_id, table, checklist_type)
 
         return {
             "statusCode": 200,
@@ -285,33 +287,32 @@ def is_valid_date(date_str):
         return False
 
 
-def check_and_update_project_status(project_id, table):
-    """Check if all tasks are completed and update project status accordingly"""
+def check_and_update_project_status(project_id, table, checklist_type=None):
+    """Check if all tasks are completed and update project status accordingly.
+    If checklist_type is provided, only update that checklist's status."""
     try:
-        # Get all tasks for both design and construction
-        all_tasks = []
-        for checklist_type in ["design", "construction"]:
-            task_prefix = f"task#{checklist_type}#"
+        types_to_check = [checklist_type] if checklist_type else ["design", "construction"]
+        
+        for ctype in types_to_check:
+            task_prefix = f"task#{ctype}#"
             response = table.query(
                 KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
                 ExpressionAttributeValues={":pid": project_id, ":task": task_prefix},
             )
-            all_tasks.extend(response.get("Items", []))
-        
-        if not all_tasks:
-            return
-        
-        # Check if all tasks are completed
-        all_completed = all(t.get("status") == "completed" for t in all_tasks)
-        new_status = "completed" if all_completed else "active"
-        
-        # Update project config status
-        table.update_item(
-            Key={"project_id": project_id, "item_id": "config"},
-            UpdateExpression="SET #status = :status",
-            ExpressionAttributeNames={"#status": "status"},
-            ExpressionAttributeValues={":status": new_status},
-        )
+            tasks = response.get("Items", [])
+            
+            if not tasks:
+                continue
+            
+            all_completed = all(t.get("status") == "completed" for t in tasks)
+            new_status = "completed" if all_completed else "active"
+            status_field = f"{ctype}_status"
+            
+            table.update_item(
+                Key={"project_id": project_id, "item_id": "config"},
+                UpdateExpression=f"SET {status_field} = :status",
+                ExpressionAttributeValues={":status": new_status},
+            )
     except Exception as e:
         print(f"Error updating project status: {str(e)}")
 
