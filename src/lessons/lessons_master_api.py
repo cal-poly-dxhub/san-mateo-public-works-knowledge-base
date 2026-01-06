@@ -40,6 +40,10 @@ def handler(event, context):
             project_type = unquote(event["pathParameters"]["project_type"])
             return get_lessons_by_type(project_type)
 
+        elif method == "PUT" and event.get("pathParameters", {}).get("lesson_id"):
+            lesson_id = unquote(event["pathParameters"]["lesson_id"])
+            return update_lesson(event, lesson_id)
+
         return {
             "statusCode": 404,
             "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
@@ -269,8 +273,89 @@ def resolve_master_conflict(event, conflict_id):
             "body": json.dumps({"error": str(e)}),
         }
 
+
+def update_lesson(event, lesson_id):
+    """Update a lesson in the master lessons file"""
+    try:
+        body = json.loads(event.get("body", "{}"))
+        project_type = body.get("projectName", "").split("-")[0] if body.get("projectName") else None
+        
+        # Try to find project type from the lesson data
+        if not project_type:
+            bucket_name = os.environ["BUCKET_NAME"]
+            # Search through all project types to find the lesson
+            response = s3.list_objects_v2(
+                Bucket=bucket_name, Prefix="lessons-learned/", Delimiter="/"
+            )
+            
+            for prefix in response.get("CommonPrefixes", []):
+                pt = prefix["Prefix"].replace("lessons-learned/", "").rstrip("/")
+                lessons_key = f"lessons-learned/{pt}/lessons.json"
+                try:
+                    obj = s3.get_object(Bucket=bucket_name, Key=lessons_key)
+                    data = json.loads(obj["Body"].read())
+                    if any(l.get("id") == lesson_id for l in data.get("lessons", [])):
+                        project_type = pt
+                        break
+                except:
+                    continue
+        
+        if not project_type:
+            return {
+                "statusCode": 404,
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
+                "body": json.dumps({"error": "Lesson not found"}),
+            }
+        
+        bucket_name = os.environ["BUCKET_NAME"]
+        lessons_key = f"lessons-learned/{project_type}/lessons.json"
+        
+        # Load lessons
+        response = s3.get_object(Bucket=bucket_name, Key=lessons_key)
+        lessons_data = json.loads(response["Body"].read())
+        lessons = lessons_data.get("lessons", [])
+        
+        # Find and update the lesson
+        updated = False
+        for i, lesson in enumerate(lessons):
+            if lesson.get("id") == lesson_id:
+                # Update fields from body
+                for key in ["title", "lesson", "details", "impact", "recommendation", "severity"]:
+                    if key in body:
+                        lessons[i][key] = body[key]
+                updated = True
+                break
+        
+        if not updated:
+            return {
+                "statusCode": 404,
+                "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
+                "body": json.dumps({"error": "Lesson not found"}),
+            }
+        
+        # Save updated lessons
+        lessons_data["lessons"] = lessons
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=lessons_key,
+            Body=json.dumps(lessons_data, indent=2).encode("utf-8"),
+            ContentType="application/json",
+        )
+        
+        # Trigger vector sync
+        try:
+            trigger_type_lessons_ingestion(bucket_name, project_type)
+        except Exception as e:
+            print(f"Warning: Failed to trigger sync: {e}")
+        
+        return {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
+            "body": json.dumps({"message": "Lesson updated"}),
+        }
+    
     except Exception as e:
-        print(f"Error resolving master conflict: {str(e)}")
+        print(f"Error updating lesson: {str(e)}")
         return {
             "statusCode": 500,
             "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
