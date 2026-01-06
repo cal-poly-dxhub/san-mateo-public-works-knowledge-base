@@ -260,6 +260,9 @@ def update_task(
             ExpressionAttributeNames=expr_names,
         )
 
+        # Check if all tasks are completed and update project status
+        check_and_update_project_status(project_id, table)
+
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": os.environ.get("ALLOWED_ORIGIN", "*"), "Access-Control-Allow-Credentials": "true"},
@@ -278,6 +281,39 @@ def is_valid_date(date_str):
     try:
         datetime.strptime(date_str, "%Y-%m-%d")
         return True
+    except:
+        return False
+
+
+def check_and_update_project_status(project_id, table):
+    """Check if all tasks are completed and update project status accordingly"""
+    try:
+        # Get all tasks for both design and construction
+        all_tasks = []
+        for checklist_type in ["design", "construction"]:
+            task_prefix = f"task#{checklist_type}#"
+            response = table.query(
+                KeyConditionExpression="project_id = :pid AND begins_with(item_id, :task)",
+                ExpressionAttributeValues={":pid": project_id, ":task": task_prefix},
+            )
+            all_tasks.extend(response.get("Items", []))
+        
+        if not all_tasks:
+            return
+        
+        # Check if all tasks are completed
+        all_completed = all(t.get("status") == "completed" for t in all_tasks)
+        new_status = "completed" if all_completed else "active"
+        
+        # Update project config status
+        table.update_item(
+            Key={"project_id": project_id, "item_id": "config"},
+            UpdateExpression="SET #status = :status",
+            ExpressionAttributeNames={"#status": "status"},
+            ExpressionAttributeValues={":status": new_status},
+        )
+    except Exception as e:
+        print(f"Error updating project status: {str(e)}")
     except:
         return False
 

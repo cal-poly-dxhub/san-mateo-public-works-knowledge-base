@@ -24,9 +24,10 @@ def handler(event, context):
         if path == "/projects" and method == "GET":
             query_params = event.get("queryStringParameters") or {}
             checklist_type = query_params.get("type", "design")
+            status_filter = query_params.get("status", "active")
             limit = int(query_params.get("limit", "50"))
             offset = int(query_params.get("offset", "0"))
-            return get_projects_list(bucket_name, checklist_type, limit, offset)
+            return get_projects_list(bucket_name, checklist_type, status_filter, limit, offset)
 
         elif path.startswith("/projects/") and method == "GET":
             project_name = event.get("pathParameters", {}).get("project_name")
@@ -68,7 +69,7 @@ def handler(event, context):
         }
 
 
-def get_projects_list(bucket_name, checklist_type="design", limit=50, offset=0):
+def get_projects_list(bucket_name, checklist_type="design", status_filter="active", limit=50, offset=0):
     """Get list of all projects with task progress"""
     try:
         table_name = os.environ.get("PROJECT_DATA_TABLE_NAME")
@@ -87,6 +88,18 @@ def get_projects_list(bucket_name, checklist_type="design", limit=50, offset=0):
                 # Get task progress from DynamoDB filtered by checklist type
                 if table:
                     try:
+                        # Get project config to check status
+                        config_response = table.get_item(
+                            Key={"project_id": project_name, "item_id": "config"}
+                        )
+                        project_status = config_response.get("Item", {}).get("status", "active")
+                        
+                        # Filter by status
+                        if status_filter != "all" and project_status != status_filter:
+                            continue
+                        
+                        project_data["status"] = project_status
+                        
                         # Query for tasks of the specified type for this project
                         task_prefix = f"task#{checklist_type}#"
                         db_response = table.query(

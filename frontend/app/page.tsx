@@ -72,6 +72,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [projectsPerPage, setProjectsPerPage] = useState(20);
   const [totalProjects, setTotalProjects] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<"active" | "completed" | "all">("active");
 
   useEffect(() => {
     const handleChecklistTypeChange = (event: CustomEvent) => {
@@ -95,7 +96,7 @@ export default function Home() {
 
   useEffect(() => {
     loadProjects();
-  }, [refreshTrigger, checklistType, currentPage, projectsPerPage]);
+  }, [refreshTrigger, checklistType, currentPage, projectsPerPage, statusFilter]);
 
   const loadAvailableModels = async () => {
     try {
@@ -116,7 +117,7 @@ export default function Home() {
     try {
       const offset = (currentPage - 1) * projectsPerPage;
       const data = await apiRequest(
-        `/projects?type=${checklistType}&limit=${projectsPerPage}&offset=${offset}`,
+        `/projects?type=${checklistType}&status=${statusFilter}&limit=${projectsPerPage}&offset=${offset}`,
       );
       setProjects(
         Array.isArray(data.projects)
@@ -248,6 +249,22 @@ export default function Home() {
             >
               Create Project
             </Button>
+            <Select
+              value={statusFilter}
+              onValueChange={(value: any) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="all">All Projects</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-2 items-center">
